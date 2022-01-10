@@ -41,7 +41,7 @@ func New(store *bbolt.DB) (*Queue, error) {
 func (q *Queue) Set(t *task.Task) error {
 	var err error
 	if t.Id == uuid.Nil {
-		t.Id, err = uuid.NewUUID()
+		t.Id, err = uuid.NewUUID() // it's v1 UUID, with a timestamp
 		if err != nil {
 			return err
 		}
@@ -98,4 +98,31 @@ func (q *Queue) Length() (int, error) {
 		return 0, err
 	}
 	return size, nil
+}
+
+func (q *Queue) First(state task.State) (*task.Task, error) {
+	q.lock.Lock()
+	defer q.lock.Unlock()
+	var t *task.Task
+
+	if err := q.store.View(func(tx *bbolt.Tx) error {
+		c := tx.Bucket([]byte(queue)).Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			_, err := q.buffer.Write(v)
+			if err != nil {
+				return err
+			}
+			err = q.decoder.Decode(&t)
+			if err != nil {
+				return err
+			}
+			if t.State == state {
+				break
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return t, nil
 }

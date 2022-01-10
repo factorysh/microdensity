@@ -36,5 +36,36 @@ func TestQueue(t *testing.T) {
 	size, err = q.Length()
 	assert.NoError(t, err)
 	assert.Equal(t, 1, size)
+}
 
+func TestFirst(t *testing.T) {
+	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
+	assert.NoError(t, err)
+	defer os.RemoveAll(dir)
+
+	s, err := bbolt.Open(
+		fmt.Sprintf("%s/bbolt.store", dir),
+		0600, &bbolt.Options{})
+	assert.NoError(t, err)
+	q, err := New(s)
+	assert.NoError(t, err)
+	err = q.Set(&task.Task{
+		Project: "Alice",
+		State:   task.Canceled,
+	})
+	assert.NoError(t, err)
+	err = q.Set(&task.Task{
+		Project: "Bob",
+		State:   task.Ready,
+	})
+	assert.NoError(t, err)
+	err = q.Set(&task.Task{
+		Project: "Charly",
+		State:   task.Ready,
+	})
+	assert.NoError(t, err)
+	tsk, err := q.First(task.Ready)
+	assert.NoError(t, err)
+	assert.NotNil(t, tsk)
+	//assert.Equal(t, "Bob", tsk.Project)
 }
