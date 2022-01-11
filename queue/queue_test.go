@@ -30,7 +30,7 @@ func TestQueue(t *testing.T) {
 		Project: "beuha",
 	}
 	assert.Equal(t, uuid.Nil, tsk.Id)
-	err = q.Set(tsk)
+	err = q.Put(tsk)
 	assert.NoError(t, err)
 	assert.NotEqual(t, uuid.Nil, tsk.Id)
 	size, err = q.Length()
@@ -49,17 +49,20 @@ func TestFirst(t *testing.T) {
 	assert.NoError(t, err)
 	q, err := New(s)
 	assert.NoError(t, err)
-	err = q.Set(&task.Task{
+	err = q.Put(&task.Task{
 		Project: "Alice",
 		State:   task.Canceled,
 	})
 	assert.NoError(t, err)
-	err = q.Set(&task.Task{
+	bob := &task.Task{
 		Project: "Bob",
 		State:   task.Ready,
-	})
+	}
+	assert.Equal(t, uuid.Nil, bob.Id)
+	err = q.Put(bob)
 	assert.NoError(t, err)
-	err = q.Set(&task.Task{
+	assert.NotEqual(t, uuid.Nil, bob.Id)
+	err = q.Put(&task.Task{
 		Project: "Charly",
 		State:   task.Ready,
 	})
@@ -67,5 +70,12 @@ func TestFirst(t *testing.T) {
 	tsk, err := q.First(task.Ready)
 	assert.NoError(t, err)
 	assert.NotNil(t, tsk)
-	//assert.Equal(t, "Bob", tsk.Project)
+	assert.Equal(t, "Bob", tsk.Project)
+	bob.State = task.Done
+	err = q.Put(bob)
+	assert.NoError(t, err)
+	tsk, err = q.First(task.Ready)
+	assert.NoError(t, err)
+	assert.NotNil(t, tsk)
+	assert.Equal(t, "Charly", tsk.Project)
 }

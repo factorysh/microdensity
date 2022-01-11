@@ -13,6 +13,7 @@ const (
 	Running
 	Canceled
 	Error
+	Done
 )
 
 type Task struct {

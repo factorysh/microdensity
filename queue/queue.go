@@ -13,11 +13,8 @@ import (
 const queue = "queue"
 
 type Queue struct {
-	lock    *sync.Mutex
-	store   *bbolt.DB
-	encoder *gob.Encoder
-	decoder *gob.Decoder
-	buffer  bytes.Buffer
+	store    *bbolt.DB
+	encoding *Encoding
 }
 
 func New(store *bbolt.DB) (*Queue, error) {
@@ -30,15 +27,17 @@ func New(store *bbolt.DB) (*Queue, error) {
 	}
 	var b bytes.Buffer
 	return &Queue{
-		lock:    &sync.Mutex{},
-		encoder: gob.NewEncoder(&b),
-		decoder: gob.NewDecoder(&b),
-		buffer:  b,
-		store:   store,
+		encoding: &Encoding{
+			lock:    &sync.Mutex{},
+			encoder: gob.NewEncoder(&b),
+			decoder: gob.NewDecoder(&b),
+			buffer:  b,
+		},
+		store: store,
 	}, nil
 }
 
-func (q *Queue) Set(t *task.Task) error {
+func (q *Queue) Put(t *task.Task) error {
 	var err error
 	if t.Id == uuid.Nil {
 		t.Id, err = uuid.NewUUID() // it's v1 UUID, with a timestamp
@@ -46,18 +45,12 @@ func (q *Queue) Set(t *task.Task) error {
 			return err
 		}
 	}
-	q.lock.Lock()
-	defer q.lock.Unlock()
-	err = q.encoder.Encode(t)
-	if err != nil {
-		return err
-	}
-	err = q.encoder.Encode(t)
+	raw, err := q.encoding.Encode(t)
 	if err != nil {
 		return err
 	}
 	if err := q.store.Update(func(tx *bbolt.Tx) error {
-		tx.Bucket([]byte(queue)).Put(t.Id[:], q.buffer.Bytes())
+		tx.Bucket([]byte(queue)).Put(t.Id[:], raw)
 		return nil
 	}); err != nil {
 		return err
@@ -67,16 +60,11 @@ func (q *Queue) Set(t *task.Task) error {
 }
 
 func (q *Queue) Get(id uuid.UUID) (*task.Task, error) {
-	q.lock.Lock()
-	defer q.lock.Unlock()
-	var t task.Task
+	var t *task.Task
 	if err := q.store.View(func(tx *bbolt.Tx) error {
 		v := tx.Bucket([]byte(queue)).Get(id.NodeID())
-		_, err := q.buffer.Write(v)
-		if err != nil {
-			return err
-		}
-		err = q.decoder.Decode(t)
+		var err error
+		t, err = q.encoding.Decode(v)
 		if err != nil {
 			return err
 		}
@@ -84,12 +72,10 @@ func (q *Queue) Get(id uuid.UUID) (*task.Task, error) {
 	}); err != nil {
 		return nil, err
 	}
-	return &t, nil
+	return t, nil
 }
 
 func (q *Queue) Length() (int, error) {
-	q.lock.Lock()
-	defer q.lock.Unlock()
 	var size int
 	if err := q.store.View(func(tx *bbolt.Tx) error {
 		size = tx.Bucket([]byte(queue)).Stats().KeyN
@@ -101,20 +87,15 @@ func (q *Queue) Length() (int, error) {
 }
 
 func (q *Queue) First(state task.State) (*task.Task, error) {
-	q.lock.Lock()
-	defer q.lock.Unlock()
 	var t *task.Task
 
 	if err := q.store.View(func(tx *bbolt.Tx) error {
 		c := tx.Bucket([]byte(queue)).Cursor()
+		var err2 error
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			_, err := q.buffer.Write(v)
-			if err != nil {
-				return err
-			}
-			err = q.decoder.Decode(&t)
-			if err != nil {
-				return err
+			t, err2 = q.encoding.Decode(v)
+			if err2 != nil {
+				return err2
 			}
 			if t.State == state {
 				break
