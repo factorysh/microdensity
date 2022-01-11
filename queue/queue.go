@@ -50,8 +50,7 @@ func (q *Queue) Put(t *task.Task) error {
 		return err
 	}
 	if err := q.store.Update(func(tx *bbolt.Tx) error {
-		tx.Bucket([]byte(queue)).Put(t.Id[:], raw)
-		return nil
+		return tx.Bucket([]byte(queue)).Put(t.Id[:], raw)
 	}); err != nil {
 		return err
 	}

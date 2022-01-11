@@ -29,8 +29,11 @@ func (e *Encoding) Encode(t *task.Task) ([]byte, error) {
 
 func (e *Encoding) Decode(raw []byte) (*task.Task, error) {
 	var t task.Task
-	e.buffer.Write(raw)
-	err := e.decoder.Decode(&t)
+	_, err := e.buffer.Write(raw)
+	if err != nil {
+		return nil, err
+	}
+	err = e.decoder.Decode(&t)
 	if err != nil {
 		return nil, err
 	}
