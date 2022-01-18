@@ -50,14 +50,12 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	docker := &client.Client{}
 	err = client.FromEnv(docker)
 	if err != nil {
 		return nil, err
 	}
-
-	service := compose.NewComposeService(docker, dockercfg)
-	fmt.Println(service)
 
 	cfg, err := os.Open(path.Join(home, "docker-compose.yml"))
 	if err != nil {
@@ -85,13 +83,12 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 		Environment: map[string]string{},
 	}
 
-	cr := &ComposeRun{
+	return &ComposeRun{
 		home:    home,
 		details: details,
-		service: service,
-	}
+		service: compose.NewComposeService(docker, dockercfg),
+	}, nil
 
-	return cr, nil
 }
 
 func (c *ComposeRun) Run(ctx context.Context, args map[string]interface{}) error {
@@ -100,5 +97,12 @@ func (c *ComposeRun) Run(ctx context.Context, args map[string]interface{}) error
 		return err
 	}
 
-	return c.service.Up(ctx, project, api.UpOptions{})
+	return c.service.Up(ctx, project, api.UpOptions{
+		Create: api.CreateOptions{
+			RemoveOrphans: true,
+		},
+		Start: api.StartOptions{
+			Wait: false,
+		},
+	})
 }

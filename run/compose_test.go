@@ -8,7 +8,7 @@ import (
 )
 
 func TestCompose(t *testing.T) {
-	cr, err := NewComposeRun("demo/")
+	cr, err := NewComposeRun("../demo/")
 	assert.NoError(t, err)
 	fmt.Println(cr)
 }
