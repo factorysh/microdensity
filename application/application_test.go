@@ -10,16 +10,30 @@ import (
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/factorysh/microdensity/claims"
-	"github.com/factorysh/microdensity/service"
 	"github.com/stretchr/testify/assert"
 )
 
+type NaiveService struct {
+	name string
+}
+
+func (n *NaiveService) Name() string {
+	return n.name
+}
+
+func (n *NaiveService) Validate(map[string]interface{}) error {
+	return nil
+}
+
+func (n *NaiveService) Run(args map[string]interface{}) error {
+	return nil
+}
 func TestApplication(t *testing.T) {
 	secret := "s3cr37"
 	a, err := New(nil, secret)
 	assert.NoError(t, err)
-	a.Services = append(a.Services, &service.Service{
-		Name: "demo",
+	a.Services = append(a.Services, &NaiveService{
+		name: "demo",
 	})
 
 	ts := httptest.NewServer(a.router)

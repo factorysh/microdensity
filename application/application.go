@@ -9,7 +9,7 @@ import (
 )
 
 type Application struct {
-	Services []*service.Service
+	Services []service.Service
 	queue    *queue.Queue
 	router   chi.Router
 }
@@ -17,7 +17,7 @@ type Application struct {
 func New(q *queue.Queue, secret string) (*Application, error) {
 	r := chi.NewRouter()
 	a := &Application{
-		Services: make([]*service.Service, 0),
+		Services: make([]service.Service, 0),
 		queue:    q,
 		router:   r,
 	}

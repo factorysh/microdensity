@@ -14,7 +14,7 @@ func (a *Application) services(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	ss := make([]string, len(a.Services))
 	for n, service := range a.Services {
-		ss[n] = service.Name
+		ss[n] = service.Name()
 	}
 	err := json.NewEncoder(w).Encode(ss)
 	if err != nil {
@@ -22,9 +22,9 @@ func (a *Application) services(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a *Application) findServiceByName(name string) *service.Service {
+func (a *Application) findServiceByName(name string) service.Service {
 	for _, s := range a.Services {
-		if s.Name == name {
+		if s.Name() == name {
 			return s
 		}
 	}
