@@ -1,0 +1,6 @@
+---
+
+services:
+  hello:
+    image: busybox
+    command: echo "world"
