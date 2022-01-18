@@ -28,6 +28,7 @@ func (n *NaiveService) Validate(map[string]interface{}) error {
 func (n *NaiveService) Run(args map[string]interface{}) error {
 	return nil
 }
+
 func TestApplication(t *testing.T) {
 	secret := "s3cr37"
 	a, err := New(nil, secret)
