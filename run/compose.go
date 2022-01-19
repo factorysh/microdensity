@@ -1,6 +1,7 @@
 package run
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -11,6 +12,7 @@ import (
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
 	"github.com/docker/docker/client"
+	"github.com/google/uuid"
 	"golang.org/x/net/context"
 )
 
@@ -18,6 +20,7 @@ type ComposeRun struct {
 	home    string
 	details types.ConfigDetails
 	service api.Service
+	run     string
 }
 
 func dockerConfig() (*configfile.ConfigFile, error) {
@@ -85,26 +88,62 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 		Environment: map[string]string{},
 	}
 
+	srv := compose.NewComposeService(docker, dockercfg)
+	project, err := loader.Load(details)
+	if err != nil {
+		return nil, err
+	}
+	grph := compose.NewGraph(project.Services, compose.ServiceStopped)
+	roots := grph.Roots()
+	if len(roots) == 0 {
+		panic("There is no roots")
+	}
+	if len(roots) > 1 {
+		rr := make([]string, len(roots))
+		for i, r := range roots {
+			rr[i] = r.Service
+		}
+		return nil, fmt.Errorf("i need only one root not %v", rr)
+	}
+
 	return &ComposeRun{
 		home:    home,
 		details: details,
-		service: compose.NewComposeService(docker, dockercfg),
+		service: srv,
+		run:     roots[0].Service,
 	}, nil
 
 }
 
-func (c *ComposeRun) Run(ctx context.Context, args map[string]interface{}) error {
-	project, err := loader.Load(c.details)
+func (c *ComposeRun) Run(ctx context.Context, args map[string]string) error {
+	id, err := uuid.NewUUID()
 	if err != nil {
 		return err
 	}
+	details := types.ConfigDetails{
+		WorkingDir:  c.details.WorkingDir,
+		ConfigFiles: c.details.ConfigFiles,
+		Environment: args,
+	}
+	project, err := loader.Load(details)
+	if err != nil {
+		return err
+	}
+	project.Name = "muhahaha"
 
-	return c.service.Up(ctx, project, api.UpOptions{
-		Create: api.CreateOptions{
-			RemoveOrphans: true,
-		},
-		Start: api.StartOptions{
-			Wait: false,
-		},
+	fmt.Println("run", c.run)
+
+	n, err := c.service.RunOneOffContainer(ctx, project, api.RunOptions{
+		Name:       fmt.Sprintf("%s_%s_%v", project.Name, c.run, id),
+		Service:    c.run,
+		Detach:     false,
+		AutoRemove: false, // FIXME
+		Privileged: false,
+		QuietPull:  true,
+		Tty:        false,
 	})
+	fmt.Println("n", n)
+
+	return err
+
 }

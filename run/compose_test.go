@@ -22,10 +22,25 @@ func TestCompose(t *testing.T) {
 	go cr.service.Logs(context.TODO(), "demo", consumer, api.LogOptions{
 		Follow: true,
 	})
+
 	ctxRun := context.TODO()
-	cr.Run(ctxRun, map[string]interface{}{})
+	defer ctxRun.Done()
+	err = cr.Run(ctxRun, map[string]string{})
+	assert.NoError(t, err)
 	out, err := ioutil.ReadAll(buff)
 	assert.NoError(t, err)
 	fmt.Println(string(out))
-	assert.Equal(t, "world", strings.TrimSpace(string(out)))
+	assert.Equal(t, "World", strings.TrimSpace(string(out)))
+
+	/*
+		buff.Reset()
+		ctxRun = context.TODO()
+		cr.Run(ctxRun, map[string]string{
+			"HELLO": "Bob",
+		})
+		out, err = ioutil.ReadAll(buff)
+		assert.NoError(t, err)
+		fmt.Println(string(out))
+		assert.Equal(t, "Bob", strings.TrimSpace(string(out)))
+	*/
 }

@@ -1,6 +1,11 @@
 ---
 
 services:
-  hello:
+  background:
     image: busybox
-    command: echo "world"
+    command: sleep 50000
+  hello:
+    depends_on:
+      - background
+    image: busybox
+    command: echo "${HELLO:-World}"
