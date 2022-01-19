@@ -8,6 +8,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/factorysh/microdensity/oauth"
 	"github.com/google/uuid"
 )
 
@@ -42,10 +43,10 @@ func OAuth(oauthConfig *oauth.Config) func(next http.Handler) http.Handler {
 
 			state := uuid.NewString()
 
-			// if token not found, ask for a new one
+			// /oauth/authorize?client_id=APP_ID&redirect_uri=REDIRECT_URI&response_type=code&state=STATE&scope=REQUESTED_SCOPES
 			values := url.Values{}
-			values.Add("client_id", appid)
-			values.Add("redirect_uri", fmt.Sprintf("https://%s/oauth/callback", redirectDomain))
+			values.Add("client_id", oauthConfig.AppID)
+			values.Add("redirect_uri", fmt.Sprintf("https://%s/oauth/callback", oauthConfig.AppDomain))
 			values.Add("response_type", "code")
 			values.Add("state", state)
 			values.Add("scope", "read_user")
@@ -64,17 +65,14 @@ func OAuth(oauthConfig *oauth.Config) func(next http.Handler) http.Handler {
 			// state is used as a random value to prevent CSRF attacks
 			stateCookie := http.Cookie{
 				Name:    "OAUTH2_STATE",
-				Domain:  redirectDomain,
+				Domain:  oauthConfig.AppDomain,
 				Path:    "/oauth/callback",
 				Expires: time.Now().AddDate(0, 1, 0),
 			}
 			stateCookie.Value = state
 			http.SetCookie(w, &stateCookie)
 
-			cookie.Value = state
-
-			http.SetCookie(w, &cookie)
-			w.WriteHeader(http.StatusOK)
+			// TODO: save requestURI using state
 		})
 	}
 }
