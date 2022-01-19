@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
@@ -21,6 +22,7 @@ type ComposeRun struct {
 	details types.ConfigDetails
 	service api.Service
 	run     string
+	name    string
 }
 
 func dockerConfig() (*configfile.ConfigFile, error) {
@@ -78,6 +80,7 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 	}
 
 	details := types.ConfigDetails{
+
 		WorkingDir: home,
 		ConfigFiles: []types.ConfigFile{
 			{
@@ -106,11 +109,14 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 		return nil, fmt.Errorf("i need only one root not %v", rr)
 	}
 
+	_, name := path.Split(strings.TrimSuffix(home, "/"))
+
 	return &ComposeRun{
 		home:    home,
 		details: details,
 		service: srv,
 		run:     roots[0].Service,
+		name:    name,
 	}, nil
 
 }
@@ -125,25 +131,32 @@ func (c *ComposeRun) Run(ctx context.Context, args map[string]string) error {
 		ConfigFiles: c.details.ConfigFiles,
 		Environment: args,
 	}
-	project, err := loader.Load(details)
+	project, err := loader.Load(details, func(opt *loader.Options) {
+		opt.Name = c.name
+	})
 	if err != nil {
 		return err
 	}
-	project.Name = "muhahaha"
 
-	fmt.Println("run", c.run)
+	err = c.service.Create(context.TODO(), project, api.CreateOptions{
+		RemoveOrphans: true,
+		Services:      []string{c.run},
+	})
+	if err != nil {
+		return err
+	}
 
-	n, err := c.service.RunOneOffContainer(ctx, project, api.RunOptions{
+	_, err = c.service.RunOneOffContainer(ctx, project, api.RunOptions{
 		Name:       fmt.Sprintf("%s_%s_%v", project.Name, c.run, id),
 		Service:    c.run,
-		Detach:     false,
-		AutoRemove: false, // FIXME
+		Detach:     true,
+		AutoRemove: true,
 		Privileged: false,
 		QuietPull:  true,
-		Tty:        false,
+		Tty:        true,
+		Stdout:     os.Stdout,
+		Stderr:     os.Stderr,
 	})
-	fmt.Println("n", n)
 
 	return err
-
 }
