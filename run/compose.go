@@ -1,7 +1,6 @@
 package run
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -51,8 +50,12 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 		return nil, err
 	}
 
-	docker := &client.Client{}
-	err = client.FromEnv(docker)
+	docker, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = docker.Ping(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +73,6 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(yml)
 
 	details := types.ConfigDetails{
 		WorkingDir: home,
