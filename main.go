@@ -24,7 +24,7 @@ func main() {
 	// protected routes
 	r.Group(func(r chi.Router) {
 		r.Use(middlewares.OAuth(oauthConfig))
-		r.Get("/protected", func(w http.ResponseWriter, _ *http.Request) {
+		r.Get("/service/{service}/{project}/latest", func(w http.ResponseWriter, _ *http.Request) {
 			w.Write([]byte("i am protected"))
 			w.WriteHeader(http.StatusOK)
 		})

@@ -9,8 +9,16 @@ import (
 	"os"
 )
 
+const (
 // CallbackEndpoint route
-const CallbackEndpoint = "/oauth/callback"
+	CallbackEndpoint = "/oauth/callback"
+	// StateCookieName unify name of oauth2 cookies
+	StateCookieName = "OAUTH2_STATE"
+	// OriginURICookieName unify name of oauth2 cookies
+	OriginURICookieName = "OAUTH2_ORIGIN_URI"
+	// OriginProjectCookieName unify name of oauth2 cookie
+	OriginProjectCookieName = "OAUTH2_ORIGIN_PROJECT"
+)
 
 // Config wraps all the config required for OAuth2 mechanism
 type Config struct {
