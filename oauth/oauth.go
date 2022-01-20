@@ -10,7 +10,7 @@ import (
 )
 
 const (
-// CallbackEndpoint route
+	// CallbackEndpoint route
 	CallbackEndpoint = "/oauth/callback"
 	// StateCookieName unify name of oauth2 cookies
 	StateCookieName = "OAUTH2_STATE"
@@ -97,7 +97,7 @@ func CallbackHandler(oauthConfig *Config) http.HandlerFunc {
 			return
 		}
 
-		cookieState, err := r.Cookie("OAUTH2_STATE")
+		cookieState, err := r.Cookie(StateCookieName)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -136,7 +136,11 @@ func CallbackHandler(oauthConfig *Config) http.HandlerFunc {
 		// AppAccess contains : expires, allowed project
 		// add Session token to cookies (path is restricted to project)
 
-		// TODO: redirect back to original requested page
-		http.Redirect(w, r, "https://bearstech.com", http.StatusTemporaryRedirect)
+		originURI := "/"
+		if cookieOriginURI, err := r.Cookie(OriginURICookieName); err == nil {
+			originURI = cookieOriginURI.Value
+		}
+
+		http.Redirect(w, r, originURI, http.StatusTemporaryRedirect)
 	}
 }
