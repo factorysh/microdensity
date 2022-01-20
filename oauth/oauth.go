@@ -123,8 +123,8 @@ func CallbackHandler(oauthConfig *Config) http.HandlerFunc {
 		}
 
 		// if response is a success, parse tokens
-		var tokenResp gitlabTokens
-		err = json.Unmarshal(body, &tokenResp)
+		var gTokens gitlabTokens
+		err = json.Unmarshal(body, &gTokens)
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
