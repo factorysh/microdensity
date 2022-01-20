@@ -16,7 +16,7 @@ const (
 	StateCookieName = "OAUTH2_STATE"
 	// OriginURICookieName unify name of oauth2 cookies
 	OriginURICookieName = "OAUTH2_ORIGIN_URI"
-	// OriginProjectCookieName unify name of oauth2 cookie
+	// OriginProjectCookieName unify name of oauth2 cookies
 	OriginProjectCookieName = "OAUTH2_ORIGIN_PROJECT"
 )
 
