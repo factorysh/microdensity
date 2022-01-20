@@ -7,6 +7,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
+
+	"github.com/factorysh/microdensity/gitlab"
+	_sessions "github.com/factorysh/microdensity/sessions"
 )
 
 const (
@@ -18,6 +22,8 @@ const (
 	OriginURICookieName = "OAUTH2_ORIGIN_URI"
 	// OriginProjectCookieName unify name of oauth2 cookies
 	OriginProjectCookieName = "OAUTH2_ORIGIN_PROJECT"
+	// SessionCookieName unify name of oauth2 cookies
+	SessionCookieName = "OAUTH2_SESSION"
 )
 
 // Config wraps all the config required for OAuth2 mechanism
@@ -89,7 +95,7 @@ type gitlabTokens struct {
 }
 
 // CallbackHandler handles the callback from Gitlab OAuth
-func CallbackHandler(oauthConfig *Config) http.HandlerFunc {
+func CallbackHandler(oauthConfig *Config, sessions *_sessions.Sessions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		callbackState := r.URL.Query().Get("state")
 		if callbackState == "" {
@@ -115,6 +121,12 @@ func CallbackHandler(oauthConfig *Config) http.HandlerFunc {
 			return
 		}
 
+		requestedProject, err := r.Cookie(OriginProjectCookieName)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		body, err := requestNewTokens(oauthConfig, callbackCode)
 		if err != nil {
 			fmt.Println(err)
@@ -131,10 +143,26 @@ func CallbackHandler(oauthConfig *Config) http.HandlerFunc {
 			return
 		}
 
-		// TODO: check access to requested project using access token
-		// if ok add to current sessions (map[string]AppAccess)
-		// AppAccess contains : expires, allowed project
-		// add Session token to cookies (path is restricted to project)
+		project, err := gitlab.FetchProject(gTokens.AccessToken, oauthConfig.ProviderDomain, requestedProject.Value)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		expiresDate := time.Now().Add(time.Second * time.Duration(gTokens.ExpiresIn))
+
+		sessions.Put(gTokens.AccessToken, expiresDate, project)
+
+		sessionCookie := http.Cookie{
+			Name:   SessionCookieName,
+			Domain: oauthConfig.AppDomain,
+			// TODO : restrict this value ?
+			Path:    "/",
+			Expires: expiresDate,
+		}
+		sessionCookie.Value = gTokens.AccessToken
+		http.SetCookie(w, &sessionCookie)
 
 		originURI := "/"
 		if cookieOriginURI, err := r.Cookie(OriginURICookieName); err == nil {
