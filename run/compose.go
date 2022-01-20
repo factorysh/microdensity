@@ -18,12 +18,17 @@ import (
 	"golang.org/x/net/context"
 )
 
+var _ Run = (*ComposeRun)(nil)
+
 type ComposeRun struct {
 	home    string
 	details types.ConfigDetails
 	service api.Service
 	run     string
 	name    string
+	id      uuid.UUID
+	runCtx  context.Context
+	project *types.Project
 }
 
 func dockerConfig() (*configfile.ConfigFile, error) {
@@ -48,6 +53,10 @@ func dockerConfig() (*configfile.ConfigFile, error) {
 		dockercfg = configfile.New(pth)
 	}
 	return dockercfg, nil
+}
+
+func (cr *ComposeRun) Id() uuid.UUID {
+	return cr.id
 }
 
 func NewComposeRun(home string) (*ComposeRun, error) {
@@ -117,11 +126,13 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 
 }
 
-func (c *ComposeRun) Run(ctx context.Context, args map[string]string, stdout io.WriteCloser, stderr io.WriteCloser) (int, error) {
-	id, err := uuid.NewUUID()
+func (c *ComposeRun) Prepare(args map[string]string) error {
+	var err error
+	c.id, err = uuid.NewUUID()
 	if err != nil {
-		return 0, err
+		return err
 	}
+	c.runCtx = context.TODO()
 	details := types.ConfigDetails{
 		WorkingDir: c.details.WorkingDir,
 		ConfigFiles: []types.ConfigFile{
@@ -132,12 +143,12 @@ func (c *ComposeRun) Run(ctx context.Context, args map[string]string, stdout io.
 		},
 		Environment: args,
 	}
-	project, err := loader.Load(details, func(opt *loader.Options) {
+	c.project, err = loader.Load(details, func(opt *loader.Options) {
 		opt.Name = c.name
 		opt.SkipInterpolation = false
 	})
 	if err != nil {
-		return 0, err
+		return err
 	}
 	/*
 		You can watch normalized YAML with
@@ -145,8 +156,12 @@ func (c *ComposeRun) Run(ctx context.Context, args map[string]string, stdout io.
 		err = yaml.NewEncoder(b).Encode(project)
 		b.String()
 	*/
-	return c.service.RunOneOffContainer(ctx, project, api.RunOptions{
-		Name:       fmt.Sprintf("%s_%s_%v", project.Name, c.run, id),
+	return nil
+}
+
+func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, error) {
+	return c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
+		Name:       fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
 		Service:    c.run,
 		Detach:     false,
 		AutoRemove: true,
@@ -158,7 +173,7 @@ func (c *ComposeRun) Run(ctx context.Context, args map[string]string, stdout io.
 		Stderr:     stderr,
 		NoDeps:     false,
 		Labels: types.Labels{
-			"sh.factory.density.id": id.String(),
+			"sh.factory.density.id": c.id.String(),
 		},
 		Index: 0,
 	})

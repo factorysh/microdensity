@@ -2,7 +2,6 @@ package run
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,9 +25,9 @@ func TestCompose(t *testing.T) {
 	assert.NoError(t, err)
 	buff := &bytes.Buffer{}
 
-	ctxRun := context.TODO()
-	defer ctxRun.Done()
-	rcode, err := cr.Run(ctxRun, map[string]string{}, &MockupReaderCloser{buff}, os.Stderr)
+	err = cr.Prepare(map[string]string{})
+	assert.NoError(t, err)
+	rcode, err := cr.Run(&MockupReaderCloser{buff}, os.Stderr)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, rcode)
 	out, err := ioutil.ReadAll(buff)
@@ -37,10 +36,11 @@ func TestCompose(t *testing.T) {
 	assert.Equal(t, "World", strings.TrimSpace(string(out)))
 
 	buff.Reset()
-	ctxRun = context.TODO()
-	rcode, err = cr.Run(ctxRun, map[string]string{
+	err = cr.Prepare(map[string]string{
 		"HELLO": "Bob",
-	}, &MockupReaderCloser{buff}, os.Stderr)
+	})
+	assert.NoError(t, err)
+	rcode, err = cr.Run(&MockupReaderCloser{buff}, os.Stderr)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, rcode)
 	out, err = ioutil.ReadAll(buff)

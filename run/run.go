@@ -3,9 +3,11 @@ package run
 import (
 	"io"
 
-	"golang.org/x/net/context"
+	"github.com/google/uuid"
 )
 
 type Run interface {
-	Run(ctx context.Context, args map[string]string, stdout io.WriteCloser, stderr io.WriteCloser) (int, error)
+	Prepare(args map[string]string) error
+	Id() uuid.UUID
+	Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, error)
 }
