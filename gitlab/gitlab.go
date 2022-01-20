@@ -3,7 +3,6 @@ package gitlab
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -26,18 +25,13 @@ func FetchProject(token string, gitlabDomain string, requestedProject string) (*
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("error when getting project for user, status code : %v", resp.StatusCode)
 	}
 
 	// Decode json to gitlab project struct
 	var project ProjectInfo
-	err = json.Unmarshal(body, &project)
+	err = json.NewDecoder(resp.Body).Decode(&project)
 	if err != nil {
 		return nil, fmt.Errorf("error when decoding project response body : %v", err)
 	}
