@@ -27,6 +27,7 @@ func New(q *queue.Queue, secret string) (*Application, error) {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	r.Use(middlewares.Tokens())
 	r.Use(middlewares.Auth(secret))
 
 	r.Get("/services", a.services)

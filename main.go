@@ -25,10 +25,13 @@ func main() {
 	// routing and handlers
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	// add tokens to context, if any
+	r.Use(middlewares.Tokens())
 
 	// protected routes
 	r.Group(func(r chi.Router) {
-		r.Use(middlewares.OAuth(oauthConfig))
+		r.Use(middlewares.OAuth(oauthConfig, &sessions))
+		r.Use(middlewares.Auth("FIXME"))
 		r.Get("/service/{service}/{project}/latest", func(w http.ResponseWriter, _ *http.Request) {
 			w.Write([]byte("i am protected"))
 			w.WriteHeader(http.StatusOK)
