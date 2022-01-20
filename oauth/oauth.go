@@ -83,9 +83,20 @@ type gitlabTokens struct {
 // CallbackHandler handles the callback from Gitlab OAuth
 func CallbackHandler(oauthConfig *Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO: check state match
 		callbackState := r.URL.Query().Get("state")
 		if callbackState == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		cookieState, err := r.Cookie("OAUTH2_STATE")
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		// Prevent CSRF attacks by checking state from cookie and state from callback
+		if cookieState.Value != callbackState {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
