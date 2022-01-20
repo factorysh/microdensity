@@ -86,7 +86,7 @@ func requestNewTokens(c *Config, callbackCode string) ([]byte, error) {
 	return body, err
 }
 
-// gitlabTokens allows  easy parsing of /oauth/token Gitlab response
+// gitlabTokens allows easy parsing of /oauth/token Gitlab response
 type gitlabTokens struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
