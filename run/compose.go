@@ -1,7 +1,9 @@
 package run
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -15,6 +17,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
+	"gopkg.in/yaml.v3"
 )
 
 type ComposeRun struct {
@@ -121,11 +124,12 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 
 }
 
-func (c *ComposeRun) Run(ctx context.Context, args map[string]string) error {
+func (c *ComposeRun) Run(ctx context.Context, args map[string]string, stdout io.WriteCloser, stderr io.WriteCloser) error {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return err
 	}
+	fmt.Println("args", args)
 	details := types.ConfigDetails{
 		WorkingDir:  c.details.WorkingDir,
 		ConfigFiles: c.details.ConfigFiles,
@@ -133,30 +137,33 @@ func (c *ComposeRun) Run(ctx context.Context, args map[string]string) error {
 	}
 	project, err := loader.Load(details, func(opt *loader.Options) {
 		opt.Name = c.name
+		opt.SkipInterpolation = false
 	})
 	if err != nil {
 		return err
 	}
-
-	err = c.service.Create(context.TODO(), project, api.CreateOptions{
-		RemoveOrphans: true,
-		Services:      []string{c.run},
-	})
-	if err != nil {
-		return err
-	}
-
-	_, err = c.service.RunOneOffContainer(ctx, project, api.RunOptions{
+	b := &bytes.Buffer{}
+	enc := yaml.NewEncoder(b)
+	enc.Encode(project)
+	fmt.Println(b.String())
+	exitcode, err := c.service.RunOneOffContainer(ctx, project, api.RunOptions{
 		Name:       fmt.Sprintf("%s_%s_%v", project.Name, c.run, id),
 		Service:    c.run,
-		Detach:     true,
+		Detach:     false,
 		AutoRemove: true,
 		Privileged: false,
 		QuietPull:  true,
-		Tty:        true,
-		Stdout:     os.Stdout,
-		Stderr:     os.Stderr,
+		Tty:        false,
+		Stdin:      os.Stdin,
+		Stdout:     stdout,
+		Stderr:     stderr,
+		NoDeps:     false,
+		Labels: types.Labels{
+			"sh.factory.density.id": id.String(),
+		},
+		Index: 0,
 	})
+	fmt.Println("exitcode", exitcode)
 
 	return err
 }

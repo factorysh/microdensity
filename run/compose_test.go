@@ -4,28 +4,31 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
-	"github.com/docker/compose/v2/cmd/formatter"
-	"github.com/docker/compose/v2/pkg/api"
 	"github.com/stretchr/testify/assert"
 )
+
+type MockupReaderCloser struct {
+	io.Writer
+}
+
+func (m *MockupReaderCloser) Close() error {
+	return nil
+}
 
 func TestCompose(t *testing.T) {
 	cr, err := NewComposeRun("../demo/")
 	assert.NoError(t, err)
-	ctx := context.TODO()
 	buff := &bytes.Buffer{}
-	consumer := formatter.NewLogConsumer(ctx, buff, false, false)
-	go cr.service.Logs(context.TODO(), "demo", consumer, api.LogOptions{
-		Follow: true,
-	})
 
 	ctxRun := context.TODO()
 	defer ctxRun.Done()
-	err = cr.Run(ctxRun, map[string]string{})
+	err = cr.Run(ctxRun, map[string]string{}, &MockupReaderCloser{buff}, os.Stderr)
 	assert.NoError(t, err)
 	out, err := ioutil.ReadAll(buff)
 	assert.NoError(t, err)
