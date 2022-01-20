@@ -59,7 +59,7 @@ func OAuth(oauthConfig *oauth.Config) func(next http.Handler) http.Handler {
 			values.Add("redirect_uri", fmt.Sprintf("https://%s%s", oauthConfig.AppDomain, oauth.CallbackEndpoint))
 			values.Add("response_type", "code")
 			values.Add("state", state)
-			values.Add("scope", "read_user")
+			values.Add("scope", "read_api")
 
 			// prepare data for template
 			data := struct {
