@@ -8,7 +8,9 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/oauth"
+	"github.com/factorysh/microdensity/server"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -21,7 +23,7 @@ var (
 )
 
 // OAuth will trigger an OAuth flow if no auth token is found see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-flow
-func OAuth(oauthConfig *oauth.Config) func(next http.Handler) http.Handler {
+func OAuth(oauthConfig *conf.OAuthConf) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			project := chi.URLParam(r, "project")
@@ -56,7 +58,7 @@ func OAuth(oauthConfig *oauth.Config) func(next http.Handler) http.Handler {
 			// /oauth/authorize?client_id=APP_ID&redirect_uri=REDIRECT_URI&response_type=code&state=STATE&scope=REQUESTED_SCOPES
 			values := url.Values{}
 			values.Add("client_id", oauthConfig.AppID)
-			values.Add("redirect_uri", fmt.Sprintf("https://%s%s", oauthConfig.AppDomain, oauth.CallbackEndpoint))
+			values.Add("redirect_uri", fmt.Sprintf("https://%s%s", oauthConfig.AppDomain, server.OAuthCallbackEndpoint))
 			values.Add("response_type", "code")
 			values.Add("state", state)
 			values.Add("scope", "read_api")
@@ -75,12 +77,12 @@ func OAuth(oauthConfig *oauth.Config) func(next http.Handler) http.Handler {
 }
 
 // addOAuthFlowCookies adds a set cookie directive use in the OAuth2 flow
-func addOAuthFlowCookies(w http.ResponseWriter, r *http.Request, oauthConfig oauth.Config, state string, project string) {
+func addOAuthFlowCookies(w http.ResponseWriter, r *http.Request, oauthConfig conf.OAuthConf, state string, project string) {
 	// state is used as a random value to prevent CSRF attacks
 	stateCookie := http.Cookie{
 		Name:    oauth.StateCookieName,
 		Domain:  oauthConfig.AppDomain,
-		Path:    oauth.CallbackEndpoint,
+		Path:    server.OAuthCallbackEndpoint,
 		Expires: time.Now().Add(30 * time.Second),
 	}
 	stateCookie.Value = state
@@ -90,7 +92,7 @@ func addOAuthFlowCookies(w http.ResponseWriter, r *http.Request, oauthConfig oau
 	originURI := http.Cookie{
 		Name:    oauth.OriginURICookieName,
 		Domain:  oauthConfig.AppDomain,
-		Path:    oauth.CallbackEndpoint,
+		Path:    server.OAuthCallbackEndpoint,
 		Expires: time.Now().Add(30 * time.Second),
 	}
 	originURI.Value = fmt.Sprintf("https://%s%s", oauthConfig.AppDomain, r.RequestURI)
@@ -100,7 +102,7 @@ func addOAuthFlowCookies(w http.ResponseWriter, r *http.Request, oauthConfig oau
 	originProject := http.Cookie{
 		Name:    oauth.OriginProjectCookieName,
 		Domain:  oauthConfig.AppDomain,
-		Path:    oauth.CallbackEndpoint,
+		Path:    server.OAuthCallbackEndpoint,
 		Expires: time.Now().Add(30 * time.Second),
 	}
 	originProject.Value = project
