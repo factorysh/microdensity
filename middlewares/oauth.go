@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"net/http"
@@ -9,8 +10,10 @@ import (
 	"time"
 
 	"github.com/factorysh/microdensity/conf"
+	"github.com/factorysh/microdensity/httpcontext"
 	"github.com/factorysh/microdensity/oauth"
 	"github.com/factorysh/microdensity/server"
+	_sessions "github.com/factorysh/microdensity/sessions"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -23,7 +26,7 @@ var (
 )
 
 // OAuth will trigger an OAuth flow if no auth token is found see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-flow
-func OAuth(oauthConfig *conf.OAuthConf) func(next http.Handler) http.Handler {
+func OAuth(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			project := chi.URLParam(r, "project")
@@ -32,15 +35,24 @@ func OAuth(oauthConfig *conf.OAuthConf) func(next http.Handler) http.Handler {
 				return
 			}
 
-			// get an auth token
-			token, _, err := getToken(r)
-			// if a token is found, pass to next middleware
-			if token != "" && err == nil {
+			// if context contains a JWT token
+			if _, err := httpcontext.GetJWT(r); err == nil {
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			// get the login template
+			// if context contains a session access token
+			if accessToken, err := httpcontext.GetAccessToken(r); err == nil {
+				// verify token access
+				if sessions.Authorize(accessToken, project) {
+					// if authorized, add value to context
+					ctx := context.WithValue(r.Context(), httpcontext.IsOAuth, true)
+					next.ServeHTTP(w, r.WithContext(ctx))
+					return
+				}
+			}
+
+			// fallback to oauth flow
 			template, err := template.New("login").Parse(loginTemplate)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
