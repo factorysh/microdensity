@@ -6,6 +6,8 @@ import (
 	"path"
 )
 
+var _ Service = (*FolderService)(nil)
+
 type FolderService struct {
 	name string
 }
