@@ -77,18 +77,13 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 	if err != nil {
 		return nil, err
 	}
-	yml, err := loader.ParseYAML(raw)
-	if err != nil {
-		return nil, err
-	}
 
 	details := types.ConfigDetails{
-
 		WorkingDir: home,
 		ConfigFiles: []types.ConfigFile{
 			{
 				Filename: home,
-				Config:   yml,
+				Content:  raw,
 			},
 		},
 		Environment: map[string]string{},
