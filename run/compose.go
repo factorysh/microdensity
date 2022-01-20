@@ -59,6 +59,11 @@ func (cr *ComposeRun) Id() uuid.UUID {
 	return cr.id
 }
 
+func (cr *ComposeRun) Cancel() {
+	_, cancelFunc := context.WithCancel(cr.runCtx)
+	cancelFunc()
+}
+
 func NewComposeRun(home string) (*ComposeRun, error) {
 	dockercfg, err := dockerConfig()
 	if err != nil {
