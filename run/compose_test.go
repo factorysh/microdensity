@@ -28,22 +28,24 @@ func TestCompose(t *testing.T) {
 
 	ctxRun := context.TODO()
 	defer ctxRun.Done()
-	err = cr.Run(ctxRun, map[string]string{}, &MockupReaderCloser{buff}, os.Stderr)
+	rcode, err := cr.Run(ctxRun, map[string]string{}, &MockupReaderCloser{buff}, os.Stderr)
 	assert.NoError(t, err)
+	assert.Equal(t, 0, rcode)
 	out, err := ioutil.ReadAll(buff)
 	assert.NoError(t, err)
 	fmt.Println(string(out))
 	assert.Equal(t, "World", strings.TrimSpace(string(out)))
 
-	/*
-		buff.Reset()
-		ctxRun = context.TODO()
-		cr.Run(ctxRun, map[string]string{
-			"HELLO": "Bob",
-		})
-		out, err = ioutil.ReadAll(buff)
-		assert.NoError(t, err)
-		fmt.Println(string(out))
-		assert.Equal(t, "Bob", strings.TrimSpace(string(out)))
-	*/
+	buff.Reset()
+	ctxRun = context.TODO()
+	rcode, err = cr.Run(ctxRun, map[string]string{
+		"HELLO": "Bob",
+	}, &MockupReaderCloser{buff}, os.Stderr)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, rcode)
+	out, err = ioutil.ReadAll(buff)
+	assert.NoError(t, err)
+	fmt.Println(string(out))
+	assert.Equal(t, "Bob", strings.TrimSpace(string(out)))
+
 }

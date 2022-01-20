@@ -1,7 +1,6 @@
 package run
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,7 +16,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
-	"gopkg.in/yaml.v3"
 )
 
 type ComposeRun struct {
@@ -119,15 +117,19 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 
 }
 
-func (c *ComposeRun) Run(ctx context.Context, args map[string]string, stdout io.WriteCloser, stderr io.WriteCloser) error {
+func (c *ComposeRun) Run(ctx context.Context, args map[string]string, stdout io.WriteCloser, stderr io.WriteCloser) (int, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
-		return err
+		return 0, err
 	}
-	fmt.Println("args", args)
 	details := types.ConfigDetails{
-		WorkingDir:  c.details.WorkingDir,
-		ConfigFiles: c.details.ConfigFiles,
+		WorkingDir: c.details.WorkingDir,
+		ConfigFiles: []types.ConfigFile{
+			{
+				Filename: c.details.ConfigFiles[0].Filename,
+				Content:  c.details.ConfigFiles[0].Content,
+			},
+		},
 		Environment: args,
 	}
 	project, err := loader.Load(details, func(opt *loader.Options) {
@@ -135,13 +137,15 @@ func (c *ComposeRun) Run(ctx context.Context, args map[string]string, stdout io.
 		opt.SkipInterpolation = false
 	})
 	if err != nil {
-		return err
+		return 0, err
 	}
-	b := &bytes.Buffer{}
-	enc := yaml.NewEncoder(b)
-	enc.Encode(project)
-	fmt.Println(b.String())
-	exitcode, err := c.service.RunOneOffContainer(ctx, project, api.RunOptions{
+	/*
+		You can watch normalized YAML with
+		b := &bytes.Buffer{}
+		err = yaml.NewEncoder(b).Encode(project)
+		b.String()
+	*/
+	return c.service.RunOneOffContainer(ctx, project, api.RunOptions{
 		Name:       fmt.Sprintf("%s_%s_%v", project.Name, c.run, id),
 		Service:    c.run,
 		Detach:     false,
@@ -158,7 +162,4 @@ func (c *ComposeRun) Run(ctx context.Context, args map[string]string, stdout io.
 		},
 		Index: 0,
 	})
-	fmt.Println("exitcode", exitcode)
-
-	return err
 }
