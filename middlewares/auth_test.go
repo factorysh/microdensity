@@ -15,6 +15,7 @@ import (
 func TestAuth(t *testing.T) {
 	key := "plop"
 	router := chi.NewRouter()
+	router.Use(Tokens())
 	router.Use(Auth(key))
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Hello, client")
