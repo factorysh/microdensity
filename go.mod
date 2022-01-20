@@ -13,7 +13,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/stretchr/testify v1.7.0
 	go.etcd.io/bbolt v1.3.6
-	golang.org/x/net v0.0.0-20211008194852-3b03d305991f
+	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
 )
 
 require (
