@@ -41,6 +41,7 @@ require (
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
+	github.com/go-chi/render v1.0.1 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/gofrs/flock v0.8.0 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
