@@ -74,6 +74,11 @@ func (s *Sessions) Authorize(accessToken string, projectName string) bool {
 	return ud.IsValid() && ud.MatchRequestedProject(projectName)
 }
 
+// Len returns the length of the pool
+func (s *Sessions) Len() int {
+	return len(s.pool)
+}
+
 // Put UserData into session pool
 func (s *Sessions) Put(sessionID string, accessToken string, expires time.Time, project *gitlab.ProjectInfo) {
 	s.Lock()
