@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares"
@@ -21,6 +22,20 @@ func main() {
 	}
 
 	sessions := _sessions.New()
+	// prune old sessions every 15 minutes
+	ticker := time.NewTicker(15 * time.Minute)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				sessions.Prune()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 
 	// routing and handlers
 	r := chi.NewRouter()
