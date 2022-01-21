@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -47,7 +48,10 @@ func (ud *UserData) MatchRequestedProject(requestedProject string) bool {
 		return false
 	}
 
-	// TODO : handle both ID and full project name
+	// if it's an int, it's a project id
+	if pID, err := strconv.Atoi(requestedProject); err == nil {
+		return pID == ud.Project.ID
+	}
 
 	return ud.Project.PathWithNamespace == requestedProject
 }
