@@ -10,6 +10,7 @@ require (
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/getsentry/sentry-go v0.12.0
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-chi/render v1.0.1
 	github.com/google/uuid v1.3.0
 	github.com/stretchr/testify v1.7.0
 	go.etcd.io/bbolt v1.3.6
@@ -41,7 +42,6 @@ require (
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
-	github.com/go-chi/render v1.0.1 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/gofrs/flock v0.8.0 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
