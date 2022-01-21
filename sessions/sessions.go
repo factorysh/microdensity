@@ -101,7 +101,16 @@ func (s *Sessions) Remove(accessToken string) {
 	s.Unlock()
 }
 
-// TODO: prune sessions
+// Prune sessions will remove expired sessions from sessions pool
+func (s *Sessions) Prune() {
+	s.Lock()
+	for key := range s.pool {
+		if !s.pool[key].IsValid() {
+			delete(s.pool, key)
+		}
+	}
+	s.Unlock()
+}
 
 // New inits a new sessions struct
 func New() Sessions {
