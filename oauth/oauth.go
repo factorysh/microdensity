@@ -68,9 +68,15 @@ func CallbackHandler(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) 
 			return
 		}
 
+		sessionID, err := _sessions.GenID()
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		expiresDate := time.Now().Add(time.Second * time.Duration(gTokens.ExpiresIn))
 
-		sessions.Put(gTokens.AccessToken, expiresDate, project)
+		sessions.Put(sessionID, gTokens.AccessToken, expiresDate, project)
 
 		sessionCookie := http.Cookie{
 			Name:   SessionCookieName,
@@ -79,7 +85,7 @@ func CallbackHandler(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) 
 			Path:    "/",
 			Expires: expiresDate,
 		}
-		sessionCookie.Value = gTokens.AccessToken
+		sessionCookie.Value = sessionID
 		http.SetCookie(w, &sessionCookie)
 
 		originURI := "/"

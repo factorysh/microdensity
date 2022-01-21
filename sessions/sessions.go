@@ -1,6 +1,8 @@
 package sessions
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"net/url"
 	"sync"
 	"time"
@@ -8,10 +10,29 @@ import (
 	"github.com/factorysh/microdensity/gitlab"
 )
 
+const idLen = 256
+
+// GenID generates a session id
+func GenID() (string, error) {
+	s := make([]byte, idLen)
+	_, err := rand.Read(s)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(s), nil
+}
+
 // UserData user sessions contains user data
 type UserData struct {
-	Expires time.Time
-	Project *gitlab.ProjectInfo
+	accessToken string
+	Expires     time.Time
+	Project     *gitlab.ProjectInfo
+}
+
+// GetToken return the accessToken value
+func (ud *UserData) GetToken() string {
+	return ud.accessToken
 }
 
 // IsValid is used to check is user data is expired
@@ -50,11 +71,12 @@ func (s *Sessions) Authorize(accessToken string, projectName string) bool {
 }
 
 // Put UserData into session pool
-func (s *Sessions) Put(accessToken string, expires time.Time, project *gitlab.ProjectInfo) {
+func (s *Sessions) Put(sessionID string, accessToken string, expires time.Time, project *gitlab.ProjectInfo) {
 	s.Lock()
-	s.pool[accessToken] = &UserData{
-		Expires: expires,
-		Project: project,
+	s.pool[sessionID] = &UserData{
+		accessToken: accessToken,
+		Expires:     expires,
+		Project:     project,
 	}
 	s.Unlock()
 }

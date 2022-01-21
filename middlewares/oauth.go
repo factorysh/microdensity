@@ -15,7 +15,6 @@ import (
 	"github.com/factorysh/microdensity/server"
 	_sessions "github.com/factorysh/microdensity/sessions"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
 var (
@@ -59,7 +58,12 @@ func OAuth(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next 
 				return
 			}
 
-			state := uuid.NewString()
+			state, err := _sessions.GenID()
+			if err != nil {
+				fmt.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 
 			// Golang stdlib wants you to set cookies first (if not they will vanish)
 			addOAuthFlowCookies(w, r, *oauthConfig, state, project)
