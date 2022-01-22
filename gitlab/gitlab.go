@@ -12,7 +12,7 @@ func FetchProject(token string, gitlabDomain string, requestedProject string) (*
 		return nil, fmt.Errorf("error requested project can't be blank")
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://%s/api/v4/projects/%s", gitlabDomain, requestedProject), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v4/projects/%s", gitlabDomain, requestedProject), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -26,14 +26,14 @@ func FetchProject(token string, gitlabDomain string, requestedProject string) (*
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error when getting project for user, status code : %v", resp.StatusCode)
+		return nil, fmt.Errorf("error when getting project `%v`, status code : %v", requestedProject, resp.StatusCode)
 	}
 
 	// Decode json to gitlab project struct
 	var project ProjectInfo
 	err = json.NewDecoder(resp.Body).Decode(&project)
 	if err != nil {
-		return nil, fmt.Errorf("error when decoding project response body : %v", err)
+		return nil, fmt.Errorf("error when decoding project `%v`, response body : %v", requestedProject, err)
 	}
 
 	return &project, err
