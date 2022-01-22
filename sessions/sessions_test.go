@@ -10,13 +10,6 @@ import (
 
 const delta = 10 * time.Second
 
-var dummyProject = gitlab.ProjectInfo{
-	PathWithNamespace: "factorysh/test",
-	Name:              "factorysh/test",
-	ID:                42,
-	Archived:          false,
-}
-
 func TestUserDataIsValid(t *testing.T) {
 
 	tests := []struct {
@@ -45,10 +38,10 @@ func TestUserDataMatchRequestedProject(t *testing.T) {
 		requestedProject string
 		want             bool
 	}{
-		{name: "Same project name", input: UserData{Project: &dummyProject}, requestedProject: "factorysh/test", want: true},
-		{name: "Different project name", input: UserData{Project: &dummyProject}, requestedProject: "factorysh/another", want: false},
-		{name: "Same ID", input: UserData{Project: &dummyProject}, requestedProject: "42", want: true},
-		{name: "Different ID", input: UserData{Project: &dummyProject}, requestedProject: "41", want: false},
+		{name: "Same project name", input: UserData{Project: &gitlab.DummyProject}, requestedProject: "group/project", want: true},
+		{name: "Different project name", input: UserData{Project: &gitlab.DummyProject}, requestedProject: "factorysh/another", want: false},
+		{name: "Same ID", input: UserData{Project: &gitlab.DummyProject}, requestedProject: "42", want: true},
+		{name: "Different ID", input: UserData{Project: &gitlab.DummyProject}, requestedProject: "41", want: false},
 	}
 
 	for _, tc := range tests {
@@ -61,13 +54,13 @@ func TestUserDataMatchRequestedProject(t *testing.T) {
 
 func TestSessionsPut(t *testing.T) {
 	s := New()
-	s.Put("id", "token", time.Now().Add(delta), &dummyProject)
+	s.Put("id", "token", time.Now().Add(delta), &gitlab.DummyProject)
 	assert.Equal(t, s.Len(), 1)
 }
 
 func TestSessionsGet(t *testing.T) {
 	s := New()
-	s.Put("id", "token", time.Now().Add(delta), &dummyProject)
+	s.Put("id", "token", time.Now().Add(delta), &gitlab.DummyProject)
 	assert.Equal(t, s.Len(), 1)
 	ud, found := s.Get("id")
 	assert.NotNil(t, ud)
@@ -76,7 +69,7 @@ func TestSessionsGet(t *testing.T) {
 
 func TestSessionsRemove(t *testing.T) {
 	s := New()
-	s.Put("id", "token", time.Now().Add(delta), &dummyProject)
+	s.Put("id", "token", time.Now().Add(delta), &gitlab.DummyProject)
 	assert.Equal(t, s.Len(), 1)
 	s.Remove("id")
 	assert.Equal(t, s.Len(), 0)
@@ -84,12 +77,12 @@ func TestSessionsRemove(t *testing.T) {
 
 func TestSessionsPrune(t *testing.T) {
 	s := New()
-	s.Put("billy", "token", time.Now().Add(-delta), &dummyProject)
-	s.Put("bob", "token", time.Now().Add(-delta), &dummyProject)
-	s.Put("alekei", "token", time.Now().Add(-delta), &dummyProject)
-	s.Put("nancy", "token", time.Now().Add(delta), &dummyProject)
-	s.Put("dustin", "token", time.Now().Add(delta), &dummyProject)
-	s.Put("steve", "token", time.Now().Add(delta), &dummyProject)
+	s.Put("billy", "token", time.Now().Add(-delta), &gitlab.DummyProject)
+	s.Put("bob", "token", time.Now().Add(-delta), &gitlab.DummyProject)
+	s.Put("alekei", "token", time.Now().Add(-delta), &gitlab.DummyProject)
+	s.Put("nancy", "token", time.Now().Add(delta), &gitlab.DummyProject)
+	s.Put("dustin", "token", time.Now().Add(delta), &gitlab.DummyProject)
+	s.Put("steve", "token", time.Now().Add(delta), &gitlab.DummyProject)
 	assert.Equal(t, s.Len(), 6)
 
 	s.Prune()
