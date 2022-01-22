@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"text/template"
+	"html/template"
 	"time"
 
 	"github.com/factorysh/microdensity/conf"
