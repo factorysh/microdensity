@@ -29,8 +29,10 @@ func TestUserDataIsValid(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		got := tc.input.IsValid()
-		assert.Equal(t, tc.want, got)
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.input.IsValid()
+			assert.Equal(t, tc.want, got)
+		})
 	}
 
 }
@@ -50,8 +52,10 @@ func TestUserDataMatchRequestedProject(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		got := tc.input.MatchRequestedProject(tc.requestedProject)
-		assert.Equal(t, tc.want, got)
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.input.MatchRequestedProject(tc.requestedProject)
+			assert.Equal(t, tc.want, got)
+		})
 	}
 }
 
