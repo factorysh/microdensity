@@ -11,10 +11,10 @@ func TestRequestNewTokens(t *testing.T) {
 	mockUP := TestMockup()
 
 	oauthConf := conf.OAuthConf{
-		ProviderDomain: mockUP.URL,
-		AppID:          "some",
-		AppSecret:      "some",
-		AppDomain:      "http://localhost:3000",
+		ProviderURL: mockUP.URL,
+		AppID:       "some",
+		AppSecret:   "some",
+		AppURL:      "http://localhost:3000",
 	}
 
 	resp, err := RequestNewTokens(&oauthConf, "code")

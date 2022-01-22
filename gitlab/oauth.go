@@ -22,7 +22,7 @@ type OAuthResponse struct {
 // RequestNewTokens uses Gitlab OAuth to generate new access tokens
 func RequestNewTokens(c *conf.OAuthConf, callbackCode string) (*OAuthResponse, error) {
 	// Request JWT tokens
-	resp, err := http.Post(fmt.Sprintf("%s%s?%s", c.ProviderDomain, "/oauth/token", newRequestTokenParams(c, callbackCode).Encode()), "applications/json", nil)
+	resp, err := http.Post(fmt.Sprintf("%s%s?%s", c.ProviderURL, "/oauth/token", newRequestTokenParams(c, callbackCode).Encode()), "applications/json", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func newRequestTokenParams(c *conf.OAuthConf, code string) url.Values {
 	values.Add("client_secret", c.AppSecret)
 	values.Add("code", code)
 	values.Add("grant_type", "authorization_code")
-	values.Add("redirect_uri", fmt.Sprintf("%s%s", c.AppDomain, server.OAuthCallbackEndpoint))
+	values.Add("redirect_uri", fmt.Sprintf("%s%s", c.AppURL, server.OAuthCallbackEndpoint))
 
 	return values
 }

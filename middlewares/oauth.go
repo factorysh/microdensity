@@ -4,9 +4,9 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
-	"html/template"
 	"time"
 
 	"github.com/factorysh/microdensity/conf"
@@ -74,7 +74,7 @@ func OAuth(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next 
 			// /oauth/authorize?client_id=APP_ID&redirect_uri=REDIRECT_URI&response_type=code&state=STATE&scope=REQUESTED_SCOPES
 			values := url.Values{}
 			values.Add("client_id", oauthConfig.AppID)
-			values.Add("redirect_uri", fmt.Sprintf("https://%s%s", oauthConfig.AppDomain, server.OAuthCallbackEndpoint))
+			values.Add("redirect_uri", fmt.Sprintf("%s%s", oauthConfig.AppURL, server.OAuthCallbackEndpoint))
 			values.Add("response_type", "code")
 			values.Add("state", state)
 			values.Add("scope", "read_api")
@@ -83,7 +83,7 @@ func OAuth(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next 
 			data := struct {
 				AuthURL string
 			}{
-				AuthURL: fmt.Sprintf("https://%s/oauth/authorize?%s", oauthConfig.ProviderDomain, values.Encode()),
+				AuthURL: fmt.Sprintf("%s/oauth/authorize?%s", oauthConfig.ProviderURL, values.Encode()),
 			}
 
 			// write filled template to response body
@@ -97,7 +97,7 @@ func addOAuthFlowCookies(w http.ResponseWriter, r *http.Request, oauthConfig con
 	// state is used as a random value to prevent CSRF attacks
 	stateCookie := http.Cookie{
 		Name:    oauth.StateCookieName,
-		Domain:  oauthConfig.AppDomain,
+		Domain:  oauthConfig.AppURL,
 		Path:    server.OAuthCallbackEndpoint,
 		Expires: time.Now().Add(30 * time.Second),
 	}
@@ -107,17 +107,17 @@ func addOAuthFlowCookies(w http.ResponseWriter, r *http.Request, oauthConfig con
 	// remember where the user comes from
 	originURI := http.Cookie{
 		Name:    oauth.OriginURICookieName,
-		Domain:  oauthConfig.AppDomain,
+		Domain:  oauthConfig.AppURL,
 		Path:    server.OAuthCallbackEndpoint,
 		Expires: time.Now().Add(30 * time.Second),
 	}
-	originURI.Value = fmt.Sprintf("https://%s%s", oauthConfig.AppDomain, r.RequestURI)
+	originURI.Value = fmt.Sprintf("%s%s", oauthConfig.AppURL, r.RequestURI)
 	http.SetCookie(w, &originURI)
 
 	// remember the requested project
 	originProject := http.Cookie{
 		Name:    oauth.OriginProjectCookieName,
-		Domain:  oauthConfig.AppDomain,
+		Domain:  oauthConfig.AppURL,
 		Path:    server.OAuthCallbackEndpoint,
 		Expires: time.Now().Add(30 * time.Second),
 	}

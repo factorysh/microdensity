@@ -61,7 +61,7 @@ func CallbackHandler(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) 
 			return
 		}
 
-		project, err := gitlab.FetchProject(gTokens.AccessToken, oauthConfig.ProviderDomain, requestedProject.Value)
+		project, err := gitlab.FetchProject(gTokens.AccessToken, oauthConfig.ProviderURL, requestedProject.Value)
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(http.StatusNotFound)
@@ -80,7 +80,7 @@ func CallbackHandler(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) 
 
 		sessionCookie := http.Cookie{
 			Name:   SessionCookieName,
-			Domain: oauthConfig.AppDomain,
+			Domain: oauthConfig.AppURL,
 			// TODO : restrict this value ?
 			Path:    "/",
 			Expires: expiresDate,

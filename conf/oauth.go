@@ -7,10 +7,10 @@ import (
 
 // OAuthConf wraps all the config required for OAuth2 mechanism
 type OAuthConf struct {
-	ProviderDomain string
-	AppID          string
-	AppSecret      string
-	AppDomain      string
+	ProviderURL string
+	AppID       string
+	AppSecret   string
+	AppURL      string
 }
 
 // NewOAuthConfigFromEnv creates an OAuth config from environment variables
@@ -25,9 +25,9 @@ func NewOAuthConfigFromEnv() (*OAuthConf, error) {
 	}
 
 	return &OAuthConf{
-		ProviderDomain: values[0],
-		AppID:          values[1],
-		AppSecret:      values[2],
-		AppDomain:      values[3],
+		ProviderURL: values[0],
+		AppID:       values[1],
+		AppSecret:   values[2],
+		AppURL:      values[3],
 	}, nil
 }
