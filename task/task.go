@@ -3,7 +3,6 @@ package task
 import (
 	"time"
 
-	"github.com/factorysh/microdensity/run"
 	"github.com/google/uuid"
 )
 
@@ -24,5 +23,3 @@ type Task struct {
 	Args     map[string]interface{}
 	State    State
 }
-
-type TaskRunner func(*Task) run.Run
