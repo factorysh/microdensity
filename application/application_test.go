@@ -10,6 +10,7 @@ import (
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/factorysh/microdensity/claims"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +26,11 @@ func (n *NaiveService) Validate(map[string]interface{}) error {
 	return nil
 }
 
-func (n *NaiveService) Run(args map[string]interface{}) error {
+func (n *NaiveService) New(project string, args map[string]interface{}) (uuid.UUID, error) {
+	return uuid.Nil, nil
+}
+
+func (n *NaiveService) Run(id uuid.UUID) error {
 	return nil
 }
 
