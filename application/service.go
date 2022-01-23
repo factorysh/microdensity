@@ -41,6 +41,7 @@ func (a *Application) service(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Http middleware
 func (a *Application) serviceCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		serviceId := chi.URLParam(r, "serviceID")
