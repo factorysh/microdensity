@@ -9,6 +9,7 @@ import (
 
 func TestFetchProject(t *testing.T) {
 	mockUP := TestMockup()
+	defer mockUP.Close()
 
 	tests := []struct {
 		name        string
