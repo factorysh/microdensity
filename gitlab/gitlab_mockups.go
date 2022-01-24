@@ -35,7 +35,7 @@ func TestMockup() *httptest.Server {
 	// from https://docs.gitlab.com/ee/api/oauth2.html
 	OAuthResp := `
 		{
-			"access_token": "de6780bc506a0446309bd9362820ba8aed28aa506c71eedbe1c5c4f9dd350e54",
+			"access_token": "access_token",
 			"token_type": "bearer",
 			"expires_in": 7200,
 			"refresh_token": "8257e65c97202ed1726cf9571600918f3bffb2544b26e00a61df9897668c33a1",
@@ -46,7 +46,7 @@ func TestMockup() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			if strings.HasPrefix(r.URL.Path, "/api/v4") && r.Header["Authorization"][0] != authHeader {
-				w.WriteHeader(http.StatusForbidden)
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 

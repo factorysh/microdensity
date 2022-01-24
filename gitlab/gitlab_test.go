@@ -19,7 +19,7 @@ func TestFetchProject(t *testing.T) {
 		err         error
 	}{
 		{name: "valid token, valid project", token: "access_token", project: &DummyProject, projectName: "group/project", err: nil},
-		{name: "invalid token, valid project", token: "nop", project: nil, projectName: "group/project", err: fmt.Errorf("error when getting project `group/project`, status code : 403")},
+		{name: "invalid token, valid project", token: "nop", project: nil, projectName: "group/project", err: fmt.Errorf("error when getting project `group/project`, status code : 401")},
 		{name: "valid token, invalid project", token: "access_token", project: nil, projectName: "group/nop", err: fmt.Errorf("error when getting project `group/nop`, status code : 404")},
 	}
 
