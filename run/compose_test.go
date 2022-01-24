@@ -21,6 +21,10 @@ func (m *MockupReaderCloser) Close() error {
 }
 
 func TestCompose(t *testing.T) {
+	if os.Getenv("CI") != "" {
+		t.Skip("Skipping testing in CI environment")
+	}
+
 	cr, err := NewComposeRun("../demo/")
 	assert.NoError(t, err)
 	buff := &bytes.Buffer{}
