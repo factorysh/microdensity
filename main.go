@@ -45,6 +45,7 @@ func main() {
 
 	// protected routes
 	r.Group(func(r chi.Router) {
+		r.Use(middlewares.Project())
 		r.Use(middlewares.OAuth(oauthConfig, &sessions))
 		r.Use(middlewares.Auth("FIXME"))
 		r.Get("/service/{service}/{project}/latest", func(w http.ResponseWriter, _ *http.Request) {

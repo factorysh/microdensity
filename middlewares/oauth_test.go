@@ -24,6 +24,7 @@ func TestOAuthRedirect(t *testing.T) {
 	s := sessions.New()
 	router := chi.NewRouter()
 	router.Group(func(r chi.Router) {
+		r.Use(Project())
 		r.Use(OAuth(&conf.OAuthConf{
 			ProviderURL: mockUP.URL,
 			AppID:       "id",
@@ -59,6 +60,7 @@ func TestOAuthPass(t *testing.T) {
 	router := chi.NewRouter()
 	router.Group(func(r chi.Router) {
 		r.Use(Tokens())
+		r.Use(Project())
 		r.Use(OAuth(&conf.OAuthConf{
 			ProviderURL: mockUP.URL,
 			AppID:       "id",

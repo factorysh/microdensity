@@ -13,8 +13,10 @@ const (
 	JWT Key = "JWT"
 	// AccessToken is the key used to read an AccessToken value from a context
 	AccessToken Key = "AccessToken"
-	// IsOAuth is the key used to check is user is auth from a context
+	// IsOAuth is the key used to check if user is auth from a context
 	IsOAuth Key = "IsOAuth"
+	// RequestedProject is the key used to check requested project from a context
+	RequestedProject Key = "RequestedProject"
 )
 
 // GetAccessToken is used to fetch an access token from request context
@@ -61,4 +63,18 @@ func GetIsOAuth(r *http.Request) (bool, error) {
 	}
 
 	return token, nil
+}
+
+func GetRequestedProject(r *http.Request) (string, error) {
+	rawProject := r.Context().Value(RequestedProject)
+	if rawProject == nil {
+		return "", fmt.Errorf("no RequestedProject found in httpcontext")
+	}
+
+	project, ok := rawProject.(string)
+	if !ok {
+		return "", fmt.Errorf("error when casting RequestedProject value")
+	}
+
+	return project, nil
 }
