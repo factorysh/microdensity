@@ -2,10 +2,12 @@ package badge
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/factorysh/microdensity/middlewares"
@@ -46,4 +48,11 @@ func TestBadge(t *testing.T) {
 	resp, err := http.Get(u)
 	assert.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
+	defer resp.Body.Close()
+	f, err := os.Create(path.Join(dir, "toto.svg"))
+	assert.NoError(t, err)
+	defer f.Close()
+	io.Copy(f, resp.Body)
+	// If you want to see the svg, comment the `defer os.RemoveAll(dir)`
+	fmt.Println(dir)
 }
