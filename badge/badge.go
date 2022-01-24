@@ -19,19 +19,20 @@ func BadgeMyProject(q *queue.Queue, label string) func(http.ResponseWriter, *htt
 		if err != nil {
 			panic(err)
 		}
+		fmt.Println("id", id, uid)
 		t, err := q.Get(uid)
 		if err != nil {
 			panic(err)
 		}
+		w.Header().Set("content-type", "image/svg+xml")
 		if t == nil {
-			http.NotFound(w, r)
+			badge.Render(label, "?!", "#5272B4", w)
 			return
 		}
 		if t.Project != project {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		w.Header().Set("content-type", "image/svg+xml")
 		badge.Render(label, fmt.Sprintf("%d", t.State), "#5272B4", w)
 	}
 }
