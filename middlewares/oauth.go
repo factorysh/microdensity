@@ -69,7 +69,7 @@ func OAuth(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next 
 			addOAuthFlowCookies(w, r, *oauthConfig, state, project)
 
 			// No token means forbidden + ask to login page
-			w.WriteHeader(http.StatusForbidden)
+			w.WriteHeader(http.StatusUnauthorized)
 
 			// /oauth/authorize?client_id=APP_ID&redirect_uri=REDIRECT_URI&response_type=code&state=STATE&scope=REQUESTED_SCOPES
 			values := url.Values{}
