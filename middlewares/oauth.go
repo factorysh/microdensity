@@ -87,7 +87,12 @@ func OAuth(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next 
 			}
 
 			// write filled template to response body
-			template.Execute(w, data)
+			err = template.Execute(w, data)
+			if err != nil {
+				fmt.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 		})
 	}
 }
