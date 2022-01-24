@@ -18,7 +18,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-var _ Run = (*ComposeRun)(nil)
+var _ Runnable = (*ComposeRun)(nil)
 
 type ComposeRun struct {
 	home    string

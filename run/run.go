@@ -2,7 +2,6 @@ package run
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"io"
 
@@ -11,16 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
-type Run struct {
+type Context struct {
 	Stdout io.WriteCloser
 	Stderr io.WriteCloser
-	cancel context.CancelFunc
 	task   *task.Task
+	run    Runnable
+}
+
+type Runnable interface {
+	Prepare(map[string]string) error
+	Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, error)
+	Cancel()
 }
 
 type Runner struct {
 	queue *queue.Queue
-	tasks map[uuid.UUID]*Run
+	tasks map[uuid.UUID]*Context
 }
 
 type ClosingBuffer struct {
@@ -35,7 +40,7 @@ func (r *Runner) Run(t *task.Task) error {
 	if t.Id == uuid.Nil {
 		return errors.New("the has no id")
 	}
-	r.tasks[t.Id] = &Run{
+	r.tasks[t.Id] = &Context{
 		task:   t,
 		Stdout: &ClosingBuffer{},
 		Stderr: &ClosingBuffer{},
