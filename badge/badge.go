@@ -19,7 +19,6 @@ func BadgeMyProject(q *queue.Queue, label string) func(http.ResponseWriter, *htt
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("id", id, uid)
 		t, err := q.Get(uid)
 		if err != nil {
 			panic(err)
