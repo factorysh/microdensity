@@ -61,7 +61,7 @@ func TestSessionsPut(t *testing.T) {
 func TestSessionsGet(t *testing.T) {
 	s := New()
 	s.Put("id", "token", time.Now().Add(delta), &gitlab.DummyProject)
-	assert.Equal(t, s.Len(), 1)
+	assert.Equal(t, 1, s.Len())
 	ud, found := s.Get("id")
 	assert.NotNil(t, ud)
 	assert.True(t, found)
@@ -70,9 +70,9 @@ func TestSessionsGet(t *testing.T) {
 func TestSessionsRemove(t *testing.T) {
 	s := New()
 	s.Put("id", "token", time.Now().Add(delta), &gitlab.DummyProject)
-	assert.Equal(t, s.Len(), 1)
+	assert.Equal(t, 1, s.Len())
 	s.Remove("id")
-	assert.Equal(t, s.Len(), 0)
+	assert.Equal(t, 0, s.Len())
 }
 
 func TestSessionsPrune(t *testing.T) {
@@ -83,8 +83,8 @@ func TestSessionsPrune(t *testing.T) {
 	s.Put("nancy", "token", time.Now().Add(delta), &gitlab.DummyProject)
 	s.Put("dustin", "token", time.Now().Add(delta), &gitlab.DummyProject)
 	s.Put("steve", "token", time.Now().Add(delta), &gitlab.DummyProject)
-	assert.Equal(t, s.Len(), 6)
+	assert.Equal(t, 6, s.Len())
 
 	s.Prune()
-	assert.Equal(t, s.Len(), 3)
+	assert.Equal(t, 3, s.Len())
 }

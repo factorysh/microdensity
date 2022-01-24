@@ -19,5 +19,5 @@ func TestRequestNewTokens(t *testing.T) {
 
 	resp, err := RequestNewTokens(&oauthConf, "code")
 	assert.NoError(t, err)
-	assert.Equal(t, resp.AccessToken, "access_token")
+	assert.Equal(t, "access_token", resp.AccessToken)
 }
