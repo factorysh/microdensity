@@ -1,7 +1,9 @@
 package volumes
 
 import (
+	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -32,5 +34,51 @@ func (v *Volumes) Request(project string, branch string, taskID string) error {
 
 // Path will return the full path for this volume
 func (v *Volumes) Path(elem ...string) string {
-	return filepath.Join(elem...)
+	return filepath.Join(v.root, filepath.Join(elem...))
+}
+
+// ByProject all subvolumes for a project
+func (v *Volumes) ByProject(project string) ([]string, error) {
+	var res []string
+
+	branches, err := ioutil.ReadDir(v.Path(project))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, branch := range branches {
+		subs, err := v.ByProjectByBranch(project, branch.Name())
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		res = append(res, subs...)
+	}
+
+	return res, nil
+}
+
+// ByProjectByBranch returns all subvolumes for a specific branch of a project
+func (v *Volumes) ByProjectByBranch(project string, branch string) ([]string, error) {
+
+	var res []string
+
+	vols, err := ioutil.ReadDir(v.Path(project, branch))
+	if err != nil || !containsFiles(vols) {
+		return nil, err
+	}
+
+	for _, run := range vols {
+		if run.IsDir() {
+			fmt.Println(run)
+			res = append(res, v.Path(project, branch, run.Name()))
+		}
+	}
+
+	return res, nil
+}
+
+func containsFiles(files []fs.FileInfo) bool {
+	return len(files) > 0
 }
