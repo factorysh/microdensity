@@ -8,4 +8,5 @@ test:
 		github.com/factorysh/microdensity/sessions \
 		github.com/factorysh/microdensity/application \
 		github.com/factorysh/microdensity/gitlab \
+		github.com/factorysh/microdensity/oauth \
 		github.com/factorysh/microdensity/run
