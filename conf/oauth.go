@@ -16,7 +16,7 @@ type OAuthConf struct {
 // NewOAuthConfigFromEnv creates an OAuth config from environment variables
 func NewOAuthConfigFromEnv() (*OAuthConf, error) {
 	values := make([]string, 4)
-	for i, key := range []string{"OAUTH_PROVIDER_DOMAIN", "OAUTH_APPID", "OAUTH_APPSECRET", "OAUTH_APPDOMAIN"} {
+	for i, key := range []string{"OAUTH_PROVIDER_URL", "OAUTH_APPID", "OAUTH_APPSECRET", "OAUTH_APPURL"} {
 		v := os.Getenv(key)
 		if v == "" {
 			return nil, fmt.Errorf("Missing %s environment variable", key)
