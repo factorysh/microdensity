@@ -1,7 +1,6 @@
 package badge
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/factorysh/microdensity/httpcontext"
@@ -35,7 +34,7 @@ func BadgeMyProject(q *queue.Queue, label string) func(http.ResponseWriter, *htt
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		err = badge.Render(label, fmt.Sprintf("%d", t.State), "#5272B4", w)
+		err = badge.Render(label, t.State.String(), "#5272B4", w)
 		if err != nil {
 			panic(err)
 		}

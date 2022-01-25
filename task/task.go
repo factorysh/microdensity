@@ -12,9 +12,13 @@ const (
 	Ready State = iota
 	Running
 	Canceled
-	Error
+	Failed
 	Done
 )
+
+func (s State) String() string {
+	return []string{"Ready", "Running", "Canceled", "Failed", "Done"}[s]
+}
 
 type Task struct {
 	Id       uuid.UUID
