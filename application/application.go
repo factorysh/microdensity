@@ -4,6 +4,7 @@ import (
 	"github.com/factorysh/microdensity/middlewares"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/service"
+	"github.com/factorysh/microdensity/volumes"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -12,6 +13,7 @@ type Application struct {
 	Services []service.Service
 	queue    *queue.Queue
 	router   chi.Router
+	volumes  *volumes.Volumes
 }
 
 func New(q *queue.Queue, secret string) (*Application, error) {
