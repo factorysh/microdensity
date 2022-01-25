@@ -12,6 +12,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/render v1.0.1
 	github.com/google/uuid v1.3.0
+	github.com/narqo/go-badge v0.0.0-20210814192603-33684e887a6d
 	github.com/stretchr/testify v1.7.0
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
@@ -46,6 +47,7 @@ require (
 	github.com/gofrs/flock v0.8.0 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -102,6 +104,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
+	golang.org/x/image v0.0.0-20190802002840-cff245a6509b // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220111092808-5a964db01320 // indirect
@@ -124,4 +127,7 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
+replace (
+	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
+	github.com/narqo/go-badge => github.com/factorysh/go-badge v0.0.0-20210814192603-33684e887a6d
+)
