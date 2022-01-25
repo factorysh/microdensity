@@ -18,6 +18,9 @@ const (
 
 type Task struct {
 	Id       uuid.UUID
+	Service  string
+	Commit   string
+	Branch   string
 	Project  string
 	Creation time.Time
 	Args     map[string]interface{}
