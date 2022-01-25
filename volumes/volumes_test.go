@@ -14,6 +14,8 @@ func cleanDir() {
 }
 
 func TestNewVolumes(t *testing.T) {
+	defer cleanDir()
+
 	tests := []struct {
 		name     string
 		root     string
@@ -38,13 +40,13 @@ func TestNewVolumes(t *testing.T) {
 }
 
 func TestListByProject(t *testing.T) {
+	defer cleanDir()
 
-	cleanDir()
 	v, err := New(testRootDir)
 	assert.NoError(t, err)
 	err = v.Request("group/project", "master", "uuid")
 	assert.NoError(t, err)
-	err = v.Request("group/project", "master", "another")
+	err = v.Request("group/project", "dev", "another")
 	assert.NoError(t, err)
 
 	dirs, err := v.ByProject("group/project")
@@ -52,5 +54,5 @@ func TestListByProject(t *testing.T) {
 	assert.Len(t, dirs, 2, "one folder should be found")
 	assert.Contains(t, dirs[0], "another")
 	assert.Contains(t, dirs[1], "uuid")
-
+	cleanDir()
 }
