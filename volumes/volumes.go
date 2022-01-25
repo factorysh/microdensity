@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 const dirMode fs.FileMode = 0755
@@ -46,6 +47,8 @@ func (v *Volumes) ByProject(project string) ([]string, error) {
 		return nil, err
 	}
 
+	fsSorter(branches)
+
 	for _, branch := range branches {
 		subs, err := v.ByProjectByBranch(project, branch.Name())
 		if err != nil {
@@ -59,6 +62,12 @@ func (v *Volumes) ByProject(project string) ([]string, error) {
 	return res, nil
 }
 
+func fsSorter(files []fs.FileInfo) {
+	sort.Slice(files, func(i int, j int) bool {
+		return files[i].ModTime().Before(files[j].ModTime())
+	})
+}
+
 // ByProjectByBranch returns all subvolumes for a specific branch of a project
 func (v *Volumes) ByProjectByBranch(project string, branch string) ([]string, error) {
 
@@ -69,9 +78,10 @@ func (v *Volumes) ByProjectByBranch(project string, branch string) ([]string, er
 		return nil, err
 	}
 
+	fsSorter(vols)
+
 	for _, run := range vols {
 		if run.IsDir() {
-			fmt.Println(run)
 			res = append(res, v.Path(project, branch, run.Name()))
 		}
 	}

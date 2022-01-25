@@ -44,9 +44,13 @@ func TestListByProject(t *testing.T) {
 	assert.NoError(t, err)
 	err = v.Request("group/project", "master", "uuid")
 	assert.NoError(t, err)
+	err = v.Request("group/project", "master", "another")
+	assert.NoError(t, err)
 
 	dirs, err := v.ByProject("group/project")
 	assert.NoError(t, err)
-	assert.Len(t, dirs, 1, "one folder should be found")
+	assert.Len(t, dirs, 2, "one folder should be found")
+	assert.Contains(t, dirs[0], "another")
+	assert.Contains(t, dirs[1], "uuid")
 
 }
