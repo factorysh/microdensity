@@ -3,6 +3,7 @@ package volumes
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -53,8 +54,8 @@ func TestListByProject(t *testing.T) {
 	dirs, err := v.ByProject("group/project")
 	assert.NoError(t, err)
 	assert.Len(t, dirs, 2, "one folder should be found")
-	assert.Contains(t, dirs[0], "another")
-	assert.Contains(t, dirs[1], "uuid")
+	assert.True(t, strings.HasSuffix(dirs[0], "/another"), dirs[0])
+	assert.True(t, strings.HasSuffix(dirs[1], "/uuid"), dirs[1])
 	cleanDir()
 }
 
@@ -62,12 +63,14 @@ func TestListByProjectByBranch(t *testing.T) {
 	defer cleanDir()
 
 	v, err := New(testRootDir)
+	assert.NoError(t, err)
 	for i := 0; i < 10; i++ {
 		err = v.Request("group/project", "master", fmt.Sprintf("%d", i))
 		assert.NoError(t, err)
 	}
 
 	dirs, err := v.ByProjectByBranch("group/project", "master")
+	assert.NoError(t, err)
 	assert.Len(t, dirs, 10, "one folder should be found")
 	assert.Contains(t, dirs[0], "0")
 	assert.Contains(t, dirs[9], "9")
