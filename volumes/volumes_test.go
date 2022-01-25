@@ -1,6 +1,7 @@
 package volumes
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -54,5 +55,21 @@ func TestListByProject(t *testing.T) {
 	assert.Len(t, dirs, 2, "one folder should be found")
 	assert.Contains(t, dirs[0], "another")
 	assert.Contains(t, dirs[1], "uuid")
+	cleanDir()
+}
+
+func TestListByProjectByBranch(t *testing.T) {
+	defer cleanDir()
+
+	v, err := New(testRootDir)
+	for i := 0; i < 10; i++ {
+		err = v.Request("group/project", "master", fmt.Sprintf("%d", i))
+		assert.NoError(t, err)
+	}
+
+	dirs, err := v.ByProjectByBranch("group/project", "master")
+	assert.Len(t, dirs, 10, "one folder should be found")
+	assert.Contains(t, dirs[0], "0")
+	assert.Contains(t, dirs[9], "9")
 	cleanDir()
 }
