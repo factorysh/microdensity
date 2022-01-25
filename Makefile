@@ -1,5 +1,9 @@
+GIT_VERSION?=$(shell git describe --tags --always --abbrev=42 --dirty)
+
 build:
-	CGO_ENABLED=0 go build .
+	CGO_ENABLED=0 go build \
+		-ldflags "-X github.com/factorysh/microdensity/version.version=$(GIT_VERSION)" \
+	.
 
 test:
 	go test --cover \

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -10,11 +11,13 @@ import (
 	"github.com/factorysh/microdensity/oauth"
 	"github.com/factorysh/microdensity/server"
 	_sessions "github.com/factorysh/microdensity/sessions"
+	"github.com/factorysh/microdensity/version"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
+	fmt.Println("Version", version.Version())
 	// get OAuth config from env
 	oauthConfig, err := conf.NewOAuthConfigFromEnv()
 	if err != nil {
