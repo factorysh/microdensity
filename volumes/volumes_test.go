@@ -1,11 +1,12 @@
 package volumes
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/factorysh/microdensity/task"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,9 +47,21 @@ func TestListByProject(t *testing.T) {
 
 	v, err := New(testRootDir)
 	assert.NoError(t, err)
-	err = v.Request("group/project", "master", "uuid")
+	id, err := uuid.NewUUID()
 	assert.NoError(t, err)
-	err = v.Request("group/project", "dev", "another")
+	err = v.Request(&task.Task{
+		Project: "group/project",
+		Branch:  "master",
+		Id:      id,
+	})
+	assert.NoError(t, err)
+	id2, err := uuid.NewUUID()
+	assert.NoError(t, err)
+	err = v.Request(&task.Task{
+		Project: "group/project",
+		Branch:  "dev",
+		Id:      id2,
+	})
 	assert.NoError(t, err)
 
 	dirs, err := v.ByProject("group/project")
@@ -65,7 +78,13 @@ func TestListByProjectByBranch(t *testing.T) {
 	v, err := New(testRootDir)
 	assert.NoError(t, err)
 	for i := 0; i < 10; i++ {
-		err = v.Request("group/project", "master", fmt.Sprintf("%d", i))
+		id, err := uuid.NewUUID()
+		assert.NoError(t, err)
+		err = v.Request(&task.Task{
+			Project: "group/project",
+			Branch:  "master",
+			Id:      id,
+		})
 		assert.NoError(t, err)
 	}
 

@@ -1,12 +1,15 @@
 package volumes
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/factorysh/microdensity/task"
 )
 
 const dirMode fs.FileMode = 0755
@@ -29,8 +32,16 @@ type Volumes struct {
 }
 
 // Request a new volume
-func (v *Volumes) Request(project string, branch string, taskID string) error {
-	return os.MkdirAll(v.Path(project, branch, taskID), dirMode)
+func (v *Volumes) Request(t *task.Task) error {
+	err := os.MkdirAll(v.Path(t.Project, t.Branch, t.Id.String()), dirMode)
+	if err != nil {
+		return err
+	}
+	f, err := os.OpenFile(v.Path(t.Project, t.Branch, t.Id.String(), "task.json"), os.O_CREATE+os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	return json.NewEncoder(f).Encode(t)
 }
 
 // Path will return the full path for this volume

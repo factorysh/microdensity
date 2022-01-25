@@ -21,12 +21,12 @@ func (s State) String() string {
 }
 
 type Task struct {
-	Id       uuid.UUID
-	Service  string
-	Commit   string
-	Branch   string
-	Project  string
-	Creation time.Time
-	Args     map[string]interface{}
+	Id       uuid.UUID              `json:"id"`
+	Service  string                 `json:"service"`
+	Project  string                 `json:"project"`
+	Branch   string                 `json:"branch"`
+	Commit   string                 `json:"commit"`
+	Creation time.Time              `json:"creation"`
+	Args     map[string]interface{} `json:"Args"`
 	State    State
 }
