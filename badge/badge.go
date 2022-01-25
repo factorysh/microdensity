@@ -25,13 +25,19 @@ func BadgeMyProject(q *queue.Queue, label string) func(http.ResponseWriter, *htt
 		}
 		w.Header().Set("content-type", "image/svg+xml")
 		if t == nil {
-			badge.Render(label, "?!", "#5272B4", w)
+			err = badge.Render(label, "?!", "#5272B4", w)
+			if err != nil {
+				panic(err)
+			}
 			return
 		}
 		if t.Project != project {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		badge.Render(label, fmt.Sprintf("%d", t.State), "#5272B4", w)
+		err = badge.Render(label, fmt.Sprintf("%d", t.State), "#5272B4", w)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
