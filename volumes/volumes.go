@@ -32,7 +32,7 @@ type Volumes struct {
 
 // Request a new volume
 func (v *Volumes) Request(t *task.Task) error {
-	err := os.MkdirAll(v.Path(t.Project, t.Branch, t.Id.String()), dirMode)
+	err := os.MkdirAll(v.Path(t.Project, t.Branch, t.Id.String(), "volumes"), dirMode)
 	if err != nil {
 		return err
 	}
