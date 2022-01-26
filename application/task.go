@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
-	"github.com/factorysh/microdensity/httpcontext"
+	_claims "github.com/factorysh/microdensity/claims"
 	_service "github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
@@ -16,18 +17,21 @@ import (
 
 func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 	service := chi.URLParam(r, "serviceID")
-	project := chi.URLParam(r, "projet")
-	jwtProject, err := httpcontext.GetRequestedProject(r)
+	project, err := url.QueryUnescape(chi.URLParam(r, "project"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	claims, err := _claims.FromCtx(r.Context())
 	if err != nil {
 		panic(err)
 	}
-	if project != jwtProject {
+	if project != claims.Path {
 		w.WriteHeader(403)
 		return
 	}
 	var args map[string]interface{}
 
-	err = render.DecodeJSON(r.Body, args)
+	err = render.DecodeJSON(r.Body, &args)
 	if err != nil {
 		panic(err)
 	}
