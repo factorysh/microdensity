@@ -1,11 +1,13 @@
 package volumes
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/factorysh/microdensity/task"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,38 +43,34 @@ func TestNewVolumes(t *testing.T) {
 	}
 }
 
-func TestListByProject(t *testing.T) {
-	defer cleanDir()
-
-	v, err := New(testRootDir)
-	assert.NoError(t, err)
-	err = v.Request("group/project", "master", "uuid")
-	assert.NoError(t, err)
-	err = v.Request("group/project", "dev", "another")
-	assert.NoError(t, err)
-
-	dirs, err := v.ByProject("group/project")
-	assert.NoError(t, err)
-	assert.Len(t, dirs, 2, "one folder should be found")
-	assert.True(t, strings.HasSuffix(dirs[0], "/another"), dirs[0])
-	assert.True(t, strings.HasSuffix(dirs[1], "/uuid"), dirs[1])
-	cleanDir()
-}
-
 func TestListByProjectByBranch(t *testing.T) {
 	defer cleanDir()
 
 	v, err := New(testRootDir)
 	assert.NoError(t, err)
+	var first uuid.UUID
+	var last uuid.UUID
 	for i := 0; i < 10; i++ {
-		err = v.Request("group/project", "master", fmt.Sprintf("%d", i))
+		id, err := uuid.NewUUID()
+		assert.NoError(t, err)
+		c := time.Now()
+		if first == uuid.Nil {
+			first = id
+		}
+		last = id
+		err = v.Request(&task.Task{
+			Project:  "group/project",
+			Branch:   "master",
+			Id:       id,
+			Creation: c,
+		})
 		assert.NoError(t, err)
 	}
 
 	dirs, err := v.ByProjectByBranch("group/project", "master")
 	assert.NoError(t, err)
 	assert.Len(t, dirs, 10, "one folder should be found")
-	assert.Contains(t, dirs[0], "0")
-	assert.Contains(t, dirs[9], "9")
+	assert.True(t, strings.HasSuffix(dirs[0], first.String()), dirs[0])
+	assert.True(t, strings.HasSuffix(dirs[9], last.String()))
 	cleanDir()
 }
