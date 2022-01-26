@@ -18,7 +18,7 @@ type Context struct {
 }
 
 type Runnable interface {
-	Prepare(map[string]string) error
+	Prepare(map[string]string, string) error
 	Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, error)
 	Cancel()
 }

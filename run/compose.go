@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/compose-spec/compose-go/loader"
@@ -16,6 +17,7 @@ import (
 	dtypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/factorysh/microdensity/volumes"
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
 )
@@ -24,7 +26,7 @@ var _ Runnable = (*ComposeRun)(nil)
 
 type ComposeRun struct {
 	home    string
-	details types.ConfigDetails
+	details *types.ConfigDetails
 	service api.Service
 	run     string
 	name    string
@@ -57,12 +59,12 @@ func dockerConfig() (*configfile.ConfigFile, error) {
 	return dockercfg, nil
 }
 
-func (cr *ComposeRun) Id() uuid.UUID {
-	return cr.id
+func (c *ComposeRun) Id() uuid.UUID {
+	return c.id
 }
 
-func (cr *ComposeRun) Cancel() {
-	_, cancelFunc := context.WithCancel(cr.runCtx)
+func (c *ComposeRun) Cancel() {
+	_, cancelFunc := context.WithCancel(c.runCtx)
 	cancelFunc()
 }
 
@@ -82,32 +84,12 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 		return nil, err
 	}
 
-	cfg, err := os.Open(path.Join(home, "docker-compose.yml"))
+	project, details, err := LoadCompose(home)
 	if err != nil {
 		return nil, err
-	}
-	defer cfg.Close()
-	raw, err := ioutil.ReadAll(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	details := types.ConfigDetails{
-		WorkingDir: home,
-		ConfigFiles: []types.ConfigFile{
-			{
-				Filename: home,
-				Content:  raw,
-			},
-		},
-		Environment: map[string]string{},
 	}
 
 	srv := compose.NewComposeService(docker, dockercfg)
-	project, err := loader.Load(details)
-	if err != nil {
-		return nil, err
-	}
 	grph := compose.NewGraph(project.Services, compose.ServiceStopped)
 	roots := grph.Roots()
 	if len(roots) == 0 {
@@ -136,7 +118,7 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 
 }
 
-func (c *ComposeRun) Prepare(args map[string]string) error {
+func (c *ComposeRun) Prepare(args map[string]string, volumesRoot string) error {
 	var err error
 	c.id, err = uuid.NewUUID()
 	if err != nil {
@@ -157,6 +139,9 @@ func (c *ComposeRun) Prepare(args map[string]string) error {
 		opt.Name = c.name
 		opt.SkipInterpolation = false
 	})
+
+	c.PrepareVolumes(volumesRoot)
+
 	if err != nil {
 		return err
 	}
@@ -166,6 +151,27 @@ func (c *ComposeRun) Prepare(args map[string]string) error {
 		err = yaml.NewEncoder(b).Encode(project)
 		b.String()
 	*/
+	return nil
+}
+
+// PrepareVolumes by prepending a custom full path and creating the path on the host
+func (c *ComposeRun) PrepareVolumes(prependPath string) error {
+	for _, svc := range c.project.Services {
+		for i, vol := range svc.Volumes {
+			if vol.Type != "bind" {
+				continue
+			}
+
+			vol.Source = filepath.Join(prependPath, "volumes", vol.Source)
+			svc.Volumes[i] = vol
+
+			err := os.MkdirAll(vol.Source, volumes.DirMode)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -210,4 +216,34 @@ func ensureNetwork(cli *client.Client, networkName string) error {
 	}
 
 	return err
+}
+
+// LoadCompose loads a docker-compose.yml file
+func LoadCompose(home string) (*types.Project, *types.ConfigDetails, error) {
+	path := filepath.Join(home, "docker-compose.yml")
+	cfg, err := os.Open(path)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer cfg.Close()
+
+	raw, err := ioutil.ReadAll(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	details := types.ConfigDetails{
+		WorkingDir: home,
+		ConfigFiles: []types.ConfigFile{
+			{
+				Filename: path,
+				Content:  raw,
+			},
+		},
+		Environment: map[string]string{},
+	}
+
+	p, err := loader.Load(details)
+
+	return p, &details, err
 }
