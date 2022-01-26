@@ -10,4 +10,4 @@ services:
     image: busybox
     command: sh -c "echo 'proof' > /cache/proof && echo '${HELLO:-World}'"
     volumes:
-      - "/cache:/cache"
+      - "./cache:/cache"
