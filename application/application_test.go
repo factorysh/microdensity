@@ -3,9 +3,11 @@ package application
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/cristalhq/jwt/v3"
@@ -36,7 +38,10 @@ func (n *NaiveService) Run(id uuid.UUID) error {
 
 func TestApplication(t *testing.T) {
 	secret := "s3cr37"
-	a, err := New(nil, secret)
+	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
+	assert.NoError(t, err)
+	defer os.RemoveAll(dir)
+	a, err := New(nil, secret, dir)
 	assert.NoError(t, err)
 	a.Services = append(a.Services, &NaiveService{
 		name: "demo",

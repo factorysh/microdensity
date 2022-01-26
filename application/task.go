@@ -63,4 +63,18 @@ func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Application) task(w http.ResponseWriter, r *http.Request) {
+	t, err := a.volumes.Get(
+		chi.URLParam(r, "serviceID"),
+		chi.URLParam(r, "project"),
+		chi.URLParam(r, "branch"),
+		chi.URLParam(r, "commit"),
+	)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	err = json.NewEncoder(w).Encode(t)
+	if err != nil {
+		panic(err)
+	}
 }

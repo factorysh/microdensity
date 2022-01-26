@@ -16,12 +16,17 @@ type Application struct {
 	volumes  *volumes.Volumes
 }
 
-func New(q *queue.Queue, secret string) (*Application, error) {
+func New(q *queue.Queue, secret string, volumePath string) (*Application, error) {
 	r := chi.NewRouter()
+	v, err := volumes.New(volumePath)
+	if err != nil {
+		return nil, err
+	}
 	a := &Application{
 		Services: make([]service.Service, 0),
 		queue:    q,
 		router:   r,
+		volumes:  v,
 	}
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
@@ -41,7 +46,7 @@ func New(q *queue.Queue, secret string) (*Application, error) {
 		r.Route("/{project}", func(r chi.Router) {
 			r.Route("/{branch}", func(r chi.Router) {
 				r.Route("/{commit}", func(r chi.Router) {
-					r.Get("/", nil)
+					r.Get("/", a.task)
 				})
 				r.Get("/latest", nil)
 			})

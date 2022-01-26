@@ -36,7 +36,7 @@ func TestCreateTask(t *testing.T) {
 	q, err := queue.New(s)
 	assert.NoError(t, err)
 	secret := "s3cr37"
-	a, err := New(q, secret)
+	a, err := New(q, secret, dir)
 	assert.NoError(t, err)
 	a.Services = append(a.Services, &NaiveService{
 		name: "demo",
@@ -67,4 +67,13 @@ func TestCreateTask(t *testing.T) {
 	l, err := q.Length()
 	assert.NoError(t, err)
 	assert.Equal(t, 1, l)
+
+	req, err = mkRequest(secret)
+	assert.NoError(t, err)
+	req.Method = "GET"
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", ts.URL))
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, r.StatusCode)
 }

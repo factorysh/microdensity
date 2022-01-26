@@ -2,6 +2,7 @@ package volumes
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -42,6 +43,30 @@ func (v *Volumes) Request(t *task.Task) error {
 		return err
 	}
 	return json.NewEncoder(f).Encode(t)
+}
+
+func (v *Volumes) Get(service, project, branch, commit string) (*task.Task, error) {
+	p := v.Path(service, project, branch)
+	commits, err := ioutil.ReadDir(p)
+	if err != nil {
+		fmt.Println("path", p)
+		return nil, err
+	}
+	for _, com := range commits {
+		f, err := os.OpenFile(v.Path(service, project, branch, com.Name(), "task.json"), os.O_RDONLY, 0)
+		if err != nil {
+			return nil, err
+		}
+		var t task.Task
+		err = json.NewDecoder(f).Decode(&t)
+		if err != nil {
+			return nil, err
+		}
+		if t.Commit == commit {
+			return &t, nil
+		}
+	}
+	return nil, nil
 }
 
 // Path will return the full path for this volume
