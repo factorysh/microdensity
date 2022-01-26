@@ -11,11 +11,12 @@ import (
 	"github.com/factorysh/microdensity/task"
 )
 
-const dirMode fs.FileMode = 0755
+// DirMode is the default dirmode for volumes
+const DirMode fs.FileMode = 0755
 
 // New inits a new volumes struct
 func New(root string) (*Volumes, error) {
-	err := os.MkdirAll(root, dirMode)
+	err := os.MkdirAll(root, DirMode)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +33,7 @@ type Volumes struct {
 
 // Request a new volume
 func (v *Volumes) Request(t *task.Task) error {
-	err := os.MkdirAll(v.Path(t.Project, t.Branch, t.Id.String(), "volumes"), dirMode)
+	err := os.MkdirAll(v.Path(t.Project, t.Branch, t.Id.String(), "volumes"), DirMode)
 	if err != nil {
 		return err
 	}

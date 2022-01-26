@@ -8,4 +8,6 @@ services:
     depends_on:
       - background
     image: busybox
-    command: echo "${HELLO:-World}"
+    command: sh -c "echo 'proof' > /cache/proof && echo '${HELLO:-World}'"
+    volumes:
+      - "/cache:/cache"

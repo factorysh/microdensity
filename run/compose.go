@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/compose-spec/compose-go/loader"
@@ -16,6 +17,7 @@ import (
 	dtypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/factorysh/microdensity/volumes"
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
 )
@@ -57,12 +59,12 @@ func dockerConfig() (*configfile.ConfigFile, error) {
 	return dockercfg, nil
 }
 
-func (cr *ComposeRun) Id() uuid.UUID {
-	return cr.id
+func (c *ComposeRun) Id() uuid.UUID {
+	return c.id
 }
 
-func (cr *ComposeRun) Cancel() {
-	_, cancelFunc := context.WithCancel(cr.runCtx)
+func (c *ComposeRun) Cancel() {
+	_, cancelFunc := context.WithCancel(c.runCtx)
 	cancelFunc()
 }
 
@@ -136,7 +138,7 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 
 }
 
-func (c *ComposeRun) Prepare(args map[string]string) error {
+func (c *ComposeRun) Prepare(args map[string]string, volumesRoot string) error {
 	var err error
 	c.id, err = uuid.NewUUID()
 	if err != nil {
@@ -157,6 +159,9 @@ func (c *ComposeRun) Prepare(args map[string]string) error {
 		opt.Name = c.name
 		opt.SkipInterpolation = false
 	})
+
+	c.PrepareVolumes(volumesRoot)
+
 	if err != nil {
 		return err
 	}
@@ -166,6 +171,27 @@ func (c *ComposeRun) Prepare(args map[string]string) error {
 		err = yaml.NewEncoder(b).Encode(project)
 		b.String()
 	*/
+	return nil
+}
+
+// PrepareVolumes by prepending a custom full path and creating the path on the host
+func (c *ComposeRun) PrepareVolumes(prependPath string) error {
+	for _, svc := range c.project.Services {
+		for i, vol := range svc.Volumes {
+			if vol.Type != "bind" {
+				continue
+			}
+
+			vol.Source = filepath.Join(prependPath, "volumes", vol.Source)
+			svc.Volumes[i] = vol
+
+			err := os.MkdirAll(vol.Source, volumes.DirMode)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
