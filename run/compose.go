@@ -26,7 +26,7 @@ var _ Runnable = (*ComposeRun)(nil)
 
 type ComposeRun struct {
 	home    string
-	details types.ConfigDetails
+	details *types.ConfigDetails
 	service api.Service
 	run     string
 	name    string
@@ -84,32 +84,12 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 		return nil, err
 	}
 
-	cfg, err := os.Open(path.Join(home, "docker-compose.yml"))
+	project, details, err := LoadCompose(home)
 	if err != nil {
 		return nil, err
-	}
-	defer cfg.Close()
-	raw, err := ioutil.ReadAll(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	details := types.ConfigDetails{
-		WorkingDir: home,
-		ConfigFiles: []types.ConfigFile{
-			{
-				Filename: home,
-				Content:  raw,
-			},
-		},
-		Environment: map[string]string{},
 	}
 
 	srv := compose.NewComposeService(docker, dockercfg)
-	project, err := loader.Load(details)
-	if err != nil {
-		return nil, err
-	}
 	grph := compose.NewGraph(project.Services, compose.ServiceStopped)
 	roots := grph.Roots()
 	if len(roots) == 0 {
@@ -236,4 +216,34 @@ func ensureNetwork(cli *client.Client, networkName string) error {
 	}
 
 	return err
+}
+
+// LoadCompose loads a docker-compose.yml file
+func LoadCompose(home string) (*types.Project, *types.ConfigDetails, error) {
+	path := filepath.Join(home, "docker-compose.yml")
+	cfg, err := os.Open(path)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer cfg.Close()
+
+	raw, err := ioutil.ReadAll(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	details := types.ConfigDetails{
+		WorkingDir: home,
+		ConfigFiles: []types.ConfigFile{
+			{
+				Filename: path,
+				Content:  raw,
+			},
+		},
+		Environment: map[string]string{},
+	}
+
+	p, err := loader.Load(details)
+
+	return p, &details, err
 }
