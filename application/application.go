@@ -34,9 +34,9 @@ func New(q *queue.Queue, secret string) (*Application, error) {
 
 	r.Get("/services", a.services)
 	r.Route("/service/{serviceID}", func(r chi.Router) {
-		r.Use(a.serviceCtx)
+		r.Use(a.serviceMiddleware)
 		r.Get("/", a.service)
-		r.Post("/", a.newTask)
+		r.Post("/{project}/{branch}/{commit}", a.newTask)
 		r.Get("/-{taskID}", a.task)
 		r.Route("/{project}", func(r chi.Router) {
 			r.Route("/{branch}", func(r chi.Router) {
