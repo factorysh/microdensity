@@ -13,6 +13,8 @@ import (
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
+	dtypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
@@ -121,6 +123,9 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 
 	_, name := path.Split(strings.TrimSuffix(home, "/"))
 
+	// use default compose network name
+	ensureNetwork(docker, fmt.Sprintf("%s_default", name))
+
 	return &ComposeRun{
 		home:    home,
 		details: details,
@@ -182,4 +187,27 @@ func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, err
 		},
 		Index: 0,
 	})
+}
+
+func ensureNetwork(cli *client.Client, networkName string) error {
+	networks, err := cli.NetworkList(context.Background(), dtypes.NetworkListOptions{
+		Filters: filters.NewArgs(filters.KeyValuePair{
+			Key:   "name",
+			Value: networkName,
+		},
+		)})
+
+	if err != nil {
+		return err
+	}
+
+	if len(networks) == 0 {
+		_, err = cli.NetworkCreate(context.Background(), networkName, dtypes.NetworkCreate{})
+		if err != nil {
+			return err
+
+		}
+	}
+
+	return err
 }
