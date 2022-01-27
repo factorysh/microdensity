@@ -36,20 +36,12 @@ func (q *Queue) Len() int {
 func (q *Queue) Put(item *task.Task) {
 	q.Lock()
 	defer q.Unlock()
-
 	q.items.Enqueue(item)
 
 	if !q.working {
+		q.working = true
 		go q.DequeueWhile()
 	}
-}
-
-// toogleWorking is used to toggle the working var
-func (q *Queue) toogleWorking() {
-	q.Lock()
-	defer q.Unlock()
-
-	q.working = !q.working
 }
 
 // dequeue one item
@@ -64,8 +56,6 @@ const maxDequeue = 1
 
 // DequeueWhile start maxDequeue workers while the queue is not empty
 func (q *Queue) DequeueWhile() {
-	q.toogleWorking()
-
 	workers := make(chan int, maxDequeue)
 
 	for q.items.Head() != nil {
@@ -81,5 +71,5 @@ func (q *Queue) DequeueWhile() {
 
 	q.BatchEnded <- true
 
-	q.toogleWorking()
+	q.working = false
 }
