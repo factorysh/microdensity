@@ -59,7 +59,7 @@ func TestListByProjectByBranch(t *testing.T) {
 		}
 		last = id
 		err = v.Request(&task.Task{
-			Project:  "group/project",
+			Project:  "group%2Fproject",
 			Branch:   "master",
 			Id:       id,
 			Creation: c,
@@ -67,7 +67,7 @@ func TestListByProjectByBranch(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	dirs, err := v.ByProjectByBranch("group/project", "master")
+	dirs, err := v.ByProjectByBranch("group%2Fproject", "master")
 	assert.NoError(t, err)
 	assert.Len(t, dirs, 10, "one folder should be found")
 	assert.True(t, strings.HasSuffix(dirs[0], first.String()), dirs[0])

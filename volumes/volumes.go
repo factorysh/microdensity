@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/factorysh/microdensity/task"
 )
@@ -34,11 +35,14 @@ type Volumes struct {
 
 // Request a new volume
 func (v *Volumes) Request(t *task.Task) error {
-	err := os.MkdirAll(v.Path(t.Project, t.Branch, t.Id.String(), "volumes"), DirMode)
+	if strings.ContainsRune(t.Project, '/') {
+		return fmt.Errorf("project must be url escaped, without any / : %s", t.Project)
+	}
+	err := os.MkdirAll(v.Path(t.Service, t.Project, t.Branch, t.Id.String(), "volumes"), DirMode)
 	if err != nil {
 		return err
 	}
-	f, err := os.OpenFile(v.Path(t.Project, t.Branch, t.Id.String(), "task.json"), os.O_CREATE+os.O_WRONLY, 0644)
+	f, err := os.OpenFile(v.Path(t.Service, t.Project, t.Branch, t.Id.String(), "task.json"), os.O_CREATE+os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
