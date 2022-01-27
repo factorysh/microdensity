@@ -17,15 +17,12 @@ import (
 
 func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 	service := chi.URLParam(r, "serviceID")
-	project, err := url.QueryUnescape(chi.URLParam(r, "project"))
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-	}
+	project := chi.URLParam(r, "project")
 	claims, err := _claims.FromCtx(r.Context())
 	if err != nil {
 		panic(err)
 	}
-	if project != claims.Path {
+	if project != url.QueryEscape(claims.Path) {
 		w.WriteHeader(403)
 		return
 	}
