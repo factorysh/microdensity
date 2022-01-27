@@ -33,8 +33,8 @@ type Volumes struct {
 	root string
 }
 
-// Request a new volume
-func (v *Volumes) Request(t *task.Task) error {
+// Create a new volume
+func (v *Volumes) Create(t *task.Task) error {
 	if strings.ContainsRune(t.Project, '/') {
 		return fmt.Errorf("project name must be url escaped, without any / : %s", t.Project)
 	}

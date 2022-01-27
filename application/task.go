@@ -53,7 +53,7 @@ func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 		Args:     args,
 		State:    task.Ready,
 	}
-	err = a.volumes.Request(t)
+	err = a.volumes.Create(t)
 	if err != nil {
 		panic(err)
 	}

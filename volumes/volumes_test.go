@@ -58,7 +58,7 @@ func TestListByProjectByBranch(t *testing.T) {
 			first = id
 		}
 		last = id
-		err = v.Request(&task.Task{
+		err = v.Create(&task.Task{
 			Project:  "group%2Fproject",
 			Branch:   "master",
 			Id:       id,
