@@ -1,6 +1,9 @@
 package task
 
 import (
+	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,4 +32,18 @@ type Task struct {
 	Creation time.Time              `json:"creation"`
 	Args     map[string]interface{} `json:"Args"`
 	State    State
+}
+
+func (t *Task) Validate() error {
+	if t.Id == uuid.Nil {
+		return errors.New("empty id not allowed")
+	}
+	if strings.ContainsRune(t.Project, '/') {
+		return fmt.Errorf("project name must be url escaped, without any / : %s", t.Project)
+	}
+	if strings.ContainsRune(t.Branch, '/') {
+		return fmt.Errorf("branch name must be url escaped, without any / : %s", t.Branch)
+	}
+	// FIXME assert commit is a sha
+	return nil
 }
