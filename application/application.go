@@ -7,6 +7,7 @@ import (
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"go.uber.org/zap"
 )
 
 type Application struct {
@@ -14,6 +15,7 @@ type Application struct {
 	queue    *queue.Queue
 	router   chi.Router
 	volumes  *volumes.Volumes
+	logger   *zap.Logger
 }
 
 func New(q *queue.Queue, secret string, volumePath string) (*Application, error) {
@@ -22,11 +24,16 @@ func New(q *queue.Queue, secret string, volumePath string) (*Application, error)
 	if err != nil {
 		return nil, err
 	}
+	logger, err := zap.NewProduction()
+	if err != nil {
+		return nil, err
+	}
 	a := &Application{
 		Services: make([]service.Service, 0),
 		queue:    q,
 		router:   r,
 		volumes:  v,
+		logger:   logger,
 	}
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
