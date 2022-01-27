@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,7 +11,10 @@ import (
 
 type State int
 
-var sha = regexp.MustCompile(`^[0-9a-f]+$`)
+var (
+	sha  = regexp.MustCompile(`^[0-9a-f]+$`)
+	name = regexp.MustCompile(`[0-9a-zA-Z\-%_]+`)
+)
 
 const (
 	Ready State = iota
@@ -41,15 +43,14 @@ func (t *Task) Validate() error {
 	if t.Id == uuid.Nil {
 		return errors.New("empty id not allowed")
 	}
-	if strings.ContainsRune(t.Project, '/') {
-		return fmt.Errorf("project name must be url escaped, without any / : %s", t.Project)
+	if len(name.FindIndex([]byte(t.Project))) != 2 {
+		return fmt.Errorf("project name must be url escaped, without any strange letter : %s", t.Project)
 	}
-	if strings.ContainsRune(t.Branch, '/') {
-		return fmt.Errorf("branch name must be url escaped, without any / : %s", t.Branch)
+	if len(name.FindIndex([]byte(t.Branch))) != 2 {
+		return fmt.Errorf("branch name must be url escaped, without any strange letter : %s", t.Branch)
 	}
 	if len(sha.FindIndex([]byte(t.Commit))) != 2 {
 		return fmt.Errorf("bad commit format : %s", t.Commit)
 	}
-	// FIXME assert commit is a sha
 	return nil
 }
