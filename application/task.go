@@ -53,7 +53,14 @@ func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 		Args:     args,
 		State:    task.Ready,
 	}
-	a.queue.Put(t)
+	err = a.volumes.Request(t)
+	if err != nil {
+		panic(err)
+	}
+	err = a.queue.Put(t)
+	if err != nil {
+		panic(err)
+	}
 	json.NewEncoder(w).Encode(map[string]string{
 		"id": id.String(),
 	})
@@ -68,6 +75,7 @@ func (a *Application) task(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		fmt.Println(err)
 		return
 	}
 	err = json.NewEncoder(w).Encode(t)
