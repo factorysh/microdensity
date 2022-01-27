@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 
-	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/task"
 	"github.com/google/uuid"
 )
@@ -24,7 +23,6 @@ type Runnable interface {
 }
 
 type Runner struct {
-	queue *queue.Storage
 	tasks map[uuid.UUID]*Context
 }
 

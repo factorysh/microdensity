@@ -13,15 +13,10 @@ import (
 )
 
 func TestQueue(t *testing.T) {
-	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
+	db, cleanFunc, err := newTestBbolt()
+	defer cleanFunc()
 	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
-
-	s, err := bbolt.Open(
-		fmt.Sprintf("%s/bbolt.store", dir),
-		0600, &bbolt.Options{})
-	assert.NoError(t, err)
-	q, err := New(s)
+	q, err := New(db)
 	assert.NoError(t, err)
 	size, err := q.Length()
 	assert.NoError(t, err)
@@ -39,15 +34,10 @@ func TestQueue(t *testing.T) {
 }
 
 func TestFirst(t *testing.T) {
-	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
+	db, cleanFunc, err := newTestBbolt()
+	defer cleanFunc()
 	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
-
-	s, err := bbolt.Open(
-		fmt.Sprintf("%s/bbolt.store", dir),
-		0600, &bbolt.Options{})
-	assert.NoError(t, err)
-	q, err := New(s)
+	q, err := New(db)
 	assert.NoError(t, err)
 	err = q.Put(&task.Task{
 		Project: "Alice",
@@ -78,4 +68,22 @@ func TestFirst(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, tsk)
 	assert.Equal(t, "Charly", tsk.Project)
+}
+
+func newTestBbolt() (*bbolt.DB, func(), error) {
+	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
+	if err != nil {
+		return nil, func() {}, err
+	}
+
+	cleanUp := func() {
+		os.RemoveAll(dir)
+	}
+
+	s, err := bbolt.Open(fmt.Sprintf("%s/bbolt.store", dir), 0600, &bbolt.Options{})
+	if err != nil {
+		return nil, cleanUp, err
+	}
+
+	return s, cleanUp, err
 }
