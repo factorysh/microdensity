@@ -3,6 +3,7 @@ package task
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 )
 
 type State int
+
+var sha = regexp.MustCompile(`^[0-9a-f]+$`)
 
 const (
 	Ready State = iota
@@ -43,6 +46,9 @@ func (t *Task) Validate() error {
 	}
 	if strings.ContainsRune(t.Branch, '/') {
 		return fmt.Errorf("branch name must be url escaped, without any / : %s", t.Branch)
+	}
+	if len(sha.FindIndex([]byte(t.Commit))) != 2 {
+		return fmt.Errorf("bad commit format : %s", t.Commit)
 	}
 	// FIXME assert commit is a sha
 	return nil
