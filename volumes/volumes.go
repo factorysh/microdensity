@@ -36,7 +36,10 @@ type Volumes struct {
 // Request a new volume
 func (v *Volumes) Request(t *task.Task) error {
 	if strings.ContainsRune(t.Project, '/') {
-		return fmt.Errorf("project must be url escaped, without any / : %s", t.Project)
+		return fmt.Errorf("project name must be url escaped, without any / : %s", t.Project)
+	}
+	if strings.ContainsRune(t.Branch, '/') {
+		return fmt.Errorf("branch name must be url escaped, without any / : %s", t.Branch)
 	}
 	err := os.MkdirAll(v.Path(t.Service, t.Project, t.Branch, t.Id.String(), "volumes"), DirMode)
 	if err != nil {
