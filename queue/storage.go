@@ -12,12 +12,12 @@ import (
 
 const queue = "queue"
 
-type Queue struct {
+type Storage struct {
 	store    *bbolt.DB
 	encoding *Encoding
 }
 
-func New(store *bbolt.DB) (*Queue, error) {
+func New(store *bbolt.DB) (*Storage, error) {
 
 	if err := store.Update(func(tx *bbolt.Tx) error {
 		_, err := tx.CreateBucket([]byte(queue))
@@ -26,7 +26,7 @@ func New(store *bbolt.DB) (*Queue, error) {
 		return nil, err
 	}
 	var b bytes.Buffer
-	return &Queue{
+	return &Storage{
 		encoding: &Encoding{
 			lock:    &sync.Mutex{},
 			encoder: gob.NewEncoder(&b),
@@ -37,7 +37,7 @@ func New(store *bbolt.DB) (*Queue, error) {
 	}, nil
 }
 
-func (q *Queue) Put(t *task.Task) error {
+func (q *Storage) Put(t *task.Task) error {
 	var err error
 	if t.Id == uuid.Nil {
 		t.Id, err = uuid.NewUUID() // it's v1 UUID, with a timestamp
@@ -58,7 +58,7 @@ func (q *Queue) Put(t *task.Task) error {
 	return err
 }
 
-func (q *Queue) Get(id uuid.UUID) (*task.Task, error) {
+func (q *Storage) Get(id uuid.UUID) (*task.Task, error) {
 	var t *task.Task
 	if err := q.store.View(func(tx *bbolt.Tx) error {
 		v := tx.Bucket([]byte(queue)).Get(id.NodeID())
@@ -74,7 +74,7 @@ func (q *Queue) Get(id uuid.UUID) (*task.Task, error) {
 	return t, nil
 }
 
-func (q *Queue) Length() (int, error) {
+func (q *Storage) Length() (int, error) {
 	var size int
 	if err := q.store.View(func(tx *bbolt.Tx) error {
 		size = tx.Bucket([]byte(queue)).Stats().KeyN
@@ -85,7 +85,7 @@ func (q *Queue) Length() (int, error) {
 	return size, nil
 }
 
-func (q *Queue) First(state task.State) (*task.Task, error) {
+func (q *Storage) First(state task.State) (*task.Task, error) {
 	var t *task.Task
 
 	if err := q.store.View(func(tx *bbolt.Tx) error {

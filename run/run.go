@@ -24,7 +24,7 @@ type Runnable interface {
 }
 
 type Runner struct {
-	queue *queue.Queue
+	queue *queue.Storage
 	tasks map[uuid.UUID]*Context
 }
 

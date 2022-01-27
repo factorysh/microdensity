@@ -10,7 +10,7 @@ import (
 	"github.com/narqo/go-badge"
 )
 
-func BadgeMyProject(q *queue.Queue, label string) func(http.ResponseWriter, *http.Request) {
+func BadgeMyProject(q *queue.Storage, label string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		project := r.Context().Value(httpcontext.RequestedProject).(string)
 		id := chi.URLParam(r, "id")

@@ -12,13 +12,14 @@ import (
 
 type Application struct {
 	Services []service.Service
-	queue    *queue.Queue
 	Router   chi.Router
+	queue    *queue.Storage
+	router   chi.Router
 	volumes  *volumes.Volumes
 	logger   *zap.Logger
 }
 
-func New(q *queue.Queue, secret string, volumePath string) (*Application, error) {
+func New(q *queue.Storage, secret string, volumePath string) (*Application, error) {
 	r := chi.NewRouter()
 	v, err := volumes.New(volumePath)
 	if err != nil {
