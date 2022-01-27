@@ -80,6 +80,12 @@ func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Application) task(w http.ResponseWriter, r *http.Request) {
+	l := a.logger.With(
+		zap.String("service", chi.URLParam(r, "serviceID")),
+		zap.String("project", chi.URLParam(r, "project")),
+		zap.String("branch", chi.URLParam(r, "branch")),
+		zap.String("commit", chi.URLParam(r, "commit")),
+	)
 	t, err := a.volumes.Get(
 		chi.URLParam(r, "serviceID"),
 		chi.URLParam(r, "project"),
@@ -87,12 +93,13 @@ func (a *Application) task(w http.ResponseWriter, r *http.Request) {
 		chi.URLParam(r, "commit"),
 	)
 	if err != nil {
+		l.Warn("Task get error", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Println(err)
 		return
 	}
 	err = json.NewEncoder(w).Encode(t)
 	if err != nil {
+		l.Error("Json encoding error", zap.Error(err))
 		panic(err)
 	}
 }
