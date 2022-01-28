@@ -63,6 +63,7 @@ func TestListByProjectByBranch(t *testing.T) {
 			Branch:   "master",
 			Id:       id,
 			Creation: c,
+			Commit:   "70ea687225ea4869311c500a954e8cc5e687e608",
 		})
 		assert.NoError(t, err)
 	}
