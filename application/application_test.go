@@ -47,7 +47,7 @@ func TestApplication(t *testing.T) {
 		name: "demo",
 	})
 
-	ts := httptest.NewServer(a.router)
+	ts := httptest.NewServer(a.Router)
 	defer ts.Close()
 
 	cli := http.Client{}
