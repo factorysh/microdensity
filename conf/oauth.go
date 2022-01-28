@@ -7,10 +7,10 @@ import (
 
 // OAuthConf wraps all the config required for OAuth2 mechanism
 type OAuthConf struct {
-	ProviderURL string
-	AppID       string
-	AppSecret   string
-	AppURL      string
+	ProviderURL string `yaml:"provider_url"`
+	AppID       string `yaml:"app_id"`
+	AppSecret   string `yaml:"app_secret"`
+	AppURL      string `yaml:"app_url"`
 }
 
 // NewOAuthConfigFromEnv creates an OAuth config from environment variables
@@ -19,7 +19,7 @@ func NewOAuthConfigFromEnv() (*OAuthConf, error) {
 	for i, key := range []string{"OAUTH_PROVIDER_URL", "OAUTH_APPID", "OAUTH_APPSECRET", "OAUTH_APPURL"} {
 		v := os.Getenv(key)
 		if v == "" {
-			return nil, fmt.Errorf("Missing %s environment variable", key)
+			return nil, fmt.Errorf("missing %s environment variable", key)
 		}
 		values[i] = v
 	}
