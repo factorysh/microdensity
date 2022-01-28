@@ -26,6 +26,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	cfg.Defaults()
 
 	sessions := _sessions.New()
 	// prune old sessions every 15 minutes
