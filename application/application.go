@@ -13,7 +13,7 @@ import (
 type Application struct {
 	Services []service.Service
 	queue    *queue.Queue
-	router   chi.Router
+	Router   chi.Router
 	volumes  *volumes.Volumes
 	logger   *zap.Logger
 }
@@ -31,7 +31,7 @@ func New(q *queue.Queue, secret string, volumePath string) (*Application, error)
 	a := &Application{
 		Services: make([]service.Service, 0),
 		queue:    q,
-		router:   r,
+		Router:   r,
 		volumes:  v,
 		logger:   logger,
 	}

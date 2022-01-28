@@ -6,23 +6,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/factorysh/microdensity/conf"
-	"github.com/factorysh/microdensity/middlewares"
-	"github.com/factorysh/microdensity/oauth"
-	"github.com/factorysh/microdensity/server"
+	"github.com/factorysh/microdensity/application"
+	"github.com/factorysh/microdensity/queue"
 	_sessions "github.com/factorysh/microdensity/sessions"
 	"github.com/factorysh/microdensity/version"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"go.etcd.io/bbolt"
 )
 
 func main() {
 	fmt.Println("Version", version.Version())
-	// get OAuth config from env
-	oauthConfig, err := conf.NewOAuthConfigFromEnv()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	sessions := _sessions.New()
 	// prune old sessions every 15 minutes
@@ -40,28 +32,19 @@ func main() {
 		}
 	}()
 
-	// routing and handlers
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	// add tokens to context, if any
-	r.Use(middlewares.Tokens())
-
-	// protected routes
-	r.Group(func(r chi.Router) {
-		r.Use(middlewares.Project())
-		r.Use(middlewares.OAuth(oauthConfig, &sessions))
-		r.Use(middlewares.Auth("FIXME"))
-		r.Get("/service/{service}/{project}/latest", func(w http.ResponseWriter, _ *http.Request) {
-			w.Write([]byte("i am protected"))
-			w.WriteHeader(http.StatusOK)
-		})
-	})
-	// oauth callback hander on /oauth/callback
-	r.Get(server.OAuthCallbackEndpoint, oauth.CallbackHandler(oauthConfig, &sessions))
-
-	r.Get("/", func(w http.ResponseWriter, _ *http.Request) {
-		w.Write([]byte("welcome"))
-	})
-
-	http.ListenAndServe(":3000", r)
+	s, err := bbolt.Open(
+		"/tmp/microdensity.store",
+		0600, &bbolt.Options{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	q, err := queue.New(s)
+	if err != nil {
+		log.Fatal(err)
+	}
+	a, err := application.New(q, "s3cr27", "/tmp/microdensity")
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.ListenAndServe("127.0.0.1:3000", a.Router)
 }
