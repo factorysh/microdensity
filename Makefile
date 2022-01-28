@@ -5,9 +5,7 @@ build:
 		-ldflags "-X github.com/factorysh/microdensity/version.version=$(GIT_VERSION)" \
 	.
 
-test:
-	go test --cover \
-		github.com/factorysh/microdensity/task \
+TESTS= github.com/factorysh/microdensity/task \
 		github.com/factorysh/microdensity/middlewares \
 		github.com/factorysh/microdensity/queue \
 		github.com/factorysh/microdensity/sessions \
@@ -16,4 +14,10 @@ test:
 		github.com/factorysh/microdensity/gitlab \
 		github.com/factorysh/microdensity/oauth \
 		github.com/factorysh/microdensity/volumes \
+
+test:
+	go test --cover ${TESTS}
+
+test-all:
+	go test --cover ${TESTS} \
 		github.com/factorysh/microdensity/run
