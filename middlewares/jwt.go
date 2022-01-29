@@ -1,41 +1,49 @@
 package middlewares
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/cristalhq/jwt/v3"
 	owner "github.com/factorysh/microdensity/claims"
 	"github.com/factorysh/microdensity/httpcontext"
 	"github.com/getsentry/sentry-go"
+	"gopkg.in/square/go-jose.v2"
 )
 
-type JWKS struct {
-	Keys []struct {
-		Kty      string `json:"kty"`
-		Kid      string `json:"kid"`
-		E        string `json:"e"`
-		N        string `json:"n"`
-		Use      string `json:"use"`
-		Alg      string `json:"alg"`
-		verifier jwt.Verifier
-	} `json:"keys"`
+type JWTAuthenticator struct {
+	jose.JSONWebKeySet
+	verifier []jwt.Verifier
 }
 
-func NewJWTAuthenticator(gitlab string) (*JWKS, error) {
-	r, err := http.Get(fmt.Sprintf("https://%s/-/jwks", gitlab))
+func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
+	r, err := http.Get(fmt.Sprintf("%s/-/jwks", gitlab))
 	if err != nil {
 		return nil, err
 	}
 	defer r.Body.Close()
-	var j JWKS
+
+	var j JWTAuthenticator
 	err = json.NewDecoder(r.Body).Decode(&j)
 	if err != nil {
 		return nil, err
 	}
-	for _, k := range j.Keys {
-		k.verifier, err = jwt.NewVerifierHS(jwt.Algorithm(k.Alg), []byte(k.N))
+	j.verifier = make([]jwt.Verifier, len(j.Keys))
+	for i, k := range j.Keys {
+		if k.Use != "sig" {
+			continue
+		}
+		alg := jwt.Algorithm(k.Algorithm)
+		var err error
+		switch {
+		case strings.HasPrefix(k.Algorithm, "HS"):
+			j.verifier[i], err = jwt.NewVerifierHS(alg, k.Key.([]byte))
+		case strings.HasPrefix(k.Algorithm, "RS"):
+			j.verifier[i], err = jwt.NewVerifierRS(alg, k.Key.(*rsa.PublicKey))
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +51,15 @@ func NewJWTAuthenticator(gitlab string) (*JWKS, error) {
 	return &j, err
 }
 
-func (j *JWKS) ParseAndValidate(jwtRaw string) (*jwt.Token, error) {
+func (j *JWTAuthenticator) Validate(t *jwt.Token) error {
+	for _, k := range j.Key(t.Header().KeyID) {
+		if k.Algorithm == t.Header().Algorithm.String() {
+		}
+	}
+	return fmt.Errorf("can't authenticate key %v", t)
+}
+
+func ParseAndValidate(jwk *jose.JSONWebKeySet, jwtRaw string) (*jwt.Token, error) {
 	jj, err := jwt.ParseString(jwtRaw)
 	if err != nil {
 		return nil, err
@@ -53,15 +69,17 @@ func (j *JWKS) ParseAndValidate(jwtRaw string) (*jwt.Token, error) {
 	if alg != jwt.RS256 {
 		return nil, fmt.Errorf("bad algo : %s", alg.String())
 	}
-	for _, k := range j.Keys {
-		if k.verifier.Algorithm() == jj.Header().Algorithm {
-			err = k.verifier.Verify(jj.Payload(), jj.Signature())
-			if err != nil {
-				return nil, err
+	/*
+		for _, k := range j.Keys {
+			if k.verifier.Algorithm() == jj.Header().Algorithm {
+				err = k.verifier.Verify(jj.Payload(), jj.Signature())
+				if err != nil {
+					return nil, err
+				}
+				return jj, nil
 			}
-			return jj, nil
 		}
-	}
+	*/
 
 	return nil, fmt.Errorf("can't validate %s", jj.String())
 }

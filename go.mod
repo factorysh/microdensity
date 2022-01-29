@@ -18,6 +18,7 @@ require (
 	go.etcd.io/bbolt v1.3.6
 	go.uber.org/zap v1.20.0
 	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
+	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
