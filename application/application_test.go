@@ -14,6 +14,7 @@ import (
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/factorysh/microdensity/claims"
+	"github.com/factorysh/microdensity/mockup"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -59,10 +60,13 @@ func TestApplication(t *testing.T) {
 	block, _ := pem.Decode([]byte(applicationPrivateRSA))
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 
+	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
+	defer gitlab.Close()
+
 	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
-	a, err := New(nil, secret, dir)
+	a, err := New(nil, gitlab.URL, dir)
 	assert.NoError(t, err)
 	a.Services = append(a.Services, &NaiveService{
 		name: "demo",

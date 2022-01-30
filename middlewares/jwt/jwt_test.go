@@ -1,15 +1,11 @@
-package middlewares
+package jwt
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cristalhq/jwt/v3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,8 +42,8 @@ func TestJWK(t *testing.T) {
 }
 
 var (
-	privateRSA1024   = mustParseRSAKey(privateRSA1024txt)
-	privateRSA1024_2 = mustParseRSAKey(privateRSA1024txt2)
+	privateRSA1024   = MustParseRSAKey(privateRSA1024txt)
+	privateRSA1024_2 = MustParseRSAKey(privateRSA1024txt2)
 )
 
 const (
@@ -83,30 +79,3 @@ iQoGPAcX0guT0GhaHvilAkEA4m0ZkENRjT8ZsvskRlFR5dI081eywzWJ7uPnh/kk
 ZjKyM9LAK2CCWDAnXCA65Yc9Fas4iKS0icxLdDH3MWPffQ==
 -----END RSA PRIVATE KEY-----`
 )
-
-func mustParseRSAKey(s string) *rsa.PrivateKey {
-	block, _ := pem.Decode([]byte(s))
-	if block == nil {
-		panic("invalid PEM")
-	}
-
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		panic(err)
-	}
-	return key
-}
-
-func buildJWT() (*jwt.Token, error) {
-	signer, err := jwt.NewSignerRS(jwt.RS256, privateRSA1024)
-	if err != nil {
-		return nil, err
-	}
-	j, err := jwt.NewBuilder(signer).Build(map[string]interface{}{
-		"project_path": "factory/check-my-web",
-	})
-	if err != nil {
-		return nil, err
-	}
-	return j, nil
-}

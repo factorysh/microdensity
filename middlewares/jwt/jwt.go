@@ -1,4 +1,4 @@
-package middlewares
+package jwt
 
 import (
 	"crypto/rsa"
@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cristalhq/jwt/v3"
+	_jwt "github.com/cristalhq/jwt/v3"
 	owner "github.com/factorysh/microdensity/claims"
 	"github.com/factorysh/microdensity/httpcontext"
 	"github.com/getsentry/sentry-go"
@@ -17,7 +17,7 @@ import (
 
 type JWTAuthenticator struct {
 	jose.JSONWebKeySet
-	verifier map[string]jwt.Verifier
+	verifier map[string]_jwt.Verifier
 	logger   *zap.Logger
 }
 
@@ -41,19 +41,19 @@ func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
 		return nil, err
 	}
 	j.logger = logger
-	j.verifier = make(map[string]jwt.Verifier)
+	j.verifier = make(map[string]_jwt.Verifier)
 	for _, k := range j.Keys {
 		if k.Use != "sig" {
 			continue
 		}
-		alg := jwt.Algorithm(k.Algorithm)
+		alg := _jwt.Algorithm(k.Algorithm)
 		l = l.With(zap.String("kid", k.KeyID), zap.String("algo", k.Algorithm))
 		var err error
 		switch {
 		case strings.HasPrefix(k.Algorithm, "HS"):
-			j.verifier[k.KeyID], err = jwt.NewVerifierHS(alg, k.Key.([]byte))
+			j.verifier[k.KeyID], err = _jwt.NewVerifierHS(alg, k.Key.([]byte))
 		case strings.HasPrefix(k.Algorithm, "RS"):
-			j.verifier[k.KeyID], err = jwt.NewVerifierRS(alg, k.Key.(*rsa.PublicKey))
+			j.verifier[k.KeyID], err = _jwt.NewVerifierRS(alg, k.Key.(*rsa.PublicKey))
 		default:
 			err = fmt.Errorf("unhandled algo : %s", k.Algorithm)
 		}
@@ -66,7 +66,7 @@ func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
 	return &j, err
 }
 
-func (j *JWTAuthenticator) Validate(t *jwt.Token) error {
+func (j *JWTAuthenticator) Validate(t *_jwt.Token) error {
 	l := j.logger.With(zap.ByteString("jwt", t.Raw()))
 	for _, k := range j.Key(t.Header().KeyID) {
 		if k.Algorithm != t.Header().Algorithm.String() {
@@ -86,8 +86,8 @@ func (j *JWTAuthenticator) Validate(t *jwt.Token) error {
 	return err
 }
 
-func (j *JWTAuthenticator) ParseAndValidate(jwtRaw string) (*jwt.Token, error) {
-	token, err := jwt.ParseString(jwtRaw)
+func (j *JWTAuthenticator) ParseAndValidate(jwtRaw string) (*_jwt.Token, error) {
+	token, err := _jwt.ParseString(jwtRaw)
 	if err != nil {
 		j.logger.Warn("Can't parse JWT", zap.Error(err))
 		return nil, err
