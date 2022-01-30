@@ -16,7 +16,7 @@ import (
 
 type JWTAuthenticator struct {
 	jose.JSONWebKeySet
-	verifier []jwt.Verifier
+	verifier map[string]jwt.Verifier
 }
 
 func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
@@ -31,8 +31,8 @@ func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
 	if err != nil {
 		return nil, err
 	}
-	j.verifier = make([]jwt.Verifier, len(j.Keys))
-	for i, k := range j.Keys {
+	j.verifier = make(map[string]jwt.Verifier)
+	for _, k := range j.Keys {
 		if k.Use != "sig" {
 			continue
 		}
@@ -40,9 +40,9 @@ func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
 		var err error
 		switch {
 		case strings.HasPrefix(k.Algorithm, "HS"):
-			j.verifier[i], err = jwt.NewVerifierHS(alg, k.Key.([]byte))
+			j.verifier[k.KeyID], err = jwt.NewVerifierHS(alg, k.Key.([]byte))
 		case strings.HasPrefix(k.Algorithm, "RS"):
-			j.verifier[i], err = jwt.NewVerifierRS(alg, k.Key.(*rsa.PublicKey))
+			j.verifier[k.KeyID], err = jwt.NewVerifierRS(alg, k.Key.(*rsa.PublicKey))
 		}
 		if err != nil {
 			return nil, err
@@ -53,39 +53,34 @@ func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
 
 func (j *JWTAuthenticator) Validate(t *jwt.Token) error {
 	for _, k := range j.Key(t.Header().KeyID) {
-		if k.Algorithm == t.Header().Algorithm.String() {
+		if k.Algorithm != t.Header().Algorithm.String() {
+			return fmt.Errorf("algo mismatch : %s vs %s", k.Algorithm, t.Header().Algorithm.String())
 		}
+		err := j.verifier[k.KeyID].Verify(t.Payload(), t.Signature())
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 	return fmt.Errorf("can't authenticate key %v", t)
 }
 
-func ParseAndValidate(jwk *jose.JSONWebKeySet, jwtRaw string) (*jwt.Token, error) {
-	jj, err := jwt.ParseString(jwtRaw)
+func (j *JWTAuthenticator) ParseAndValidate(jwtRaw string) (*jwt.Token, error) {
+	token, err := jwt.ParseString(jwtRaw)
 	if err != nil {
 		return nil, err
 	}
-	// FIXME alg in RS*
-	alg := jj.Header().Algorithm
-	if alg != jwt.RS256 {
-		return nil, fmt.Errorf("bad algo : %s", alg.String())
-	}
-	/*
-		for _, k := range j.Keys {
-			if k.verifier.Algorithm() == jj.Header().Algorithm {
-				err = k.verifier.Verify(jj.Payload(), jj.Signature())
-				if err != nil {
-					return nil, err
-				}
-				return jj, nil
-			}
-		}
-	*/
 
-	return nil, fmt.Errorf("can't validate %s", jj.String())
+	err = j.Validate(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
 
 // Auth will ensure JWT token is valid
-func Auth(key string) func(next http.Handler) http.Handler {
+func (j *JWTAuthenticator) Middleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -102,23 +97,17 @@ func Auth(key string) func(next http.Handler) http.Handler {
 				return
 			}
 
-			handleJWTAuth(token, key, w, r, next)
+			j.handleJWTAuth(token, w, r, next)
 		})
 	}
 }
 
-func handleJWTAuth(token string, key string, w http.ResponseWriter, r *http.Request, next http.Handler) {
-	verifier, err := jwt.NewVerifierHS(jwt.HS256, []byte(key))
+func (j *JWTAuthenticator) handleJWTAuth(token string, w http.ResponseWriter, r *http.Request, next http.Handler) {
+	t, err := j.ParseAndValidate(token)
+
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	t, err := jwt.ParseAndVerify([]byte(token), verifier)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 

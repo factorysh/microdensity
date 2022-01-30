@@ -43,7 +43,11 @@ func New(q *queue.Storage, secret string, volumePath string) (*Application, erro
 	r.Use(middleware.Recoverer)
 
 	r.Use(middlewares.Tokens())
-	r.Use(middlewares.Auth(secret))
+	jwtAuth, err := middlewares.NewJWTAuthenticator(gitlab)
+	if err != nil {
+		return nil, err
+	}
+	r.Use(jwtAuth.Middleware())
 
 	r.Get("/services", a.services)
 	r.Route("/service/{serviceID}", func(r chi.Router) {
