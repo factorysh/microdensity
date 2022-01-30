@@ -3,13 +3,18 @@ package middlewares
 import (
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
+	"github.com/cristalhq/jwt/v3"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/square/go-jose.v2"
 )
 
 func TestJWK(t *testing.T) {
@@ -42,12 +47,11 @@ func TestJWK(t *testing.T) {
 	fmt.Println("j", j)
 	assert.NoError(t, err)
 	assert.Len(t, j.Keys, 2)
-
 }
 
 var (
-	privateRSA1024 = mustParseRSAKey(privateRSA1024txt)
-	publicRSA1024  = privateRSA1024.PublicKey
+	privateRSA1024   = mustParseRSAKey(privateRSA1024txt)
+	privateRSA1024_2 = mustParseRSAKey(privateRSA1024txt2)
 )
 
 const (
@@ -67,6 +71,21 @@ pwH+JtBFpoYM8VrH7HvQTR122rh7dnohrDfwvB0HMUXPi79RjU68NG9RxnV4eusv
 YTtyeLyjo3IFcGk0pC/BoQJBAJQbcTj2IbCHrx/QB/EcenbyjIQwT9QuAx9nkSLm
 JBT2XB3g+NSO5sd54NgvmSA78gXsQ8i4HQSaY3fL6K4tI0o=
 -----END RSA PRIVATE KEY-----`
+	privateRSA1024txt2 = `-----BEGIN RSA PRIVATE KEY-----
+MIICXgIBAAKBgQDRhfCQOaKVTZdX3W4uSQP4rHe8lie+7Ti6gmm2nDA5sKRPbcXm
+xK2Mhv6id4V1c8ydbIfsiCBBLx8yY7nKJEg9hJtpeoCzS0h6cX5/kGnSo6fZiRQ5
+iHi8k4rxmOhUOF6WGVv2N1T6XmONB2RJ5t9j4XDaG0oqyo9DKsRrNaeY5wIDAQAB
+AoGAWbly8EBOOIO2uODRSy7nbXll+TOQJ7nsnio03Qd7u2jCpGUM56r36wLwTmDC
+nS6OxCdy+b69mUx1np2INWFeMXuZDg0mXzJZ420OwSzpfRHiT2x4o2EYgAomePDf
+9MTiRz5hli+F/qSBmnoV7QeqveSZ/B8ny5+fmqtw0dlw9gkCQQDoRj19otEjs+tJ
+1WIfYSkSs6l3pnBVbiDD033PG0CvwzkjSwRqRjh73bF9B8zKo68/zbvWQ+p4RKKu
+qMcTXbPrAkEA5uzHAkWjrsf2P6h5b84zoOwmFPMCbA/qjY1o3dCjEujOF2X7Ffvd
+ZoCThxLk2IQUvlEd6aA8g44+RW/w6vn79QJBAOPPCD4xszd2Hf2TSCKIs7UA+uQ8
+HI7dbUtDIXBARWhda6vexpzI9FsgKxT60nOoqJhGWsUiZVPB1WDCbkXjMDMCQQCR
+x/aWg5ois8/MPjJzl8xWEd60qPjleWLMe/Iw3g6k2F2KvfG13ivWEuOPiSj5WuCx
+iQoGPAcX0guT0GhaHvilAkEA4m0ZkENRjT8ZsvskRlFR5dI081eywzWJ7uPnh/kk
+ZjKyM9LAK2CCWDAnXCA65Yc9Fas4iKS0icxLdDH3MWPffQ==
+-----END RSA PRIVATE KEY-----`
 )
 
 func mustParseRSAKey(s string) *rsa.PrivateKey {
@@ -80,4 +99,37 @@ func mustParseRSAKey(s string) *rsa.PrivateKey {
 		panic(err)
 	}
 	return key
+}
+
+func buildJWT() (*jwt.Token, error) {
+	signer, err := jwt.NewSignerRS(jwt.RS256, privateRSA1024)
+	if err != nil {
+		return nil, err
+	}
+	j, err := jwt.NewBuilder(signer).Build(map[string]interface{}{
+		"project_path": "factory/check-my-web",
+	})
+	if err != nil {
+		return nil, err
+	}
+	return j, nil
+}
+
+func TestJWK_(t *testing.T) {
+	err := buildJWK(privateRSA1024, os.Stdout)
+	assert.NoError(t, err)
+	assert.True(t, false)
+}
+
+func buildJWK(private *rsa.PrivateKey, w io.Writer) error {
+	j := jose.JSONWebKey{
+		Key:   &private.PublicKey,
+		Use:   "sig",
+		KeyID: "someID",
+	}
+	err := json.NewEncoder(w).Encode(j)
+	if err != nil {
+		return err
+	}
+	return nil
 }

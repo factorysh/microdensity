@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -13,10 +14,16 @@ import (
 )
 
 func TestAuth(t *testing.T) {
-	key := "plop"
+	gitlab := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		buildJWK(privateRSA1024, w)
+	}))
+	defer gitlab.Close()
+
 	router := chi.NewRouter()
-	router.Use(Tokens())
-	router.Use(Auth(key))
+	authenticator, err := NewJWTAuthenticator(gitlab.URL)
+	assert.NoError(t, err)
+	router.Use(authenticator.Middleware())
+	//router.Use(Auth(key))
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Hello, client")
 	})
@@ -31,7 +38,7 @@ func TestAuth(t *testing.T) {
 
 	type fixture struct {
 		claim  claims.Claims
-		key    []byte
+		key    *rsa.PrivateKey
 		status int
 	}
 	for _, a := range []fixture{
@@ -39,25 +46,25 @@ func TestAuth(t *testing.T) {
 			claim: claims.Claims{
 				Owner: "bob",
 			},
-			key:    []byte(key),
+			key:    privateRSA1024,
 			status: 200,
 		},
 		{ // owner is missing
 			claim:  claims.Claims{},
-			key:    []byte(key),
+			key:    privateRSA1024,
 			status: 400,
 		},
 		{ // wrong key
 			claim: claims.Claims{
 				Owner: "bob",
 			},
-			key:    []byte("wrong key"),
+			key:    privateRSA1024_2,
 			status: 401,
 		},
 	} {
 		r, err := http.NewRequest("GET", ts.URL, nil)
 		assert.NoError(t, err)
-		signer, err := jwt.NewSignerHS(jwt.HS256, []byte(a.key))
+		signer, err := jwt.NewSignerRS(jwt.RS256, a.key)
 		assert.NoError(t, err)
 		builder := jwt.NewBuilder(signer)
 		token, err := builder.Build(a.claim)
