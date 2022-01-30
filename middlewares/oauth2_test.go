@@ -11,6 +11,7 @@ import (
 
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/gitlab"
+	"github.com/factorysh/microdensity/middlewares/oauth2"
 	"github.com/factorysh/microdensity/oauth"
 	"github.com/factorysh/microdensity/sessions"
 	"github.com/go-chi/chi/v5"
@@ -25,7 +26,7 @@ func TestOAuthRedirect(t *testing.T) {
 	router := chi.NewRouter()
 	router.Group(func(r chi.Router) {
 		r.Use(Project())
-		r.Use(OAuth(&conf.OAuthConf{
+		r.Use(oauth2.OAuth(&conf.OAuthConf{
 			ProviderURL: mockUP.URL,
 			AppID:       "id",
 			AppSecret:   "secret",
@@ -61,7 +62,7 @@ func TestOAuthPass(t *testing.T) {
 	router.Group(func(r chi.Router) {
 		r.Use(Tokens())
 		r.Use(Project())
-		r.Use(OAuth(&conf.OAuthConf{
+		r.Use(oauth2.OAuth(&conf.OAuthConf{
 			ProviderURL: mockUP.URL,
 			AppID:       "id",
 			AppSecret:   "secret",

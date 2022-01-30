@@ -9,14 +9,13 @@ import (
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/factorysh/microdensity/claims"
+	"github.com/factorysh/microdensity/mockup"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAuth(t *testing.T) {
-	gitlab := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		buildJWK(privateRSA1024, w)
-	}))
+	gitlab := httptest.NewServer(mockup.GitlabJWK(&privateRSA1024.PublicKey))
 	defer gitlab.Close()
 
 	router := chi.NewRouter()

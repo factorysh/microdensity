@@ -1,4 +1,4 @@
-package middlewares
+package oauth2
 
 import (
 	"context"

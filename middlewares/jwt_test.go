@@ -3,18 +3,14 @@ package middlewares
 import (
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/square/go-jose.v2"
 )
 
 func TestJWK(t *testing.T) {
@@ -113,23 +109,4 @@ func buildJWT() (*jwt.Token, error) {
 		return nil, err
 	}
 	return j, nil
-}
-
-func TestJWK_(t *testing.T) {
-	err := buildJWK(privateRSA1024, os.Stdout)
-	assert.NoError(t, err)
-	assert.True(t, false)
-}
-
-func buildJWK(private *rsa.PrivateKey, w io.Writer) error {
-	j := jose.JSONWebKey{
-		Key:   &private.PublicKey,
-		Use:   "sig",
-		KeyID: "someID",
-	}
-	err := json.NewEncoder(w).Encode(j)
-	if err != nil {
-		return err
-	}
-	return nil
 }
