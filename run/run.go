@@ -36,7 +36,7 @@ func (c *ClosingBuffer) Close() error {
 
 func (r *Runner) Run(t *task.Task) error {
 	if t.Id == uuid.Nil {
-		return errors.New("the has no id")
+		return errors.New("the task has no id")
 	}
 	r.tasks[t.Id] = &Context{
 		task:   t,
