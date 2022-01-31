@@ -9,6 +9,7 @@ import (
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/factorysh/microdensity/claims"
+	_jwt "github.com/factorysh/microdensity/middlewares/jwt"
 	"github.com/factorysh/microdensity/mockup"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ func TestAuth(t *testing.T) {
 	defer gitlab.Close()
 
 	router := chi.NewRouter()
-	authenticator, err := NewJWTAuthenticator(gitlab.URL)
+	authenticator, err := _jwt.NewJWTAuthenticator(gitlab.URL)
 	assert.NoError(t, err)
 	router.Use(authenticator.Middleware())
 	//router.Use(Auth(key))
