@@ -23,7 +23,6 @@ func TestAuth(t *testing.T) {
 	authenticator, err := _jwt.NewJWTAuthenticator(gitlab.URL)
 	assert.NoError(t, err)
 	router.Use(authenticator.Middleware())
-	//router.Use(Auth(key))
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Hello, client")
 	})
@@ -66,9 +65,7 @@ func TestAuth(t *testing.T) {
 		assert.NoError(t, err)
 		signer, err := jwt.NewSignerRS(jwt.RS256, a.key)
 		assert.NoError(t, err)
-		builder := jwt.NewBuilder(signer)
-		token, err := builder.Build(a.claim)
-		assert.NoError(t, err)
+		token, err := jwt.NewBuilder(signer).Build(a.claim)
 		assert.NoError(t, err)
 		r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		res, err = client.Do(r)
