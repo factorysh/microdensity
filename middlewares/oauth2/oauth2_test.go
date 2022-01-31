@@ -12,6 +12,7 @@ import (
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/gitlab"
 	"github.com/factorysh/microdensity/middlewares"
+	"github.com/factorysh/microdensity/middlewares/project"
 	"github.com/factorysh/microdensity/oauth"
 	"github.com/factorysh/microdensity/sessions"
 	"github.com/go-chi/chi/v5"
@@ -31,7 +32,7 @@ func TestOAuthRedirect(t *testing.T) {
 			AppSecret:   "secret",
 			AppURL:      "url",
 		}, &s))
-		r.Use(middlewares.AssertProject)
+		r.Use(project.AssertProject)
 		r.Get("/{project}", func(w http.ResponseWriter, _ *http.Request) {
 			w.Write([]byte("i am protected"))
 			w.WriteHeader(http.StatusOK)
@@ -59,7 +60,7 @@ func TestOAuthPass(t *testing.T) {
 	s := sessions.New()
 	s.Put("session", "access", time.Now().Add(10*time.Minute), &gitlab.DummyProject)
 	router := chi.NewRouter()
-	router.Group(func(r chi.Router) {
+	router.Route("/{project}", func(r chi.Router) {
 		r.Use(middlewares.Tokens())
 		r.Use(OAuth2(&conf.OAuthConf{
 			ProviderURL: mockUP.URL,
@@ -67,8 +68,8 @@ func TestOAuthPass(t *testing.T) {
 			AppSecret:   "secret",
 			AppURL:      "url",
 		}, &s))
-		r.Use(middlewares.AssertProject)
-		r.Get("/{project}", func(w http.ResponseWriter, _ *http.Request) {
+		r.Use(project.AssertProject)
+		r.Get("/", func(w http.ResponseWriter, _ *http.Request) {
 			w.Write([]byte("i am protected"))
 			w.WriteHeader(http.StatusOK)
 		})
