@@ -38,14 +38,6 @@ func NewJWTOrOauth2(
 func (j *JWTOrOAuth2) Middleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			l := j.logger.With(zap.String("url", r.URL.String()))
-			project, err := httpcontext.GetRequestedProject(r)
-			if err != nil {
-				l.Warn("Project error", zap.Error(err))
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			l = l.With(zap.String("project", project))
 			j.authenticator.Middleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				jwtRaw := r.Context().Value(httpcontext.JWT)
 				if jwtRaw == nil {
