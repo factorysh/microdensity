@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/factorysh/microdensity/task"
+	"github.com/factorysh/microdensity/volumes"
 	"github.com/google/uuid"
 )
 
@@ -24,13 +25,23 @@ type Runnable interface {
 }
 
 type Runner struct {
-	tasks map[uuid.UUID]*Context
+	tasks       map[uuid.UUID]*Context
+	servicesDir string
+	volumes     *volumes.Volumes
 }
 
-func NewRunner() *Runner {
-	return &Runner{
-		tasks: make(map[uuid.UUID]*Context),
+func NewRunner(servicesDir string, volumesRoot string) (*Runner, error) {
+
+	v, err := volumes.New(volumesRoot)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Runner{
+		tasks:       make(map[uuid.UUID]*Context),
+		servicesDir: servicesDir,
+		volumes:     v,
+	}, nil
 }
 
 type ClosingBuffer struct {
@@ -41,21 +52,19 @@ func (c *ClosingBuffer) Close() error {
 	return nil
 }
 
-func (r *Runner) Run(t *task.Task) error {
+func (r *Runner) Run(t *task.Task) (int, error) {
 	if t.Id == uuid.Nil {
-		return errors.New("the task has no id")
+		return 0, errors.New("the task has no id")
 	}
 
-	// FIXME: dir for service
-	runnable, err := NewComposeRun(fmt.Sprintf("../%s", t.Service))
+	runnable, err := NewComposeRun(fmt.Sprintf("%s/%s", r.servicesDir, t.Service))
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	// FIXME: Args and volume root
-	err = runnable.Prepare(nil, "/tmp")
+	err = runnable.Prepare(nil, r.volumes.Path(t.Project, t.Branch, t.Id.String()))
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	r.tasks[t.Id] = &Context{

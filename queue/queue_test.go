@@ -15,7 +15,9 @@ func TestDeq(t *testing.T) {
 	assert.NoError(t, err)
 	q, err := New(db)
 
-	que := NewQueue(q, run.NewRunner())
+	r, err := run.NewRunner("../", "/tmp/microdensity/volumes")
+	assert.NoError(t, err)
+	que := NewQueue(q, r)
 
 	tsk1 := &task.Task{
 		Id:      uuid.New(),
