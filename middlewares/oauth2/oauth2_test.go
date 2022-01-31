@@ -1,4 +1,4 @@
-package middlewares
+package oauth2
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/gitlab"
-	"github.com/factorysh/microdensity/middlewares/oauth2"
+	"github.com/factorysh/microdensity/middlewares"
 	"github.com/factorysh/microdensity/oauth"
 	"github.com/factorysh/microdensity/sessions"
 	"github.com/go-chi/chi/v5"
@@ -25,8 +25,8 @@ func TestOAuthRedirect(t *testing.T) {
 	s := sessions.New()
 	router := chi.NewRouter()
 	router.Group(func(r chi.Router) {
-		r.Use(Project())
-		r.Use(oauth2.OAuth(&conf.OAuthConf{
+		r.Use(middlewares.Project())
+		r.Use(OAuth(&conf.OAuthConf{
 			ProviderURL: mockUP.URL,
 			AppID:       "id",
 			AppSecret:   "secret",
@@ -60,9 +60,9 @@ func TestOAuthPass(t *testing.T) {
 	s.Put("session", "access", time.Now().Add(10*time.Minute), &gitlab.DummyProject)
 	router := chi.NewRouter()
 	router.Group(func(r chi.Router) {
-		r.Use(Tokens())
-		r.Use(Project())
-		r.Use(oauth2.OAuth(&conf.OAuthConf{
+		r.Use(middlewares.Tokens())
+		r.Use(middlewares.Project())
+		r.Use(OAuth(&conf.OAuthConf{
 			ProviderURL: mockUP.URL,
 			AppID:       "id",
 			AppSecret:   "secret",
