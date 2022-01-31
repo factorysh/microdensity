@@ -23,8 +23,8 @@ var (
 	loginTemplate string
 )
 
-// OAuth will trigger an OAuth flow if no auth token is found see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-flow
-func OAuth(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next http.Handler) http.Handler {
+// OAuth2 will trigger an OAuth2 flow if no auth token is found see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-flow
+func OAuth2(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			project, err := httpcontext.GetRequestedProject(r)

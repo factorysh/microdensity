@@ -1,70 +1,54 @@
 package jwt
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
 	"net/http"
 
-	owner "github.com/factorysh/microdensity/claims"
+	"github.com/cristalhq/jwt/v3"
 	"github.com/factorysh/microdensity/httpcontext"
 	"github.com/getsentry/sentry-go"
+	"go.uber.org/zap"
 )
 
 // Auth will ensure JWT token is valid
 func (j *JWTAuthenticator) Middleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			// if user was auth using oauth
-			isOAuth, err := httpcontext.GetIsOAuth(r)
-			if err == nil && isOAuth {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			token, err := httpcontext.GetJWT(r)
+			l := j.logger.With(zap.String("url", r.URL.String()))
+			token, err := getJWTToken(r)
 			if err != nil {
-				w.WriteHeader(http.StatusUnauthorized)
+				l.Warn("cant't read JWT token", zap.Error(err))
+				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-
-			j.handleJWTAuth(token, w, r, next)
+			if token != nil {
+				l = l.With(zap.String("token header", string(token.RawHeader())),
+					zap.String("token payload", string(token.Payload())))
+				if hub := sentry.GetHubFromContext(r.Context()); hub != nil {
+					hub.WithScope(func(scope *sentry.Scope) {
+						scope.SetExtra("jwt", token.RawClaims())
+					})
+				}
+				err = j.Validate(token)
+				if err != nil {
+					l.Warn("rotten token", zap.Error(err))
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				r = r.WithContext(context.WithValue(r.Context(), httpcontext.JWT, token))
+			}
+			next.ServeHTTP(w, r)
 		})
 	}
 }
 
-func (j *JWTAuthenticator) handleJWTAuth(token string, w http.ResponseWriter, r *http.Request, next http.Handler) {
-	t, err := j.ParseAndValidate(token)
-
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+func getJWTToken(r *http.Request) (*jwt.Token, error) {
+	p := r.Header.Get("PRIVATE-TOKEN")
+	if p == "" {
+		p = r.URL.Query().Get("private_token")
 	}
-
-	// owner claims
-	var claims owner.Claims
-	err = json.Unmarshal(t.RawClaims(), &claims)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusUnauthorized)
-		return
+	if p == "" {
+		return nil, nil
 	}
-
-	err = claims.Validate()
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if hub := sentry.GetHubFromContext(r.Context()); hub != nil {
-		hub.WithScope(func(scope *sentry.Scope) {
-			scope.SetExtra("jwt", claims)
-		})
-	}
-
-	ctx := claims.ToCtx(r.Context())
-
-	next.ServeHTTP(w, r.WithContext(ctx))
+	return jwt.Parse([]byte(p))
 }
