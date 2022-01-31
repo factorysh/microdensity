@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/cristalhq/jwt/v3"
@@ -35,7 +36,23 @@ func (j *JWTAuthenticator) Middleware() func(next http.Handler) http.Handler {
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				}
+				l = l.With(zap.ByteString("payload", token.Payload()))
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.JWT, token))
+				var payload map[string]interface{}
+				err = json.Unmarshal(token.Payload(), &payload)
+				if err != nil {
+					l.Warn("rotten payload",
+						zap.Error(err))
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				user, ok := payload["user_login"].(string)
+				if !ok {
+					l.Warn("user is not a string")
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				r = r.WithContext(context.WithValue(r.Context(), httpcontext.User, user))
 			}
 			next.ServeHTTP(w, r)
 		})

@@ -1,4 +1,4 @@
-package middlewares
+package jwtoroauth2
 
 import (
 	"net/http"
