@@ -6,6 +6,7 @@ build:
 	.
 
 TESTS= github.com/factorysh/microdensity/task \
+		github.com/factorysh/microdensity/middlewares/jwt \
 		github.com/factorysh/microdensity/middlewares \
 		github.com/factorysh/microdensity/queue \
 		github.com/factorysh/microdensity/sessions \
