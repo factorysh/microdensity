@@ -52,8 +52,8 @@ func (r *Runner) Run(t *task.Task) error {
 		return err
 	}
 
-	// FIXME: Args
-	err = runnable.Prepare(nil, runnable.home)
+	// FIXME: Args and volume root
+	err = runnable.Prepare(nil, "/tmp")
 	if err != nil {
 		return err
 	}
