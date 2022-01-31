@@ -26,6 +26,12 @@ type Runner struct {
 	tasks map[uuid.UUID]*Context
 }
 
+func NewRunner() *Runner {
+	return &Runner{
+		tasks: make(map[uuid.UUID]*Context),
+	}
+}
+
 type ClosingBuffer struct {
 	*bytes.Buffer
 }
@@ -38,10 +44,17 @@ func (r *Runner) Run(t *task.Task) error {
 	if t.Id == uuid.Nil {
 		return errors.New("the task has no id")
 	}
+
+	runnable, err := NewComposeRun("../demo")
+	if err != nil {
+		return err
+	}
+
 	r.tasks[t.Id] = &Context{
 		task:   t,
 		Stdout: &ClosingBuffer{},
 		Stderr: &ClosingBuffer{},
+		run:    runnable,
 	}
 	return nil
 }
