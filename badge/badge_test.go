@@ -10,7 +10,6 @@ import (
 	"path"
 	"testing"
 
-	_project "github.com/factorysh/microdensity/middlewares/project"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
@@ -36,7 +35,7 @@ func TestBadge(t *testing.T) {
 	})
 	r := chi.NewRouter()
 	r.Route("/s/{service:[a-z-]+}/{project}/{id}/badge", func(r chi.Router) {
-		r.Use(_project.AssertProject)
+		//r.Use(_project.AssertProject)
 		r.Get("/", BadgeMyProject(q, "status"))
 	})
 
