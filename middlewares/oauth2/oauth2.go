@@ -14,6 +14,7 @@ import (
 	"github.com/factorysh/microdensity/oauth"
 	"github.com/factorysh/microdensity/server"
 	_sessions "github.com/factorysh/microdensity/sessions"
+	"github.com/go-chi/chi/v5"
 )
 
 var (
@@ -27,12 +28,8 @@ var (
 func OAuth2(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			project, err := httpcontext.GetRequestedProject(r)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
 
+			project := chi.URLParam(r, "project")
 			// if context contains a JWT token
 			if _, err := httpcontext.GetJWT(r); err == nil {
 				next.ServeHTTP(w, r)

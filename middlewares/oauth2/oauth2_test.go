@@ -25,13 +25,13 @@ func TestOAuthRedirect(t *testing.T) {
 	s := sessions.New()
 	router := chi.NewRouter()
 	router.Group(func(r chi.Router) {
-		r.Use(middlewares.Project())
 		r.Use(OAuth2(&conf.OAuthConf{
 			ProviderURL: mockUP.URL,
 			AppID:       "id",
 			AppSecret:   "secret",
 			AppURL:      "url",
 		}, &s))
+		r.Use(middlewares.AssertProject)
 		r.Get("/{project}", func(w http.ResponseWriter, _ *http.Request) {
 			w.Write([]byte("i am protected"))
 			w.WriteHeader(http.StatusOK)
@@ -61,13 +61,13 @@ func TestOAuthPass(t *testing.T) {
 	router := chi.NewRouter()
 	router.Group(func(r chi.Router) {
 		r.Use(middlewares.Tokens())
-		r.Use(middlewares.Project())
 		r.Use(OAuth2(&conf.OAuthConf{
 			ProviderURL: mockUP.URL,
 			AppID:       "id",
 			AppSecret:   "secret",
 			AppURL:      "url",
 		}, &s))
+		r.Use(middlewares.AssertProject)
 		r.Get("/{project}", func(w http.ResponseWriter, _ *http.Request) {
 			w.Write([]byte("i am protected"))
 			w.WriteHeader(http.StatusOK)
