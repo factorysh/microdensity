@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	_jwt "github.com/cristalhq/jwt/v3"
-	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 	"gopkg.in/square/go-jose.v2"
 )
@@ -40,7 +39,6 @@ func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
 	}
 	j.logger = logger
 	j.verifier = make(map[string]_jwt.Verifier)
-	spew.Dump(j.Keys)
 	for _, k := range j.Keys {
 		if k.Use != "sig" {
 			continue

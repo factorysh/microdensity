@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/factorysh/microdensity/mockup"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,7 +19,6 @@ func TestJWK(t *testing.T) {
 		"name": "Bob",
 	})
 	assert.NoError(t, err)
-	spew.Dump(token.Header())
 	fmt.Println("claims", string(token.RawClaims()))
 	err = a.Validate(token)
 	assert.NoError(t, err)
