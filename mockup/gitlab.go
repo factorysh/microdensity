@@ -10,6 +10,7 @@ import (
 	"gopkg.in/square/go-jose.v2"
 )
 
+// GitlabJWK exposes -/jwks
 func GitlabJWK(public *rsa.PublicKey) http.Handler {
 	h := sha1.New()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
