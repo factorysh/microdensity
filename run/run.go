@@ -3,6 +3,7 @@ package run
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/factorysh/microdensity/task"
@@ -45,16 +46,28 @@ func (r *Runner) Run(t *task.Task) error {
 		return errors.New("the task has no id")
 	}
 
-	runnable, err := NewComposeRun("../demo")
+	// FIXME: dir for service
+	runnable, err := NewComposeRun(fmt.Sprintf("../%s", t.Service))
+	if err != nil {
+		return err
+	}
+
+	// FIXME: Args
+	err = runnable.Prepare(nil, runnable.home)
 	if err != nil {
 		return err
 	}
 
 	r.tasks[t.Id] = &Context{
 		task:   t,
-		Stdout: &ClosingBuffer{},
-		Stderr: &ClosingBuffer{},
+		Stdout: &ClosingBuffer{&bytes.Buffer{}},
+		Stderr: &ClosingBuffer{&bytes.Buffer{}},
 		run:    runnable,
 	}
-	return nil
+
+	ctx := r.tasks[t.Id]
+	ret, err := ctx.run.Run(ctx.Stdout, ctx.Stderr)
+	fmt.Println(ret)
+
+	return err
 }
