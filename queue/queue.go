@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/factorysh/microdensity/run"
 	"github.com/factorysh/microdensity/task"
 	"github.com/oleiade/lane"
 )
@@ -12,15 +13,17 @@ import (
 type Queue struct {
 	sync.RWMutex
 	items      *lane.Queue
+	runner     *run.Runner
 	BatchEnded chan bool
 	working    bool
 }
 
 // NewQueue inits a new queue struct
-func NewQueue(s *Storage) Queue {
+func NewQueue(s *Storage, runner *run.Runner) Queue {
 	return Queue{
 		items:      lane.NewQueue(),
 		BatchEnded: make(chan bool, 1),
+		runner:     runner,
 	}
 }
 
@@ -63,10 +66,19 @@ func (q *Queue) DequeueWhile() {
 
 		item := q.dequeue()
 
-		go func(interface{}) {
-			fmt.Println("WIP", item)
+		t, ok := item.(*task.Task)
+		if !ok {
+			fmt.Println("error when casting item to task")
+			continue
+		}
+
+		go func(t *task.Task) {
+			err := q.runner.Run(t)
+			if err != nil {
+				fmt.Println(err)
+			}
 			<-workers
-		}(item)
+		}(t)
 	}
 
 	q.BatchEnded <- true
