@@ -66,8 +66,6 @@ func (r *Runner) Run(t *task.Task) error {
 	}
 
 	ctx := r.tasks[t.Id]
-	ret, err := ctx.run.Run(ctx.Stdout, ctx.Stderr)
-	fmt.Println(ret)
 
-	return err
+	return ctx.run.Run(ctx.Stdout, ctx.Stderr)
 }

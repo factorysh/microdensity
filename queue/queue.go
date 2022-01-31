@@ -73,7 +73,7 @@ func (q *Queue) DequeueWhile() {
 		}
 
 		go func(t *task.Task) {
-			err := q.runner.Run(t)
+			_, err := q.runner.Run(t)
 			if err != nil {
 				fmt.Println(err)
 			}
