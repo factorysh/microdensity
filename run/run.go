@@ -19,7 +19,7 @@ type Context struct {
 }
 
 type Runnable interface {
-	Prepare(map[string]string, string) error
+	Prepare(map[string]string, string, uuid.UUID) error
 	Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, error)
 	Cancel()
 }
@@ -62,7 +62,7 @@ func (r *Runner) Run(t *task.Task) (int, error) {
 		return 0, err
 	}
 
-	err = runnable.Prepare(nil, r.volumes.Path(t.Project, t.Branch, t.Id.String()))
+	err = runnable.Prepare(nil, r.volumes.Path(t.Project, t.Branch, t.Id.String()), t.Id)
 	if err != nil {
 		return 0, err
 	}
