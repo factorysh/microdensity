@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
@@ -44,7 +45,11 @@ func NewFolder(_path string) (*FolderService, error) {
 		}
 	} else {
 		vm := goja.New()
-		_, err := vm.RunScript("meta", jsPath)
+		src, err := ioutil.ReadFile(jsPath)
+		if err != nil {
+			return nil, err
+		}
+		_, err = vm.RunScript("meta", string(src))
 		if err != nil {
 			return nil, err
 		}
