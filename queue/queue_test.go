@@ -43,9 +43,19 @@ func TestDeq(t *testing.T) {
 	err = r.Prepare(tsk3)
 	assert.NoError(t, err)
 
+	tsk4 := &task.Task{
+		Id:      uuid.New(),
+		Project: "notprepared",
+		Service: "demo",
+	}
+	assert.NoError(t, err)
+
+	// FIXME: asserts on state status
 	que.Put(tsk1)
 	que.Put(tsk2)
 	que.Put(tsk3)
+	que.Put(tsk4)
 
 	<-que.BatchEnded
+
 }
