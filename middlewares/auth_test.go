@@ -62,6 +62,8 @@ func TestRESTAuthJWT(t *testing.T) {
 			status: 400,
 		},
 	} {
+		a.claim.IssuedAt = jwt.NewNumericDate(time.Now())
+		a.claim.ExpiresAt = jwt.NewNumericDate(time.Now().Add(10 * time.Minute))
 		r, err := http.NewRequest("GET", ts.URL, nil)
 		assert.NoError(t, err)
 		signer, err := jwt.NewSignerRS(jwt.RS256, a.key)
