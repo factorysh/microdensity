@@ -13,7 +13,7 @@ type State int
 
 var (
 	sha  = regexp.MustCompile(`^[0-9a-f]+$`)
-	name = regexp.MustCompile(`[0-9a-zA-Z\-%_]+`)
+	name = regexp.MustCompile(`^[0-9a-zA-Z\-%_]+$`)
 )
 
 const (
