@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/dop251/goja"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/task"
 	"github.com/google/uuid"
@@ -13,8 +14,10 @@ import (
 var _ Service = (*FolderService)(nil)
 
 type FolderService struct {
-	name string
-	qeue *queue.Storage
+	name      string
+	qeue      *queue.Storage
+	jsruntime *goja.Runtime
+	validate  func(map[string]interface{}) map[string]interface{}
 }
 
 func NewFolder(_path string) (*FolderService, error) {
@@ -25,10 +28,34 @@ func NewFolder(_path string) (*FolderService, error) {
 	if !stat.IsDir() {
 		return nil, fmt.Errorf("%s is not a directory", _path)
 	}
+
 	_, name := path.Split(_path)
-	return &FolderService{
+	service := &FolderService{
 		name: name,
-	}, nil
+	}
+
+	jsPath := path.Join(_path, "meta.js")
+	_, err = os.Stat(jsPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// there is meta.js file
+		} else {
+			return nil, err
+		}
+	} else {
+		vm := goja.New()
+		_, err := vm.RunScript("meta", jsPath)
+		if err != nil {
+			return nil, err
+		}
+		err = vm.ExportTo(vm.Get("validate"), &service.validate)
+		if err != nil {
+			return nil, err
+		}
+		service.jsruntime = vm
+	}
+
+	return service, nil
 }
 
 func (f *FolderService) Name() string {
