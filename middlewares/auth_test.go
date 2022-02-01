@@ -49,11 +49,6 @@ func TestRESTAuthJWT(t *testing.T) {
 			key:    privateRSA1024,
 			status: 200,
 		},
-		{ // owner is missing
-			claim:  claims.Claims{},
-			key:    privateRSA1024,
-			status: 400,
-		},
 		{ // wrong key
 			claim: claims.Claims{
 				UserLogin: "bob",
