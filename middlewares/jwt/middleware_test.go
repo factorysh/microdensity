@@ -17,7 +17,7 @@ func TestMiddleware(t *testing.T) {
 
 	auth, err := NewJWTAuthenticator(gitlab.URL)
 	assert.NoError(t, err)
-	srv := httptest.NewServer(auth.Middleware(true)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(auth.Handler(true)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})))
 	defer srv.Close()

@@ -13,7 +13,7 @@ import (
 )
 
 // Auth will ensure JWT token is valid
-func (j *JWTAuthenticator) Middleware(isBlocking bool) func(next http.Handler) http.Handler {
+func (j *JWTAuthenticator) Handler(isBlocking bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			l := j.logger.With(zap.String("url", r.URL.String()))
@@ -47,13 +47,13 @@ func (j *JWTAuthenticator) Middleware(isBlocking bool) func(next http.Handler) h
 				var claims _claims.Claims
 				err = json.Unmarshal(token.RawClaims(), &claims)
 				if err != nil {
-					l.Warn("rotten payload",
+					l.Warn("Can't read claims JSON",
 						zap.Error(err))
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				}
-				user := claims.Owner
-				r = r.WithContext(context.WithValue(r.Context(), httpcontext.User, user))
+				r = r.WithContext(context.WithValue(r.Context(), httpcontext.User, claims.UserLogin))
+				r = r.WithContext(context.WithValue(r.Context(), httpcontext.RequestedProject, claims.ProjectPath))
 			} else {
 				l.Info("No JWT token, but it's not blocking")
 			}
