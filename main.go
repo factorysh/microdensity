@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"time"
 
 	"github.com/factorysh/microdensity/application"
 	"github.com/factorysh/microdensity/conf"
@@ -29,20 +28,7 @@ func main() {
 	cfg.Defaults()
 
 	sessions := _sessions.New()
-	// prune old sessions every 15 minutes
-	ticker := time.NewTicker(15 * time.Minute)
-	quit := make(chan struct{})
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				sessions.Prune()
-			case <-quit:
-				ticker.Stop()
-				return
-			}
-		}
-	}()
+	sessions.Start(15)
 
 	s, err := bbolt.Open(
 		path.Join(cfg.Queue, "microdensity.store"),
