@@ -1,9 +1,6 @@
 package application
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares/jwt"
 	jwtoroauth2 "github.com/factorysh/microdensity/middlewares/jwt_or_oauth2"
@@ -25,24 +22,14 @@ type Application struct {
 	logger   *zap.Logger
 }
 
-func New(q *queue.Storage, secret string, volumePath string) (*Application, error) {
+func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, secret string, volumePath string, jwtProvider string) (*Application, error) {
 	sessions := sessions.New()
 	err := sessions.Start(15)
 	if err != nil {
 		return nil, err
 	}
 
-	jwtProvider := os.Getenv("JWT_PROVIDER_URL")
-	if jwtProvider == "" {
-		return nil, fmt.Errorf("missing JWT_PROVIDER_URL environment variable")
-	}
-
 	jwtAuth, err := jwt.NewJWTAuthenticator(jwtProvider)
-	if err != nil {
-		return nil, err
-	}
-
-	oAuthConfig, err := conf.NewOAuthConfigFromEnv()
 	if err != nil {
 		return nil, err
 	}

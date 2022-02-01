@@ -10,7 +10,6 @@ import (
 	"github.com/factorysh/microdensity/application"
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/queue"
-	_sessions "github.com/factorysh/microdensity/sessions"
 	"github.com/factorysh/microdensity/version"
 	"go.etcd.io/bbolt"
 )
@@ -27,8 +26,10 @@ func main() {
 	}
 	cfg.Defaults()
 
-	sessions := _sessions.New()
-	sessions.Start(15)
+	oauthConfig, err := conf.NewOAuthConfigFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	s, err := bbolt.Open(
 		path.Join(cfg.Queue, "microdensity.store"),
@@ -40,7 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	a, err := application.New(q, cfg.JWTSecret, cfg.Services)
+	a, err := application.New(q, oauthConfig, cfg.JWTSecret, cfg.Services, "fixme")
 	if err != nil {
 		log.Fatal(err)
 	}
