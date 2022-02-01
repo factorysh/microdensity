@@ -73,6 +73,7 @@ func (q *Queue) DequeueWhile() {
 		}
 
 		go func(t *task.Task) {
+			// FIXME: use hook to save task state to jsoh
 			t.State = task.Running
 			ret, err := q.runner.Run(t)
 			if err != nil {
