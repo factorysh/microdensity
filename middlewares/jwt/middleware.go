@@ -42,7 +42,7 @@ func (j *JWTAuthenticator) Handler(isBlocking bool) func(next http.Handler) http
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				}
-				l = l.With(zap.ByteString("payload", token.Payload()))
+				l = l.With(zap.ByteString("claims", token.RawClaims()))
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.JWT, token))
 				var claims _claims.Claims
 				err = json.Unmarshal(token.RawClaims(), &claims)
