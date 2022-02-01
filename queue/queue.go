@@ -73,11 +73,18 @@ func (q *Queue) DequeueWhile() {
 		}
 
 		go func(t *task.Task) {
+			t.State = task.Running
 			ret, err := q.runner.Run(t)
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Printf("return code for task %s: %d\n", t.Id, ret)
+
+			if ret == 0 {
+				t.State = task.Done
+			} else {
+				t.State = task.Failed
+			}
+
 			<-workers
 		}(t)
 	}
