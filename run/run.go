@@ -2,7 +2,6 @@ package run
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 
@@ -52,19 +51,24 @@ func (c *ClosingBuffer) Close() error {
 	return nil
 }
 
-func (r *Runner) Run(t *task.Task) (int, error) {
+// Prepare the run
+func (r *Runner) Prepare(t *task.Task) error {
 	if t.Id == uuid.Nil {
-		return 0, errors.New("the task has no id")
+		return fmt.Errorf("task requires an ID to be prepared")
+	}
+
+	if _, found := r.tasks[t.Id]; found {
+		return fmt.Errorf("task with id `%s` already prepared", t.Id)
 	}
 
 	runnable, err := NewComposeRun(fmt.Sprintf("%s/%s", r.servicesDir, t.Service))
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	err = runnable.Prepare(nil, r.volumes.Path(t.Project, t.Branch, t.Id.String()), t.Id)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	r.tasks[t.Id] = &Context{
@@ -74,7 +78,15 @@ func (r *Runner) Run(t *task.Task) (int, error) {
 		run:    runnable,
 	}
 
-	ctx := r.tasks[t.Id]
+	return nil
+}
+
+func (r *Runner) Run(t *task.Task) (int, error) {
+
+	ctx, found := r.tasks[t.Id]
+	if !found {
+		return 0, fmt.Errorf("task with id `%s` not found in runner", t.Id)
+	}
 
 	return ctx.run.Run(ctx.Stdout, ctx.Stderr)
 }
