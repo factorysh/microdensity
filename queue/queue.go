@@ -73,10 +73,11 @@ func (q *Queue) DequeueWhile() {
 		}
 
 		go func(t *task.Task) {
-			_, err := q.runner.Run(t)
+			ret, err := q.runner.Run(t)
 			if err != nil {
 				fmt.Println(err)
 			}
+			fmt.Printf("return code for task %s: %d\n", t.Id, ret)
 			<-workers
 		}(t)
 	}
