@@ -29,19 +29,18 @@ func OAuth2(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-			project := chi.URLParam(r, "project")
-			// if context contains a JWT token
-			if _, err := httpcontext.GetJWT(r); err == nil {
-				next.ServeHTTP(w, r)
+			project, err := url.QueryUnescape(chi.URLParam(r, "project"))
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
 			// if context contains a session access token
-			if accessToken, err := httpcontext.GetAccessToken(r); err == nil {
+			if accessToken, err := r.Cookie(oauth.SessionCookieName); err == nil && accessToken != nil {
 				// verify token access
-				if sessions.Authorize(accessToken, project) {
+				if sessions.Authorize(accessToken.Value, project) {
 					// if authorized, add value to context
-					ctx := context.WithValue(r.Context(), httpcontext.IsOAuth, true)
+					ctx := context.WithValue(r.Context(), httpcontext.RequestedProject, project)
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}

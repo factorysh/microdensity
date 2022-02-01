@@ -86,6 +86,6 @@ func TestOAuthPass(t *testing.T) {
 	res, err := cli.Do(req)
 	assert.NoError(t, err)
 	defer res.Body.Close()
-	assert.Equal(t, res.StatusCode, http.StatusOK)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 }
