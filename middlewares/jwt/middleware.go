@@ -30,7 +30,7 @@ func (j *JWTAuthenticator) Handler(isBlocking bool) func(next http.Handler) http
 			}
 			if token != nil {
 				l = l.With(zap.String("token header", string(token.RawHeader())),
-					zap.String("token payload", string(token.Payload())))
+					zap.String("token claims", string(token.RawClaims())))
 				if hub := sentry.GetHubFromContext(r.Context()); hub != nil {
 					hub.WithScope(func(scope *sentry.Scope) {
 						scope.SetExtra("jwt", token.RawClaims())
