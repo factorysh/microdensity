@@ -1,9 +1,15 @@
 package application
 
 import (
-	"github.com/factorysh/microdensity/middlewares"
+	"fmt"
+	"os"
+
+	"github.com/factorysh/microdensity/conf"
+	"github.com/factorysh/microdensity/middlewares/jwt"
+	jwtoroauth2 "github.com/factorysh/microdensity/middlewares/jwt_or_oauth2"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/service"
+	"github.com/factorysh/microdensity/sessions"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -20,15 +26,39 @@ type Application struct {
 }
 
 func New(q *queue.Storage, secret string, volumePath string) (*Application, error) {
-	r := chi.NewRouter()
+	sessions := sessions.New()
+	err := sessions.Start(15)
+	if err != nil {
+		return nil, err
+	}
+
+	jwtProvider := os.Getenv("JWT_PROVIDER_URL")
+	if jwtProvider == "" {
+		return nil, fmt.Errorf("missing JWT_PROVIDER_URL environment variable")
+	}
+
+	jwtAuth, err := jwt.NewJWTAuthenticator(jwtProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	oAuthConfig, err := conf.NewOAuthConfigFromEnv()
+	if err != nil {
+		return nil, err
+	}
+
 	v, err := volumes.New(volumePath)
 	if err != nil {
 		return nil, err
 	}
+
 	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, err
 	}
+
+	r := chi.NewRouter()
+
 	a := &Application{
 		Services: make([]service.Service, 0),
 		queue:    q,
@@ -42,11 +72,11 @@ func New(q *queue.Storage, secret string, volumePath string) (*Application, erro
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	jwtAuth, err := middlewares.NewJWTAuthenticator(gitlab)
+	authMiddleware, err := jwtoroauth2.NewJWTOrOauth2(jwtAuth, oAuthConfig, &sessions)
 	if err != nil {
 		return nil, err
 	}
-	r.Use(jwtAuth.Middleware())
+	r.Use(authMiddleware.Middleware())
 
 	r.Get("/services", a.services)
 	r.Route("/service/{serviceID}", func(r chi.Router) {

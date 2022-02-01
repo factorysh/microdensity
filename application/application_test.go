@@ -77,7 +77,7 @@ func TestApplication(t *testing.T) {
 
 	cli := http.Client{}
 
-	req, err := mkRequest(secret)
+	req, err := mkRequest("fixme")
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
 	req.URL, err = url.Parse(fmt.Sprintf("%s/services", ts.URL))
@@ -92,7 +92,7 @@ func TestApplication(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"demo"}, services)
 
-	req, err = mkRequest(secret)
+	req, err = mkRequest("fixme")
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
 	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo", ts.URL))
