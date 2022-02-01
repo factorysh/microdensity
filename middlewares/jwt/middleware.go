@@ -54,6 +54,8 @@ func (j *JWTAuthenticator) Middleware(isBlocking bool) func(next http.Handler) h
 				}
 				user := payload.Owner
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.User, user))
+			} else {
+				l.Info("No JWT token, but it's not blocking")
 			}
 			next.ServeHTTP(w, r)
 		})
