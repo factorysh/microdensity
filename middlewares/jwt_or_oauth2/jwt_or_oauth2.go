@@ -38,7 +38,7 @@ func NewJWTOrOauth2(
 func (j *JWTOrOAuth2) Middleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			j.authenticator.Middleware(false)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			j.authenticator.Handler(false)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				jwtRaw := r.Context().Value(httpcontext.JWT)
 				if jwtRaw == nil {
 					oauth2.OAuth2(j.oauthConfig, j.sessions)(next)

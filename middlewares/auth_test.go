@@ -16,14 +16,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAuth(t *testing.T) {
+func TestRESTAuthJWT(t *testing.T) {
 	gitlab := httptest.NewServer(mockup.GitlabJWK(&privateRSA1024.PublicKey))
 	defer gitlab.Close()
 
 	router := chi.NewRouter()
 	authenticator, err := _jwt.NewJWTAuthenticator(gitlab.URL)
 	assert.NoError(t, err)
-	router.Use(authenticator.Middleware())
+	router.Use(authenticator.Handler(true))
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Hello, client")
 	})
