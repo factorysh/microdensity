@@ -28,8 +28,8 @@ func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 		l.Warn("Claims error", zap.Error(err))
 		panic(err)
 	}
-	if project != url.QueryEscape(claims.Path) {
-		l.Warn("Path mismatch with claims", zap.String("claims.Path", claims.Path))
+	if project != url.QueryEscape(claims.ProjectPath) {
+		l.Warn("Path mismatch with claims", zap.String("claims.Path", claims.ProjectPath))
 		w.WriteHeader(403)
 		return
 	}

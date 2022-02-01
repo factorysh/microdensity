@@ -109,9 +109,8 @@ func freshToken(key string) (*jwt.Token, error) {
 		return nil, err
 	}
 	clm := claims.Claims{
-		Owner: "Bob",
-		Admin: false,
-		Path:  "group/project",
+		UserLogin:   "Bob",
+		ProjectPath: "group/project",
 	}
 
 	builder := jwt.NewBuilder(signer)

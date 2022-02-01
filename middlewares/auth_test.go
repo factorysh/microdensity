@@ -44,7 +44,7 @@ func TestAuth(t *testing.T) {
 	for _, a := range []fixture{
 		{ // it's ok
 			claim: claims.Claims{
-				Owner: "bob",
+				UserLogin: "bob",
 			},
 			key:    privateRSA1024,
 			status: 200,
@@ -56,7 +56,7 @@ func TestAuth(t *testing.T) {
 		},
 		{ // wrong key
 			claim: claims.Claims{
-				Owner: "bob",
+				UserLogin: "bob",
 			},
 			key:    privateRSA1024_2,
 			status: 401,
