@@ -41,4 +41,19 @@ func TestMiddleware(t *testing.T) {
 	res, err = client.Do(r)
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
+
+	// Wrong date
+	token, err = jwt.NewBuilder(signer,
+		jwt.WithKeyID(mockup.Kid(&privateRSA1024.PublicKey))).Build(
+		jwt.StandardClaims{
+			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-1 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Minute)),
+		})
+	assert.NoError(t, err)
+	r, err = http.NewRequest("GET", srv.URL, nil)
+	assert.NoError(t, err)
+	r.Header.Set("Private-Token", token.String())
+	res, err = client.Do(r)
+	assert.NoError(t, err)
+	assert.Equal(t, 400, res.StatusCode)
 }

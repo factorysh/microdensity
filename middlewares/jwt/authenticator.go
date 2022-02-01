@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	_jwt "github.com/cristalhq/jwt/v3"
 	"go.uber.org/zap"
@@ -79,6 +80,17 @@ func (j *JWTAuthenticator) VerifySignature(t *_jwt.Token) error {
 		err := j.verifier[k.KeyID].Verify(t.Payload(), t.Signature())
 		if err != nil {
 			l.Error("verification faild", zap.Error(err))
+			return err
+		}
+		var claims _jwt.StandardClaims
+		err = json.Unmarshal(t.RawClaims(), &claims)
+		if err != nil {
+			l.Error("can't parse standard claims JSON", zap.Error(err))
+			return err
+		}
+		if claims.ExpiresAt != nil && time.Now().After(claims.ExpiresAt.Local()) {
+			err = fmt.Errorf("expired token %v", claims.ExpiresAt.Time)
+			l.Error("Expired", zap.Error(err))
 			return err
 		}
 		return nil
