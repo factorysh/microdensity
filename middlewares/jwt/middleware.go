@@ -6,13 +6,14 @@ import (
 	"net/http"
 
 	"github.com/cristalhq/jwt/v3"
+	"github.com/factorysh/microdensity/claims"
 	"github.com/factorysh/microdensity/httpcontext"
 	"github.com/getsentry/sentry-go"
 	"go.uber.org/zap"
 )
 
 // Auth will ensure JWT token is valid
-func (j *JWTAuthenticator) Middleware() func(next http.Handler) http.Handler {
+func (j *JWTAuthenticator) Middleware(isBlocking bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			l := j.logger.With(zap.String("url", r.URL.String()))
@@ -20,6 +21,11 @@ func (j *JWTAuthenticator) Middleware() func(next http.Handler) http.Handler {
 			if err != nil {
 				l.Warn("cant't read JWT token", zap.Error(err))
 				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			if token == nil && isBlocking {
+				l.Warn("jwt token not found, middleware blocking")
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 			if token != nil {
@@ -38,7 +44,7 @@ func (j *JWTAuthenticator) Middleware() func(next http.Handler) http.Handler {
 				}
 				l = l.With(zap.ByteString("payload", token.Payload()))
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.JWT, token))
-				var payload map[string]interface{}
+				var payload claims.Claims
 				err = json.Unmarshal(token.Payload(), &payload)
 				if err != nil {
 					l.Warn("rotten payload",
@@ -46,12 +52,7 @@ func (j *JWTAuthenticator) Middleware() func(next http.Handler) http.Handler {
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				}
-				user, ok := payload["user_login"].(string)
-				if !ok {
-					l.Warn("user is not a string")
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
+				user := payload.Owner
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.User, user))
 			}
 			next.ServeHTTP(w, r)
