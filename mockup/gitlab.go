@@ -12,9 +12,8 @@ import (
 
 // GitlabJWK exposes -/jwks
 func GitlabJWK(public *rsa.PublicKey) http.Handler {
-	h := sha1.New()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		kid := base64.RawURLEncoding.EncodeToString(h.Sum(public.N.Bytes()))[:16]
+		kid := Kid(public)
 		j := jose.JSONWebKey{
 			Key:       public,
 			Use:       "sig",
@@ -30,4 +29,9 @@ func GitlabJWK(public *rsa.PublicKey) http.Handler {
 		}
 	})
 
+}
+
+func Kid(public *rsa.PublicKey) string {
+	h := sha1.New()
+	return base64.RawURLEncoding.EncodeToString(h.Sum(public.N.Bytes()))[:16]
 }
