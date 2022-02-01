@@ -59,7 +59,7 @@ func TestRESTAuthJWT(t *testing.T) {
 				UserLogin: "bob",
 			},
 			key:    privateRSA1024_2,
-			status: 401,
+			status: 400,
 		},
 	} {
 		r, err := http.NewRequest("GET", ts.URL, nil)
