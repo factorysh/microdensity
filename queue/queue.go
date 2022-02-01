@@ -1,108 +1,96 @@
 package queue
 
 import (
-	"bytes"
-	"encoding/gob"
+	"fmt"
 	"sync"
 
+	"github.com/factorysh/microdensity/run"
 	"github.com/factorysh/microdensity/task"
-	"github.com/google/uuid"
-	"go.etcd.io/bbolt"
+	"github.com/oleiade/lane"
 )
 
-const queue = "queue"
-
+// Queue struct use to put and get job items
 type Queue struct {
-	store    *bbolt.DB
-	encoding *Encoding
+	sync.RWMutex
+	items      *lane.Queue
+	runner     *run.Runner
+	BatchEnded chan bool
+	working    bool
 }
 
-func New(store *bbolt.DB) (*Queue, error) {
-
-	if err := store.Update(func(tx *bbolt.Tx) error {
-		_, err := tx.CreateBucket([]byte(queue))
-		return err
-	}); err != nil {
-		return nil, err
+// NewQueue inits a new queue struct
+func NewQueue(s *Storage, runner *run.Runner) Queue {
+	return Queue{
+		items:      lane.NewQueue(),
+		BatchEnded: make(chan bool, 1),
+		runner:     runner,
 	}
-	var b bytes.Buffer
-	return &Queue{
-		encoding: &Encoding{
-			lock:    &sync.Mutex{},
-			encoder: gob.NewEncoder(&b),
-			decoder: gob.NewDecoder(&b),
-			buffer:  b,
-		},
-		store: store,
-	}, nil
 }
 
-func (q *Queue) Put(t *task.Task) error {
-	var err error
-	if t.Id == uuid.Nil {
-		t.Id, err = uuid.NewUUID() // it's v1 UUID, with a timestamp
-		if err != nil {
-			return err
+// Len of the current dequeue
+func (q *Queue) Len() int {
+	q.RLock()
+	defer q.RUnlock()
+
+	return q.items.Size()
+}
+
+// Put a new item into the queue and the storage
+func (q *Queue) Put(item *task.Task) {
+	q.Lock()
+	defer q.Unlock()
+	q.items.Enqueue(item)
+
+	if !q.working {
+		q.working = true
+		go q.DequeueWhile()
+	}
+}
+
+// dequeue one item
+func (q *Queue) dequeue() interface{} {
+	q.Lock()
+	defer q.Unlock()
+
+	return q.items.Dequeue()
+}
+
+const maxDequeue = 1
+
+// DequeueWhile start maxDequeue workers while the queue is not empty
+func (q *Queue) DequeueWhile() {
+	workers := make(chan int, maxDequeue)
+
+	for q.items.Head() != nil {
+		workers <- 1
+
+		item := q.dequeue()
+
+		t, ok := item.(*task.Task)
+		if !ok {
+			fmt.Println("error when casting item to task")
+			continue
 		}
-	}
-	raw, err := q.encoding.Encode(t)
-	if err != nil {
-		return err
-	}
-	if err := q.store.Update(func(tx *bbolt.Tx) error {
-		return tx.Bucket([]byte(queue)).Put(t.Id[:], raw)
-	}); err != nil {
-		return err
-	}
 
-	return err
-}
-
-func (q *Queue) Get(id uuid.UUID) (*task.Task, error) {
-	var t *task.Task
-	if err := q.store.View(func(tx *bbolt.Tx) error {
-		v := tx.Bucket([]byte(queue)).Get(id.NodeID())
-		var err error
-		t, err = q.encoding.Decode(v)
-		if err != nil {
-			return err
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return t, nil
-}
-
-func (q *Queue) Length() (int, error) {
-	var size int
-	if err := q.store.View(func(tx *bbolt.Tx) error {
-		size = tx.Bucket([]byte(queue)).Stats().KeyN
-		return nil
-	}); err != nil {
-		return 0, err
-	}
-	return size, nil
-}
-
-func (q *Queue) First(state task.State) (*task.Task, error) {
-	var t *task.Task
-
-	if err := q.store.View(func(tx *bbolt.Tx) error {
-		c := tx.Bucket([]byte(queue)).Cursor()
-		var err2 error
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			t, err2 = q.encoding.Decode(v)
-			if err2 != nil {
-				return err2
+		go func(t *task.Task) {
+			// FIXME: use hook to save task state to jsoh
+			t.State = task.Running
+			ret, err := q.runner.Run(t)
+			if err != nil {
+				fmt.Println(err)
 			}
-			if t.State == state {
-				break
+
+			if ret == 0 {
+				t.State = task.Done
+			} else {
+				t.State = task.Failed
 			}
-		}
-		return nil
-	}); err != nil {
-		return nil, err
+
+			<-workers
+		}(t)
 	}
-	return t, nil
+
+	q.BatchEnded <- true
+
+	q.working = false
 }

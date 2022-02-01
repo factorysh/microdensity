@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/factorysh/microdensity/volumes"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +38,7 @@ func TestCompose(t *testing.T) {
 	assert.NoError(t, err)
 	buff := &bytes.Buffer{}
 
-	err = cr.Prepare(map[string]string{}, microdensityVolumesRoot)
+	err = cr.Prepare(map[string]string{}, microdensityVolumesRoot, uuid.New())
 	assert.NoError(t, err)
 	rcode, err := cr.Run(&MockupReaderCloser{buff}, os.Stderr)
 	assert.NoError(t, err)
@@ -54,7 +55,7 @@ func TestCompose(t *testing.T) {
 	buff.Reset()
 	err = cr.Prepare(map[string]string{
 		"HELLO": "Bob",
-	}, microdensityVolumesRoot)
+	}, microdensityVolumesRoot, uuid.New())
 	assert.NoError(t, err)
 	rcode, err = cr.Run(&MockupReaderCloser{buff}, os.Stderr)
 	assert.NoError(t, err)

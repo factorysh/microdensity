@@ -12,10 +12,13 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/render v1.0.1
 	github.com/google/uuid v1.3.0
-	github.com/narqo/go-badge v0.0.0-20220127184443-140af28a266e
+	github.com/narqo/go-badge v0.0.0-20210814192603-33684e887a6d
+	github.com/oleiade/lane v1.0.1
 	github.com/stretchr/testify v1.7.0
 	go.etcd.io/bbolt v1.3.6
+	go.uber.org/zap v1.20.0
 	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
 require (
@@ -105,7 +108,6 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/zap v1.20.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
@@ -120,7 +122,6 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	gotest.tools/v3 v3.1.0 // indirect
 	k8s.io/apimachinery v0.21.0 // indirect
 	k8s.io/client-go v0.21.0 // indirect

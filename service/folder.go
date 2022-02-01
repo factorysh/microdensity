@@ -14,7 +14,7 @@ var _ Service = (*FolderService)(nil)
 
 type FolderService struct {
 	name string
-	qeue *queue.Queue
+	qeue *queue.Storage
 }
 
 func NewFolder(_path string) (*FolderService, error) {

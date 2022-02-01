@@ -118,12 +118,9 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 
 }
 
-func (c *ComposeRun) Prepare(args map[string]string, volumesRoot string) error {
+func (c *ComposeRun) Prepare(args map[string]string, volumesRoot string, id uuid.UUID) error {
 	var err error
-	c.id, err = uuid.NewUUID()
-	if err != nil {
-		return err
-	}
+	c.id = id
 	c.runCtx = context.TODO()
 	details := types.ConfigDetails{
 		WorkingDir: c.details.WorkingDir,
