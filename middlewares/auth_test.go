@@ -68,7 +68,7 @@ func TestRESTAuthJWT(t *testing.T) {
 		assert.NoError(t, err)
 		signer, err := jwt.NewSignerRS(jwt.RS256, a.key)
 		assert.NoError(t, err)
-		token, err := jwt.NewBuilder(signer).Build(a.claim)
+		token, err := jwt.NewBuilder(signer, jwt.WithKeyID(mockup.Kid(&privateRSA1024.PublicKey))).Build(a.claim)
 		assert.NoError(t, err)
 		r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		res, err = client.Do(r)
