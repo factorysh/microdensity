@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/cristalhq/jwt/v3"
-	"github.com/factorysh/microdensity/claims"
+	_claims "github.com/factorysh/microdensity/claims"
 	"github.com/factorysh/microdensity/httpcontext"
 	"github.com/getsentry/sentry-go"
 	"go.uber.org/zap"
@@ -44,15 +44,15 @@ func (j *JWTAuthenticator) Middleware(isBlocking bool) func(next http.Handler) h
 				}
 				l = l.With(zap.ByteString("payload", token.Payload()))
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.JWT, token))
-				var payload claims.Claims
-				err = json.Unmarshal(token.Payload(), &payload)
+				var claims _claims.Claims
+				err = json.Unmarshal(token.RawClaims(), &claims)
 				if err != nil {
 					l.Warn("rotten payload",
 						zap.Error(err))
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				}
-				user := payload.Owner
+				user := claims.Owner
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.User, user))
 			} else {
 				l.Info("No JWT token, but it's not blocking")
@@ -70,5 +70,5 @@ func getJWTToken(r *http.Request) (*jwt.Token, error) {
 	if p == "" {
 		return nil, nil
 	}
-	return jwt.Parse([]byte(p))
+	return jwt.ParseString(p)
 }
