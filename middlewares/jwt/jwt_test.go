@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -10,10 +11,10 @@ import (
 )
 
 func TestJWK(t *testing.T) {
-	srv := httptest.NewServer(mockup.GitlabJWK(&privateRSA1024.PublicKey))
+	gitlab := httptest.NewServer(mockup.GitlabJWK(&privateRSA1024.PublicKey))
+	defer gitlab.Close()
 
-	defer srv.Close()
-	a, err := NewJWTAuthenticator(srv.URL)
+	a, err := NewJWTAuthenticator(gitlab.URL)
 	assert.NoError(t, err)
 	token, err := BuildJWT(privateRSA1024, map[string]interface{}{
 		"name": "Bob",
@@ -22,6 +23,12 @@ func TestJWK(t *testing.T) {
 	fmt.Println("claims", string(token.RawClaims()))
 	err = a.Validate(token)
 	assert.NoError(t, err)
+
+	brokenGitlab := httptest.NewServer(http.NewServeMux())
+	defer brokenGitlab.Close()
+	_, err = NewJWTAuthenticator(brokenGitlab.URL)
+	assert.Error(t, err)
+
 }
 
 var (

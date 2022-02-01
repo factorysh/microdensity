@@ -29,6 +29,10 @@ func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
 		l.Error("can't fetch Gitlab's jwks", zap.Error(err))
 		return nil, err
 	}
+	if r.StatusCode != http.StatusOK {
+		l.Error("can't fetch Gitlab's jwks", zap.Int("status", r.StatusCode))
+		return nil, fmt.Errorf("GET jwks bad status: %d", r.StatusCode)
+	}
 	defer r.Body.Close()
 
 	var j JWTAuthenticator
