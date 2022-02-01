@@ -36,7 +36,7 @@ func (j *JWTAuthenticator) Handler(isBlocking bool) func(next http.Handler) http
 						scope.SetExtra("jwt", token.RawClaims())
 					})
 				}
-				err = j.Validate(token)
+				err = j.VerifySignature(token)
 				if err != nil {
 					l.Warn("rotten token", zap.Error(err))
 					w.WriteHeader(http.StatusBadRequest)

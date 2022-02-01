@@ -68,7 +68,7 @@ func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
 	return &j, err
 }
 
-func (j *JWTAuthenticator) Validate(t *_jwt.Token) error {
+func (j *JWTAuthenticator) VerifySignature(t *_jwt.Token) error {
 	l := j.logger.With(zap.ByteString("jwt", t.Raw()))
 	for _, k := range j.Key(t.Header().KeyID) {
 		if k.Algorithm != t.Header().Algorithm.String() {
@@ -88,14 +88,14 @@ func (j *JWTAuthenticator) Validate(t *_jwt.Token) error {
 	return err
 }
 
-func (j *JWTAuthenticator) ParseAndValidate(jwtRaw string) (*_jwt.Token, error) {
+func (j *JWTAuthenticator) ParseAndVerifySignature(jwtRaw string) (*_jwt.Token, error) {
 	token, err := _jwt.ParseString(jwtRaw)
 	if err != nil {
 		j.logger.Warn("Can't parse JWT", zap.Error(err))
 		return nil, err
 	}
 
-	err = j.Validate(token)
+	err = j.VerifySignature(token)
 	if err != nil {
 		return nil, err
 	}

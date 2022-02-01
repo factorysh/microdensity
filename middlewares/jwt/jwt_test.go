@@ -21,7 +21,7 @@ func TestJWK(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	fmt.Println("claims", string(token.RawClaims()))
-	err = a.Validate(token)
+	err = a.VerifySignature(token)
 	assert.NoError(t, err)
 
 	brokenGitlab := httptest.NewServer(http.NewServeMux())
