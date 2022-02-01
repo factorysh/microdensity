@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/dop251/goja"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/task"
@@ -18,7 +19,7 @@ type FolderService struct {
 	name      string
 	qeue      *queue.Storage
 	jsruntime *goja.Runtime
-	validate  func(map[string]interface{}) map[string]interface{}
+	validate  func(map[string]interface{}) (map[string]interface{}, error)
 }
 
 func NewFolder(_path string) (*FolderService, error) {
@@ -45,6 +46,9 @@ func NewFolder(_path string) (*FolderService, error) {
 		}
 	} else {
 		vm := goja.New()
+		vm.Set("debug", func(a interface{}) {
+			spew.Dump(a)
+		})
 		src, err := ioutil.ReadFile(jsPath)
 		if err != nil {
 			return nil, err

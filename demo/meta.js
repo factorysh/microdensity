@@ -1,11 +1,11 @@
-let onlyLetters = new RegExp('^[a-zA-Z]+$/');
+var onlyLetters = /^\w+$/i ;
 
 function validate(param) {
     if (!('HELLO' in param)) {
         throw('HELLO argument is mandatory');
     }
-    /*if ( onlyLetters.search(param.HELLO) != -1) {
+    if ( ! onlyLetters.test(param.HELLO)) {
         throw('HELLO is only letters');
-    }*/
+    }
     return param;
 }
