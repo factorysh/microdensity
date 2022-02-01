@@ -1,11 +1,18 @@
 var onlyLetters = /^\w+$/i ;
 
-function validate(param) {
-    if (!('HELLO' in param)) {
+function validate(params) {
+    if (!('HELLO' in params)) {
         throw('HELLO argument is mandatory');
     }
-    if ( ! onlyLetters.test(param.HELLO)) {
-        throw('HELLO is only letters');
+    if ( ! onlyLetters.test(params.HELLO)) {
+        throw(`HELLO is only letters : [${params.HELLO}]`);
     }
-    return param;
+    return {
+        environments: {
+            HELLO: params.HELLO
+        },
+        files: {
+            'hello.txt': `Hello ${params.HELLO}`
+        }
+    };
 }

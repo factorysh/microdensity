@@ -19,7 +19,12 @@ type FolderService struct {
 	name      string
 	qeue      *queue.Storage
 	jsruntime *goja.Runtime
-	validate  func(map[string]interface{}) (map[string]interface{}, error)
+	validate  func(map[string]interface{}) (Arguments, error)
+}
+
+type Arguments struct {
+	Environments map[string]string `json:"environments"`
+	Files        map[string]string `json:"files"`
 }
 
 func NewFolder(_path string) (*FolderService, error) {
@@ -46,6 +51,7 @@ func NewFolder(_path string) (*FolderService, error) {
 		}
 	} else {
 		vm := goja.New()
+		vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 		vm.Set("debug", func(a interface{}) {
 			spew.Dump(a)
 		})
