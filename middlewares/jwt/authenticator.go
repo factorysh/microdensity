@@ -93,6 +93,11 @@ func (j *JWTAuthenticator) VerifySignature(t *_jwt.Token) error {
 			l.Error("Expired", zap.Error(err))
 			return err
 		}
+		if claims.NotBefore != nil && claims.NotBefore.Local().After(time.Now()) {
+			err = fmt.Errorf("not before token %v", claims.NotBefore.Time)
+			l.Error("Not before", zap.Error(err))
+			return err
+		}
 		return nil
 	}
 	err := fmt.Errorf("can't authenticate key %v", t)
