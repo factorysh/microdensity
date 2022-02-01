@@ -42,7 +42,6 @@ func New(q *queue.Storage, secret string, volumePath string) (*Application, erro
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Use(middlewares.Tokens())
 	jwtAuth, err := middlewares.NewJWTAuthenticator(gitlab)
 	if err != nil {
 		return nil, err

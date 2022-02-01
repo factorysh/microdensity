@@ -11,7 +11,6 @@ import (
 
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/gitlab"
-	"github.com/factorysh/microdensity/middlewares"
 	"github.com/factorysh/microdensity/middlewares/project"
 	"github.com/factorysh/microdensity/oauth"
 	"github.com/factorysh/microdensity/sessions"
@@ -61,7 +60,6 @@ func TestOAuthPass(t *testing.T) {
 	s.Put("session", "access", time.Now().Add(10*time.Minute), &gitlab.DummyProject)
 	router := chi.NewRouter()
 	router.Route("/{project}", func(r chi.Router) {
-		r.Use(middlewares.Tokens())
 		r.Use(OAuth2(&conf.OAuthConf{
 			ProviderURL: mockUP.URL,
 			AppID:       "id",
