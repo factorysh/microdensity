@@ -7,7 +7,7 @@ import (
 )
 
 type Conf struct {
-	Issuer      string
+	Issuer      string    // FIXME what the hell is an issuer?
 	OAuth       OAuthConf `yaml:"OAuth"`
 	Services    string    `yaml:"service"` // Service folder
 	Queue       string    `yaml:"queue"`   // Queue path
