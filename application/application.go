@@ -11,6 +11,7 @@ import (
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/sessions"
+	"github.com/factorysh/microdensity/version"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
@@ -90,7 +91,7 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
   \___|_| |_|\___|\___|_|\_\ |_| |_| |_|\__, |   \_/\_/ \___|_.__/
                                          |___/
 		`))
-		fmt.Fprintf(w, "Version: %s", sentry.Version)
+		fmt.Fprintf(w, "Version: %s", version.Version)
 	})
 
 	r.Get("/services", a.services)
