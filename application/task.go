@@ -41,7 +41,7 @@ func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	s := r.Context().Value("service").(_service.Service)
-	err = s.Validate(args)
+	_, err = s.Validate(args)
 	if err != nil {
 		l.Warn("Validation error", zap.Error(err))
 		w.WriteHeader(400)

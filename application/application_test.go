@@ -18,6 +18,7 @@ import (
 	"github.com/factorysh/microdensity/claims"
 	_jwt "github.com/factorysh/microdensity/middlewares/jwt"
 	"github.com/factorysh/microdensity/mockup"
+	"github.com/factorysh/microdensity/service"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,8 +31,8 @@ func (n *NaiveService) Name() string {
 	return n.name
 }
 
-func (n *NaiveService) Validate(map[string]interface{}) error {
-	return nil
+func (n *NaiveService) Validate(map[string]interface{}) (service.Arguments, error) {
+	return service.Arguments{}, nil
 }
 
 func (n *NaiveService) New(project string, args map[string]interface{}) (uuid.UUID, error) {

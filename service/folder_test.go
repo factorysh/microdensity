@@ -17,7 +17,7 @@ func TestValidate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Alice", v.Environments["HELLO"], v)
 	assert.Equal(t, "Hello Alice", v.Files["hello.txt"])
-	_, err = service.validate(map[string]interface{}{
+	_, err = service.Validate(map[string]interface{}{
 		"HELLO": "Alice Dupont",
 	})
 	assert.Error(t, err)

@@ -5,12 +5,14 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/dop251/goja"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/task"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 var _ Service = (*FolderService)(nil)
@@ -20,6 +22,7 @@ type FolderService struct {
 	qeue      *queue.Storage
 	jsruntime *goja.Runtime
 	validate  func(map[string]interface{}) (Arguments, error)
+	logger    *zap.Logger
 }
 
 type Arguments struct {
@@ -28,18 +31,27 @@ type Arguments struct {
 }
 
 func NewFolder(_path string) (*FolderService, error) {
-	stat, err := os.Stat(_path)
+	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, err
 	}
+	l := logger.With(zap.String("path", _path))
+	stat, err := os.Stat(_path)
+	if err != nil {
+		l.Error("stat", zap.Error(err))
+		return nil, err
+	}
 	if !stat.IsDir() {
+		l.Error("Is not a directory")
 		return nil, fmt.Errorf("%s is not a directory", _path)
 	}
 
 	_, name := path.Split(_path)
 	service := &FolderService{
-		name: name,
+		name:   name,
+		logger: logger,
 	}
+	l = l.With(zap.String("name", name))
 
 	jsPath := path.Join(_path, "meta.js")
 	_, err = os.Stat(jsPath)
@@ -50,6 +62,7 @@ func NewFolder(_path string) (*FolderService, error) {
 			return nil, err
 		}
 	} else {
+		chrono := time.Now()
 		vm := goja.New()
 		vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 		vm.Set("debug", func(a interface{}) {
@@ -67,6 +80,7 @@ func NewFolder(_path string) (*FolderService, error) {
 		if err != nil {
 			return nil, err
 		}
+		l.Info("js is ready", zap.Float64("js cooking time (ms)", float64(time.Since(chrono))/1000000))
 		service.jsruntime = vm
 	}
 
@@ -76,8 +90,10 @@ func NewFolder(_path string) (*FolderService, error) {
 func (f *FolderService) Name() string {
 	return f.name
 }
-func (f *FolderService) Validate(map[string]interface{}) error {
-	return nil
+func (f *FolderService) Validate(args map[string]interface{}) (Arguments, error) {
+	chrono := time.Now()
+	defer f.logger.Info("Validate", zap.String("name", f.name), zap.Float64("validation time (µs)", float64(time.Since(chrono))/1000))
+	return f.validate(args)
 }
 func (f *FolderService) New(project string, args map[string]interface{}) (uuid.UUID, error) {
 	t := &task.Task{
