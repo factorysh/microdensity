@@ -13,8 +13,10 @@ func (a *Application) services(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	ss := make([]string, len(a.Services))
-	for n, service := range a.Services {
-		ss[n] = service.Name()
+	i := 0
+	for _, service := range a.Services {
+		ss[i] = service.Name()
+		i++
 	}
 	err := json.NewEncoder(w).Encode(ss)
 	if err != nil {

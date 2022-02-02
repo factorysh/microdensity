@@ -50,9 +50,9 @@ func TestCreateTask(t *testing.T) {
 	assert.NoError(t, err)
 	a, err := New(q, nil, jwtAuth, dir)
 	assert.NoError(t, err)
-	a.Services = append(a.Services, &NaiveService{
+	a.Services["demo"] = &NaiveService{
 		name: "demo",
-	})
+	}
 
 	ts := httptest.NewServer(a.Router)
 	defer ts.Close()

@@ -14,7 +14,7 @@ import (
 )
 
 type Application struct {
-	Services []service.Service
+	Services map[string]service.Service
 	Router   chi.Router
 	queue    *queue.Storage
 	router   chi.Router
@@ -42,7 +42,7 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
 	r := chi.NewRouter()
 
 	a := &Application{
-		Services: make([]service.Service, 0),
+		Services: make(map[string]service.Service),
 		queue:    q,
 		Router:   r,
 		volumes:  v,
