@@ -2,22 +2,14 @@ package application
 
 import (
 	"bytes"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
-	"os"
 	"testing"
 
-	_jwt "github.com/factorysh/microdensity/middlewares/jwt"
-	"github.com/factorysh/microdensity/mockup"
-	"github.com/factorysh/microdensity/queue"
+	"github.com/factorysh/microdensity/service"
 	"github.com/stretchr/testify/assert"
-	"go.etcd.io/bbolt"
 )
 
 type rc struct {
@@ -29,63 +21,59 @@ func (r *rc) Close() error {
 }
 
 func TestCreateTask(t *testing.T) {
-
-	block, _ := pem.Decode([]byte(applicationPrivateRSA))
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-
-	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
-	defer gitlab.Close()
-
-	jwtAuth, err := _jwt.NewJWTAuthenticator(gitlab.URL)
-	assert.NoError(t, err)
-
-	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
-	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
-	s, err := bbolt.Open(
-		fmt.Sprintf("%s/bbolt.store", dir),
-		0600, &bbolt.Options{})
-	assert.NoError(t, err)
-	q, err := queue.New(s)
-	assert.NoError(t, err)
-	a, err := New(q, nil, jwtAuth, dir)
-	assert.NoError(t, err)
-	a.Services = append(a.Services, &NaiveService{
-		name: "demo",
-	})
-
-	ts := httptest.NewServer(a.Router)
-	defer ts.Close()
-
-	cli := http.Client{}
-	req, err := mkRequest(key)
-	assert.NoError(t, err)
-	req.Method = "POST"
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", ts.URL))
-	assert.NoError(t, err)
-	b := &rc{
-		&bytes.Buffer{},
+	tests := []struct {
+		name         string
+		args         map[string]interface{}
+		createStatus int
+		getStatus    int
+		qLen         int
+	}{
+		{name: "Valid args", qLen: 1, args: map[string]interface{}{"HELLO": "Bob"}, createStatus: http.StatusOK, getStatus: http.StatusOK},
+		{name: "Invalid args", qLen: 0, args: map[string]interface{}{"nop": "Bob"}, createStatus: http.StatusBadRequest, getStatus: http.StatusBadRequest},
 	}
-	err = json.NewEncoder(b).Encode(map[string]interface{}{
-		"name": "Bob",
-	})
-	assert.NoError(t, err)
 
-	req.Body = b
-	r, err := cli.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, 200, r.StatusCode)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, err := service.NewFolder("../demo")
+			assert.NoError(t, err)
 
-	l, err := q.Length()
-	assert.NoError(t, err)
-	assert.Equal(t, 1, l)
+			var services = map[string]service.Service{
+				"demo": svc,
+			}
 
-	req, err = mkRequest(key)
-	assert.NoError(t, err)
-	req.Method = "GET"
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", ts.URL))
-	assert.NoError(t, err)
-	r, err = cli.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, 200, r.StatusCode)
+			key, app, _, q, cleanUp := prepareTestingContext(t, services)
+			defer cleanUp()
+
+			cli := http.Client{}
+			req, err := mkRequest(key)
+			assert.NoError(t, err)
+			req.Method = "POST"
+			req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", app.URL))
+			assert.NoError(t, err)
+			b := &rc{
+				&bytes.Buffer{},
+			}
+			err = json.NewEncoder(b).Encode(tc.args)
+			assert.NoError(t, err)
+
+			req.Body = b
+			r, err := cli.Do(req)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.createStatus, r.StatusCode)
+
+			l, err := q.Length()
+			assert.NoError(t, err)
+			assert.Equal(t, tc.qLen, l)
+
+			req, err = mkRequest(key)
+			assert.NoError(t, err)
+			req.Method = "GET"
+			req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", app.URL))
+			assert.NoError(t, err)
+			r, err = cli.Do(req)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.getStatus, r.StatusCode)
+		})
+	}
+
 }
