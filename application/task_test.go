@@ -21,27 +21,28 @@ func (r *rc) Close() error {
 }
 
 func TestCreateTask(t *testing.T) {
-
-	svc, err := service.NewFolder("../demo")
-	assert.NoError(t, err)
-
-	var services = map[string]service.Service{
-		"demo": svc,
-	}
-
-	key, app, _, q, cleanUp := prepareTestingContext(t, services)
-	defer cleanUp()
-
 	tests := []struct {
 		name   string
 		args   map[string]interface{}
 		status int
 		qLen   int
 	}{
-		{name: "Valid args", qLen: 1, args: map[string]interface{}{"HELLO": "Bob"}, status: http.StatusOK}}
+		{name: "Valid args", qLen: 1, args: map[string]interface{}{"HELLO": "Bob"}, status: http.StatusOK},
+		{name: "Invalid args", qLen: 0, args: map[string]interface{}{"nop": "Bob"}, status: http.StatusBadRequest},
+	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			svc, err := service.NewFolder("../demo")
+			assert.NoError(t, err)
+
+			var services = map[string]service.Service{
+				"demo": svc,
+			}
+
+			key, app, _, q, cleanUp := prepareTestingContext(t, services)
+			defer cleanUp()
+
 			cli := http.Client{}
 			req, err := mkRequest(key)
 			assert.NoError(t, err)
