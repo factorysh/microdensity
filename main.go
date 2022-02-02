@@ -21,6 +21,7 @@ func main() {
 	if configPath == "" {
 		configPath = "/etc/microdensity.yml"
 	}
+	fmt.Println("Config path", configPath)
 	cfg, err := conf.Open(configPath)
 	if err != nil {
 		log.Fatal(err)
