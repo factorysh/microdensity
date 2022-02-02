@@ -21,18 +21,14 @@ func main() {
 	if configPath == "" {
 		configPath = "/etc/microdensity.yml"
 	}
+	fmt.Println("Config path", configPath)
 	cfg, err := conf.Open(configPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	cfg.Defaults()
 
-	oauthConfig, err := conf.NewOAuthConfigFromEnv()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jwtAuth, err := jwt.NewJWTAuthenticator(cfg.JWTSecret)
+	jwtAuth, err := jwt.NewJWTAuthenticator(cfg.JWKProvider)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,7 +44,7 @@ func main() {
 		log.Fatal(err)
 	}
 	// FIXME: path
-	a, err := application.New(q, oauthConfig, jwtAuth, "/tmp/microdensity")
+	a, err := application.New(q, &cfg.OAuth, jwtAuth, "/tmp/microdensity")
 	if err != nil {
 		log.Fatal(err)
 	}

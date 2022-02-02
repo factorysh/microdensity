@@ -7,11 +7,11 @@ import (
 )
 
 type Conf struct {
-	Issuer    string
-	OAuth     OAuthConf `yaml:"OAuth"`
-	Services  string    `yaml:"service"` // Service folder
-	Queue     string    `yaml:"queue"`   // Queue path
-	JWTSecret string    `yaml:"jwt_secret"`
+	Issuer      string
+	OAuth       OAuthConf `yaml:"OAuth"`
+	Services    string    `yaml:"service"` // Service folder
+	Queue       string    `yaml:"queue"`   // Queue path
+	JWKProvider string    `yaml:"jwk_provider"`
 }
 
 func (c *Conf) Defaults() {
