@@ -26,7 +26,7 @@ func New(store *bbolt.DB) (*Storage, error) {
 	}
 
 	if err := store.Update(func(tx *bbolt.Tx) error {
-		_, err := tx.CreateBucket([]byte(queue))
+		_, err := tx.CreateBucketIfNotExists([]byte(queue))
 		if err != nil {
 			logger.Error("Bbolt can't create bucket", zap.String("bucket", queue), zap.Error(err))
 		}
