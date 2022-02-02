@@ -91,7 +91,7 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
   \___|_| |_|\___|\___|_|\_\ |_| |_| |_|\__, |   \_/\_/ \___|_.__/
                                          |___/
 		`))
-		fmt.Fprintf(w, "Version: %s", version.Version)
+		fmt.Fprintf(w, "Version: %s", version.Version())
 	})
 
 	r.Get("/services", a.services)
