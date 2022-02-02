@@ -5,9 +5,11 @@ go 1.17
 require (
 	github.com/compose-spec/compose-go v1.0.9-0.20220101154228-91ed80f52afe
 	github.com/cristalhq/jwt/v3 v3.1.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/cli v20.10.12+incompatible
 	github.com/docker/compose/v2 v2.2.3
 	github.com/docker/docker v20.10.12+incompatible
+	github.com/dop251/goja v0.0.0-20220124171016-cfb079cdc7b4
 	github.com/getsentry/sentry-go v0.12.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/render v1.0.1
@@ -37,7 +39,6 @@ require (
 	github.com/containerd/containerd v1.5.9 // indirect
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/containerd/typeurl v1.0.2 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/distribution/v3 v3.0.0-20210316161203-a01c71e2477e // indirect
 	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
 	github.com/docker/buildx v0.5.2-0.20210422185057-908a856079fc // indirect
@@ -47,7 +48,6 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/dop251/goja v0.0.0-20220124171016-cfb079cdc7b4 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
