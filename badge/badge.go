@@ -3,7 +3,6 @@ package badge
 import (
 	"net/http"
 
-	"github.com/factorysh/microdensity/httpcontext"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -12,7 +11,7 @@ import (
 
 func BadgeMyProject(q *queue.Storage, label string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		project := r.Context().Value(httpcontext.RequestedProject).(string)
+		project := chi.URLParam(r, "project")
 		id := chi.URLParam(r, "id")
 		uid, err := uuid.Parse(id)
 		if err != nil {

@@ -1,9 +1,12 @@
 package application
 
 import (
-	"github.com/factorysh/microdensity/middlewares"
+	"github.com/factorysh/microdensity/conf"
+	"github.com/factorysh/microdensity/middlewares/jwt"
+	jwtoroauth2 "github.com/factorysh/microdensity/middlewares/jwt_or_oauth2"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/service"
+	"github.com/factorysh/microdensity/sessions"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -19,16 +22,25 @@ type Application struct {
 	logger   *zap.Logger
 }
 
-func New(q *queue.Storage, secret string, volumePath string) (*Application, error) {
-	r := chi.NewRouter()
+func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenticator, secret string, volumePath string) (*Application, error) {
+	sessions := sessions.New()
+	err := sessions.Start(15)
+	if err != nil {
+		return nil, err
+	}
+
 	v, err := volumes.New(volumePath)
 	if err != nil {
 		return nil, err
 	}
+
 	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, err
 	}
+
+	r := chi.NewRouter()
+
 	a := &Application{
 		Services: make([]service.Service, 0),
 		queue:    q,
@@ -42,8 +54,11 @@ func New(q *queue.Storage, secret string, volumePath string) (*Application, erro
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Use(middlewares.Tokens())
-	r.Use(middlewares.Auth(secret))
+	authMiddleware, err := jwtoroauth2.NewJWTOrOauth2(jwtAuth, oAuthConfig, &sessions)
+	if err != nil {
+		return nil, err
+	}
+	r.Use(authMiddleware.Middleware())
 
 	r.Get("/services", a.services)
 	r.Route("/service/{serviceID}", func(r chi.Router) {

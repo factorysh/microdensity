@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"time"
 
 	"github.com/factorysh/microdensity/application"
 	"github.com/factorysh/microdensity/conf"
+	"github.com/factorysh/microdensity/middlewares/jwt"
 	"github.com/factorysh/microdensity/queue"
-	_sessions "github.com/factorysh/microdensity/sessions"
 	"github.com/factorysh/microdensity/version"
 	"go.etcd.io/bbolt"
 )
@@ -28,21 +27,15 @@ func main() {
 	}
 	cfg.Defaults()
 
-	sessions := _sessions.New()
-	// prune old sessions every 15 minutes
-	ticker := time.NewTicker(15 * time.Minute)
-	quit := make(chan struct{})
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				sessions.Prune()
-			case <-quit:
-				ticker.Stop()
-				return
-			}
-		}
-	}()
+	oauthConfig, err := conf.NewOAuthConfigFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	jwtAuth, err := jwt.NewJWTAuthenticator(cfg.JWTSecret)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	s, err := bbolt.Open(
 		path.Join(cfg.Queue, "microdensity.store"),
@@ -54,7 +47,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	a, err := application.New(q, cfg.JWTSecret, cfg.Services)
+	a, err := application.New(q, oauthConfig, jwtAuth, cfg.Services, "fixme")
 	if err != nil {
 		log.Fatal(err)
 	}

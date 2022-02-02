@@ -1,4 +1,4 @@
-package middlewares
+package oauth2
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"github.com/factorysh/microdensity/oauth"
 	"github.com/factorysh/microdensity/server"
 	_sessions "github.com/factorysh/microdensity/sessions"
+	"github.com/go-chi/chi/v5"
 )
 
 var (
@@ -23,28 +24,23 @@ var (
 	loginTemplate string
 )
 
-// OAuth will trigger an OAuth flow if no auth token is found see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-flow
-func OAuth(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next http.Handler) http.Handler {
+// OAuth2 will trigger an OAuth2 flow if no auth token is found see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-flow
+func OAuth2(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			project, err := httpcontext.GetRequestedProject(r)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
 
-			// if context contains a JWT token
-			if _, err := httpcontext.GetJWT(r); err == nil {
-				next.ServeHTTP(w, r)
+			project, err := url.QueryUnescape(chi.URLParam(r, "project"))
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
 			// if context contains a session access token
-			if accessToken, err := httpcontext.GetAccessToken(r); err == nil {
+			if accessToken, err := r.Cookie(oauth.SessionCookieName); err == nil && accessToken != nil {
 				// verify token access
-				if sessions.Authorize(accessToken, project) {
+				if sessions.Authorize(accessToken.Value, project) {
 					// if authorized, add value to context
-					ctx := context.WithValue(r.Context(), httpcontext.IsOAuth, true)
+					ctx := context.WithValue(r.Context(), httpcontext.RequestedProject, project)
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}

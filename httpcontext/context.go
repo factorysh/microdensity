@@ -17,6 +17,7 @@ const (
 	IsOAuth Key = "IsOAuth"
 	// RequestedProject is the key used to check requested project from a context
 	RequestedProject Key = "RequestedProject"
+	User             Key = "User"
 )
 
 // GetAccessToken is used to fetch an access token from request context

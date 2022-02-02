@@ -3,6 +3,7 @@ package sessions
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"net/url"
 	"strconv"
 	"sync"
@@ -59,7 +60,8 @@ func (ud *UserData) MatchRequestedProject(requestedProject string) bool {
 // Sessions pool
 type Sessions struct {
 	sync.RWMutex
-	pool map[string]*UserData
+	pool    map[string]*UserData
+	started bool
 }
 
 // Authorize user to access to matching ressource
@@ -115,6 +117,34 @@ func (s *Sessions) Prune() {
 		}
 	}
 	s.Unlock()
+}
+
+// Start will start the session handler in the background and prune expired sessions
+func (s *Sessions) Start(delay uint) error {
+	s.Lock()
+	defer s.Unlock()
+
+	if s.started {
+		return fmt.Errorf("sessions already started and running")
+	}
+
+	s.started = true
+
+	ticker := time.NewTicker(time.Duration(delay) * time.Minute)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				s.Prune()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
+	return nil
 }
 
 // New inits a new sessions struct
