@@ -1,6 +1,7 @@
 package application
 
 import (
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -11,9 +12,11 @@ import (
 	"net/url"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/factorysh/microdensity/claims"
+	_jwt "github.com/factorysh/microdensity/middlewares/jwt"
 	"github.com/factorysh/microdensity/mockup"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -63,10 +66,13 @@ func TestApplication(t *testing.T) {
 	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
 	defer gitlab.Close()
 
+	jwtAuth, err := _jwt.NewJWTAuthenticator(gitlab.URL)
+	assert.NoError(t, err)
+
 	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
-	a, err := New(nil, nil, nil, dir, gitlab.URL)
+	a, err := New(nil, nil, jwtAuth, dir, gitlab.URL)
 	assert.NoError(t, err)
 	a.Services = append(a.Services, &NaiveService{
 		name: "demo",
@@ -77,7 +83,7 @@ func TestApplication(t *testing.T) {
 
 	cli := http.Client{}
 
-	req, err := mkRequest("fixme")
+	req, err := mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
 	req.URL, err = url.Parse(fmt.Sprintf("%s/services", ts.URL))
@@ -92,7 +98,7 @@ func TestApplication(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"demo"}, services)
 
-	req, err = mkRequest("fixme")
+	req, err = mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
 	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo", ts.URL))
@@ -103,28 +109,31 @@ func TestApplication(t *testing.T) {
 	assert.Equal(t, 200, r.StatusCode)
 }
 
-func freshToken(key string) (*jwt.Token, error) {
-	signer, err := jwt.NewSignerHS(jwt.HS256, []byte(key))
+func freshToken(key *rsa.PrivateKey) (*jwt.Token, error) {
+	signer, err := jwt.NewSignerRS(jwt.RS256, key)
 	if err != nil {
 		return nil, err
 	}
-	clm := claims.Claims{
-		UserLogin:   "Bob",
-		ProjectPath: "group/project",
-	}
+	return jwt.NewBuilder(signer,
+		jwt.WithKeyID(mockup.Kid(&key.PublicKey))).Build(
+		claims.Claims{
+			StandardClaims: jwt.StandardClaims{
+				IssuedAt: jwt.NewNumericDate(time.Now()),
+			},
+			UserLogin:   "Bob",
+			ProjectPath: "group/project",
+		})
 
-	builder := jwt.NewBuilder(signer)
-	return builder.Build(clm)
 }
 
-func mkRequest(key string) (*http.Request, error) {
+func mkRequest(key *rsa.PrivateKey) (*http.Request, error) {
 	t, err := freshToken(key)
 	if err != nil {
 		return nil, err
 	}
 	return &http.Request{
 		Header: http.Header{
-			"Authorization": {fmt.Sprintf("Bearer %s", t.String())},
+			"PRIVATE-TOKEN": {t.String()},
 		},
 	}, nil
 }
