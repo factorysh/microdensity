@@ -37,20 +37,24 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
 			return nil, err
 		}
 		logger = zap.New(zapsentry.NewCore(zapcore.ErrorLevel, client))
+		logger.Info("Sentry is set")
 	} else {
 		logger, err = zap.NewProduction()
 		if err != nil {
 			return nil, err
 		}
+		logger.Info("There is no Sentry set")
 	}
 	sessions := sessions.New()
 	err = sessions.Start(15)
 	if err != nil {
+		logger.Error("Session crash", zap.Error(err))
 		return nil, err
 	}
 
 	v, err := volumes.New(volumePath)
 	if err != nil {
+		logger.Error("Volumes crash", zap.Error(err))
 		return nil, err
 	}
 
@@ -71,6 +75,7 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
 
 	authMiddleware, err := jwtoroauth2.NewJWTOrOauth2(jwtAuth, oAuthConfig, &sessions)
 	if err != nil {
+		logger.Error("JWT or OAth2 middleware crash", zap.Error(err))
 		return nil, err
 	}
 	r.Use(authMiddleware.Middleware())
