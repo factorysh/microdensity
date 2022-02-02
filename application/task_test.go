@@ -16,6 +16,7 @@ import (
 	_jwt "github.com/factorysh/microdensity/middlewares/jwt"
 	"github.com/factorysh/microdensity/mockup"
 	"github.com/factorysh/microdensity/queue"
+	"github.com/factorysh/microdensity/service"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/bbolt"
 )
@@ -50,9 +51,9 @@ func TestCreateTask(t *testing.T) {
 	assert.NoError(t, err)
 	a, err := New(q, nil, jwtAuth, dir)
 	assert.NoError(t, err)
-	a.Services["demo"] = &NaiveService{
-		name: "demo",
-	}
+	svc, err := service.NewFolder("../demo")
+	assert.NoError(t, err)
+	a.Services["demo"] = svc
 
 	ts := httptest.NewServer(a.Router)
 	defer ts.Close()
@@ -67,7 +68,7 @@ func TestCreateTask(t *testing.T) {
 		&bytes.Buffer{},
 	}
 	err = json.NewEncoder(b).Encode(map[string]interface{}{
-		"name": "Bob",
+		"HELLO": "Bob",
 	})
 	assert.NoError(t, err)
 

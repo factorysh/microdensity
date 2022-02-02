@@ -8,7 +8,6 @@ import (
 	"time"
 
 	_claims "github.com/factorysh/microdensity/claims"
-	_service "github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -17,12 +16,20 @@ import (
 )
 
 func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
-	service := chi.URLParam(r, "serviceID")
+	serviceID := chi.URLParam(r, "serviceID")
 	project := chi.URLParam(r, "project")
 	l := a.logger.With(
-		zap.String("service", service),
+		zap.String("service", serviceID),
 		zap.String("project", project),
 	)
+
+	// get the service interface for the requested service
+	service, found := a.Services[serviceID]
+	if !found {
+		l.Warn("Requested service not found", zap.String("serviceID", serviceID))
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
 	claims, err := _claims.FromCtx(r.Context())
 	if err != nil {
 		l.Warn("Claims error", zap.Error(err))
@@ -40,8 +47,9 @@ func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 		l.Warn("Body JSON decode error", zap.Error(err))
 		panic(err)
 	}
-	s := r.Context().Value("service").(_service.Service)
-	_, err = s.Validate(args)
+
+	// validate the arguments
+	_, err = service.Validate(args)
 	if err != nil {
 		l.Warn("Validation error", zap.Error(err))
 		w.WriteHeader(400)
@@ -56,7 +64,7 @@ func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 	l = l.With(zap.String("id", id.String()))
 	t := &task.Task{
 		Id:       id,
-		Service:  service,
+		Service:  serviceID,
 		Project:  project,
 		Branch:   chi.URLParam(r, "branch"),
 		Commit:   chi.URLParam(r, "commit"),
