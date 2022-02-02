@@ -72,10 +72,10 @@ func (c *Claims) ToCtx(in context.Context) context.Context {
 
 // FromCtx extract a user from a context
 func FromCtx(ctx context.Context) (*Claims, error) {
-	u, ok := ctx.Value(claimsKey).(Claims)
+	c, ok := ctx.Value(claimsKey).(Claims)
 	if !ok {
-		return nil, errors.New("No user in this context")
+		return nil, errors.New("No claim found in this context")
 	}
 
-	return &u, nil
+	return &c, nil
 }

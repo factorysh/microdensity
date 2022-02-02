@@ -52,6 +52,7 @@ func (j *JWTAuthenticator) Handler(isBlocking bool) func(next http.Handler) http
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				}
+				r = r.WithContext(claims.ToCtx(r.Context()))
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.User, claims.UserLogin))
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.RequestedProject, claims.ProjectPath))
 			} else {
