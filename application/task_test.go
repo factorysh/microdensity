@@ -2,23 +2,14 @@ package application
 
 import (
 	"bytes"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
-	"os"
 	"testing"
 
-	_jwt "github.com/factorysh/microdensity/middlewares/jwt"
-	"github.com/factorysh/microdensity/mockup"
-	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/service"
 	"github.com/stretchr/testify/assert"
-	"go.etcd.io/bbolt"
 )
 
 type rc struct {
@@ -31,38 +22,21 @@ func (r *rc) Close() error {
 
 func TestCreateTask(t *testing.T) {
 
-	block, _ := pem.Decode([]byte(applicationPrivateRSA))
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-
-	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
-	defer gitlab.Close()
-
-	jwtAuth, err := _jwt.NewJWTAuthenticator(gitlab.URL)
-	assert.NoError(t, err)
-
-	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
-	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
-	s, err := bbolt.Open(
-		fmt.Sprintf("%s/bbolt.store", dir),
-		0600, &bbolt.Options{})
-	assert.NoError(t, err)
-	q, err := queue.New(s)
-	assert.NoError(t, err)
-	a, err := New(q, nil, jwtAuth, dir)
-	assert.NoError(t, err)
 	svc, err := service.NewFolder("../demo")
 	assert.NoError(t, err)
-	a.Services["demo"] = svc
 
-	ts := httptest.NewServer(a.Router)
-	defer ts.Close()
+	var services = map[string]service.Service{
+		"demo": svc,
+	}
+
+	key, app, _, q, cleanUp := prepareTestingContext(t, services)
+	defer cleanUp()
 
 	cli := http.Client{}
 	req, err := mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = "POST"
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", ts.URL))
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", app.URL))
 	assert.NoError(t, err)
 	b := &rc{
 		&bytes.Buffer{},
@@ -84,7 +58,7 @@ func TestCreateTask(t *testing.T) {
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = "GET"
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", ts.URL))
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", app.URL))
 	assert.NoError(t, err)
 	r, err = cli.Do(req)
 	assert.NoError(t, err)

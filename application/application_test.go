@@ -18,9 +18,11 @@ import (
 	"github.com/factorysh/microdensity/claims"
 	_jwt "github.com/factorysh/microdensity/middlewares/jwt"
 	"github.com/factorysh/microdensity/mockup"
+	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/service"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"go.etcd.io/bbolt"
 )
 
 type NaiveService struct {
@@ -61,53 +63,78 @@ bhfhLtK7l19RUDS9g702dcr+z7UxZS97SztCWyEO/mjs
 
 func TestApplication(t *testing.T) {
 
-	block, _ := pem.Decode([]byte(applicationPrivateRSA))
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-
-	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
-	defer gitlab.Close()
-
-	jwtAuth, err := _jwt.NewJWTAuthenticator(gitlab.URL)
-	assert.NoError(t, err)
-
-	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
-	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
-	a, err := New(nil, nil, jwtAuth, dir)
-	assert.NoError(t, err)
-	a.Services["demo"] = &NaiveService{
-		name: "demo",
+	var services = map[string]service.Service{
+		"demo": &NaiveService{
+			name: "demo",
+		},
 	}
-
-	ts := httptest.NewServer(a.Router)
-	defer ts.Close()
+	key, app, _, _, cleanUp := prepareTestingContext(t, services)
+	defer cleanUp()
 
 	cli := http.Client{}
-
 	req, err := mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
-	req.URL, err = url.Parse(fmt.Sprintf("%s/services", ts.URL))
+	req.URL, err = url.Parse(fmt.Sprintf("%s/services", app.URL))
 	assert.NoError(t, err)
 
 	r, err := cli.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, 200, r.StatusCode)
 	dec := json.NewDecoder(r.Body)
-	var services []string
-	err = dec.Decode(&services)
+	var servicesList []string
+	err = dec.Decode(&servicesList)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"demo"}, services)
+	assert.Equal(t, []string{"demo"}, servicesList)
 
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo", ts.URL))
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo", app.URL))
 	assert.NoError(t, err)
 
 	r, err = cli.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, 200, r.StatusCode)
+}
+
+func prepareTestingContext(t *testing.T, services map[string]service.Service) (key *rsa.PrivateKey,
+	app *httptest.Server,
+	gitlab *httptest.Server,
+	q *queue.Storage,
+	cleanUp func()) {
+	block, _ := pem.Decode([]byte(applicationPrivateRSA))
+	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	assert.NoError(t, err)
+
+	gitlab = httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
+
+	jwtAuth, err := _jwt.NewJWTAuthenticator(gitlab.URL)
+	assert.NoError(t, err)
+
+	volDir, err := ioutil.TempDir(os.TempDir(), "volumes")
+	assert.NoError(t, err)
+
+	queueDir, err := ioutil.TempDir(os.TempDir(), "queue-")
+	assert.NoError(t, err)
+	s, err := bbolt.Open(
+		fmt.Sprintf("%s/bbolt.store", queueDir),
+		0600, &bbolt.Options{})
+	assert.NoError(t, err)
+	q, err = queue.New(s)
+
+	a, err := New(q, nil, jwtAuth, volDir)
+	assert.NoError(t, err)
+	a.Services = services
+
+	app = httptest.NewServer(a.Router)
+
+	return key, app, gitlab, q, func() {
+		os.RemoveAll(volDir)
+		os.RemoveAll(queueDir)
+		gitlab.Close()
+		app.Close()
+	}
 }
 
 func freshToken(key *rsa.PrivateKey) (*jwt.Token, error) {
