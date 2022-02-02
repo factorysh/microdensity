@@ -48,7 +48,7 @@ func TestCreateTask(t *testing.T) {
 	assert.NoError(t, err)
 	q, err := queue.New(s)
 	assert.NoError(t, err)
-	a, err := New(q, nil, jwtAuth, dir, gitlab.URL)
+	a, err := New(q, nil, jwtAuth, dir)
 	assert.NoError(t, err)
 	a.Services = append(a.Services, &NaiveService{
 		name: "demo",

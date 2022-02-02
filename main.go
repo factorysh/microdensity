@@ -47,7 +47,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	a, err := application.New(q, oauthConfig, jwtAuth, cfg.Services, "fixme")
+	// FIXME: path
+	a, err := application.New(q, oauthConfig, jwtAuth, "/tmp/microdensity")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -22,7 +22,7 @@ type Application struct {
 	logger   *zap.Logger
 }
 
-func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenticator, secret string, volumePath string) (*Application, error) {
+func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenticator, volumePath string) (*Application, error) {
 	sessions := sessions.New()
 	err := sessions.Start(15)
 	if err != nil {
