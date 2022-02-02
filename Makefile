@@ -10,7 +10,6 @@ TESTS= github.com/factorysh/microdensity/task \
 		github.com/factorysh/microdensity/middlewares/project\
 		github.com/factorysh/microdensity/middlewares/oauth2 \
 		github.com/factorysh/microdensity/middlewares \
-		github.com/factorysh/microdensity/queue \
 		github.com/factorysh/microdensity/sessions \
 		github.com/factorysh/microdensity/badge \
 		github.com/factorysh/microdensity/application \
@@ -23,4 +22,5 @@ test:
 
 test-all:
 	go test --cover ${TESTS} \
-		github.com/factorysh/microdensity/run
+		github.com/factorysh/microdensity/run \
+		github.com/factorysh/microdensity/queue \
