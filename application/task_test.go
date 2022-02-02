@@ -28,8 +28,14 @@ func TestCreateTask(t *testing.T) {
 		getStatus    int
 		qLen         int
 	}{
-		{name: "Valid args", qLen: 1, args: map[string]interface{}{"HELLO": "Bob"}, createStatus: http.StatusOK, getStatus: http.StatusOK},
-		{name: "Invalid args", qLen: 0, args: map[string]interface{}{"nop": "Bob"}, createStatus: http.StatusBadRequest, getStatus: http.StatusBadRequest},
+		{name: "Valid args",
+			qLen: 1, args: map[string]interface{}{"HELLO": "Bob"},
+			createStatus: http.StatusOK,
+			getStatus:    http.StatusOK},
+		{name: "Invalid args", qLen: 0,
+			args:         map[string]interface{}{"nop": "Bob"},
+			createStatus: http.StatusBadRequest,
+			getStatus:    http.StatusBadRequest},
 	}
 
 	for _, tc := range tests {
