@@ -1,6 +1,8 @@
 package application
 
 import (
+	"os"
+
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares/jwt"
 	jwtoroauth2 "github.com/factorysh/microdensity/middlewares/jwt_or_oauth2"
@@ -8,9 +10,12 @@ import (
 	"github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/sessions"
 	"github.com/factorysh/microdensity/volumes"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/tchap/zapext/v2/zapsentry"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type Application struct {
@@ -23,18 +28,28 @@ type Application struct {
 }
 
 func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenticator, volumePath string) (*Application, error) {
+	var logger *zap.Logger
+	var err error
+	dsn := os.Getenv("SENTRY_DSN")
+	if dsn != "" {
+		client, err := sentry.NewClient(sentry.ClientOptions{Dsn: dsn})
+		if err != nil {
+			return nil, err
+		}
+		logger = zap.New(zapsentry.NewCore(zapcore.ErrorLevel, client))
+	} else {
+		logger, err = zap.NewProduction()
+		if err != nil {
+			return nil, err
+		}
+	}
 	sessions := sessions.New()
-	err := sessions.Start(15)
+	err = sessions.Start(15)
 	if err != nil {
 		return nil, err
 	}
 
 	v, err := volumes.New(volumePath)
-	if err != nil {
-		return nil, err
-	}
-
-	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, err
 	}
