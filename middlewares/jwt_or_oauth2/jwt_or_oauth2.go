@@ -45,7 +45,7 @@ func (j *JWTOrOAuth2) Middleware() func(next http.Handler) http.Handler {
 				} else {
 					next.ServeHTTP(w, r)
 				}
-			}))
+			})).ServeHTTP(w, r)
 		})
 	}
 }
