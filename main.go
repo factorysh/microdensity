@@ -33,20 +33,22 @@ func main() {
 		log.Fatal(err)
 	}
 
+	storePath := path.Join(cfg.Queue, "microdensity.store")
+	fmt.Println("bbolt path", storePath)
 	s, err := bbolt.Open(
-		path.Join(cfg.Queue, "microdensity.store"),
+		storePath,
 		0600, &bbolt.Options{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("bbolt error", err)
 	}
 	q, err := queue.New(s)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Queue error", err)
 	}
 	// FIXME: path
 	a, err := application.New(q, &cfg.OAuth, jwtAuth, "/tmp/microdensity")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Application crash", err)
 	}
 	http.ListenAndServe("127.0.0.1:3000", a.Router)
 }
