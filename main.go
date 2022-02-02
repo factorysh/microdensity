@@ -50,5 +50,6 @@ func main() {
 	if err != nil {
 		log.Fatal("Application crash", err)
 	}
-	http.ListenAndServe("127.0.0.1:3000", a.Router)
+	fmt.Println("Listen", cfg.Listen)
+	http.ListenAndServe(cfg.Listen, a.Router)
 }

@@ -12,6 +12,7 @@ type Conf struct {
 	Services    string    `yaml:"service"` // Service folder
 	Queue       string    `yaml:"queue"`   // Queue path
 	JWKProvider string    `yaml:"jwk_provider"`
+	Listen      string    `yaml:"listen"` // http listen address
 }
 
 func (c *Conf) Defaults() {
@@ -20,6 +21,9 @@ func (c *Conf) Defaults() {
 	}
 	if c.Queue == "" {
 		c.Queue = "/var/lib/microdensity/queue"
+	}
+	if c.Listen == "" {
+		c.Listen = "127.0.0.1:3000"
 	}
 }
 
