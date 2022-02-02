@@ -1,8 +1,6 @@
 package application
 
 import (
-	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/factorysh/microdensity/conf"
@@ -11,7 +9,6 @@ import (
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/sessions"
-	"github.com/factorysh/microdensity/version"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
@@ -81,18 +78,7 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
 		logger.Error("JWT or OAth2 middleware crash", zap.Error(err))
 		return nil, err
 	}
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("content-type", "text/plain")
-		w.Write([]byte(`
-       _               _                                     _
-   ___| |__   ___  ___| | __  _ __ ___  _   _  __      _____| |__
-  / __| '_ \ / _ \/ __| |/ / | '_ ' _ \| | | | \ \ /\ / / _ \ '_ \
- | (__| | | |  __/ (__|   <  | | | | | | |_| |  \ V  V /  __/ |_) |
-  \___|_| |_|\___|\___|_|\_\ |_| |_| |_|\__, |   \_/\_/ \___|_.__/
-                                         |___/
-		`))
-		fmt.Fprintf(w, "Version: %s", version.Version())
-	})
+	r.Get("/", HomeHandler)
 
 	r.Get("/services", a.services)
 	r.Route("/service/{serviceID}", func(r chi.Router) {
