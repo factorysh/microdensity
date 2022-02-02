@@ -14,13 +14,13 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/render v1.0.1
 	github.com/google/uuid v1.3.0
-	github.com/narqo/go-badge v0.0.0-20210814192603-33684e887a6d
+	github.com/narqo/go-badge v0.0.0-20220127184443-140af28a266e
 	github.com/oleiade/lane v1.0.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tchap/zapext/v2 v2.1.1
 	go.etcd.io/bbolt v1.3.6
 	go.uber.org/zap v1.20.0
-	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
@@ -118,7 +118,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
-	golang.org/x/term v0.0.0-20210503060354-a79de5458b56 // indirect
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	google.golang.org/appengine v1.6.7 // indirect
