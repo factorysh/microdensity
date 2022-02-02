@@ -66,7 +66,7 @@ func TestApplication(t *testing.T) {
 	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
-	a, err := New(nil, gitlab.URL, dir)
+	a, err := New(nil, nil, nil, dir, gitlab.URL)
 	assert.NoError(t, err)
 	a.Services = append(a.Services, &NaiveService{
 		name: "demo",

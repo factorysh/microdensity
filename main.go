@@ -9,6 +9,7 @@ import (
 
 	"github.com/factorysh/microdensity/application"
 	"github.com/factorysh/microdensity/conf"
+	"github.com/factorysh/microdensity/middlewares/jwt"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/version"
 	"go.etcd.io/bbolt"
@@ -31,6 +32,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	jwtAuth, err := jwt.NewJWTAuthenticator(cfg.JWTSecret)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	s, err := bbolt.Open(
 		path.Join(cfg.Queue, "microdensity.store"),
 		0600, &bbolt.Options{})
@@ -41,7 +47,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	a, err := application.New(q, oauthConfig, cfg.JWTSecret, cfg.Services, "fixme")
+	a, err := application.New(q, oauthConfig, jwtAuth, cfg.Services, "fixme")
 	if err != nil {
 		log.Fatal(err)
 	}
