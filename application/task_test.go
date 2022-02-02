@@ -22,13 +22,14 @@ func (r *rc) Close() error {
 
 func TestCreateTask(t *testing.T) {
 	tests := []struct {
-		name   string
-		args   map[string]interface{}
-		status int
-		qLen   int
+		name         string
+		args         map[string]interface{}
+		createStatus int
+		getStatus    int
+		qLen         int
 	}{
-		{name: "Valid args", qLen: 1, args: map[string]interface{}{"HELLO": "Bob"}, status: http.StatusOK},
-		{name: "Invalid args", qLen: 0, args: map[string]interface{}{"nop": "Bob"}, status: http.StatusBadRequest},
+		{name: "Valid args", qLen: 1, args: map[string]interface{}{"HELLO": "Bob"}, createStatus: http.StatusOK, getStatus: http.StatusOK},
+		{name: "Invalid args", qLen: 0, args: map[string]interface{}{"nop": "Bob"}, createStatus: http.StatusBadRequest, getStatus: http.StatusBadRequest},
 	}
 
 	for _, tc := range tests {
@@ -58,22 +59,20 @@ func TestCreateTask(t *testing.T) {
 			req.Body = b
 			r, err := cli.Do(req)
 			assert.NoError(t, err)
-			assert.Equal(t, tc.status, r.StatusCode)
+			assert.Equal(t, tc.createStatus, r.StatusCode)
 
 			l, err := q.Length()
 			assert.NoError(t, err)
 			assert.Equal(t, tc.qLen, l)
 
-			if tc.status == http.StatusOK {
-				req, err = mkRequest(key)
-				assert.NoError(t, err)
-				req.Method = "GET"
-				req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", app.URL))
-				assert.NoError(t, err)
-				r, err = cli.Do(req)
-				assert.NoError(t, err)
-				assert.Equal(t, tc.status, r.StatusCode)
-			}
+			req, err = mkRequest(key)
+			assert.NoError(t, err)
+			req.Method = "GET"
+			req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", app.URL))
+			assert.NoError(t, err)
+			r, err = cli.Do(req)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.getStatus, r.StatusCode)
 		})
 	}
 
