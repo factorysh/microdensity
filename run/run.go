@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Context is a run context, with a STDOUT and a STDERR
 type Context struct {
 	Stdout io.WriteCloser
 	Stderr io.WriteCloser
@@ -30,7 +31,6 @@ type Runner struct {
 }
 
 func NewRunner(servicesDir string, volumesRoot string) (*Runner, error) {
-
 	v, err := volumes.New(volumesRoot)
 	if err != nil {
 		return nil, err
@@ -41,14 +41,6 @@ func NewRunner(servicesDir string, volumesRoot string) (*Runner, error) {
 		servicesDir: servicesDir,
 		volumes:     v,
 	}, nil
-}
-
-type ClosingBuffer struct {
-	*bytes.Buffer
-}
-
-func (c *ClosingBuffer) Close() error {
-	return nil
 }
 
 // Prepare the run
