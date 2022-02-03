@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/factorysh/microdensity/run"
+	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/task"
 	"github.com/oleiade/lane"
 )
@@ -14,16 +15,18 @@ type Queue struct {
 	sync.RWMutex
 	items      *lane.Queue
 	runner     *run.Runner
+	storage    storage.Storage
 	BatchEnded chan bool
 	working    bool
 }
 
 // NewQueue inits a new queue struct
-func NewQueue(s *Storage, runner *run.Runner) Queue {
+func NewQueue(s storage.Storage, runner *run.Runner) Queue {
 	return Queue{
 		items:      lane.NewQueue(),
 		BatchEnded: make(chan bool, 1),
 		runner:     runner,
+		storage:    s,
 	}
 }
 
@@ -73,9 +76,21 @@ func (q *Queue) DequeueWhile() {
 		}
 
 		go func(t *task.Task) {
-			// FIXME: use hook to save task state to jsoh
+			defer func() {
+				<-workers
+			}()
+
+			ret := -1
+
 			t.State = task.Running
-			ret, err := q.runner.Run(t)
+			err := q.storage.Upsert(t)
+			// FIXME: handle err
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			ret, err = q.runner.Run(t)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -86,7 +101,12 @@ func (q *Queue) DequeueWhile() {
 				t.State = task.Failed
 			}
 
-			<-workers
+			err = q.storage.Upsert(t)
+			// FIXME: handle err
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 		}(t)
 	}
 

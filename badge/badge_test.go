@@ -10,33 +10,30 @@ import (
 	"path"
 	"testing"
 
-	"github.com/factorysh/microdensity/queue"
+	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"go.etcd.io/bbolt"
 )
 
 func TestBadge(t *testing.T) {
-	dir, err := ioutil.TempDir(os.TempDir(), "queue-")
+	dir, err := ioutil.TempDir(os.TempDir(), "data-")
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
-	s, err := bbolt.Open(
-		fmt.Sprintf("%s/bbolt.store", dir),
-		0600, &bbolt.Options{})
+	store, err := storage.NewFSStore(dir)
 	assert.NoError(t, err)
-	q, err := queue.New(s)
-	assert.NoError(t, err)
-	q.Put(&task.Task{
-		Id:      uuid.MustParse("63E322B7-A9D0-4BDA-85AD-5867F90A1DBA"),
-		State:   task.Running,
-		Project: "42",
-	})
+
+	err = store.Upsert(
+		&task.Task{
+			Id:      uuid.MustParse("63E322B7-A9D0-4BDA-85AD-5867F90A1DBA"),
+			State:   task.Running,
+			Project: "42",
+		})
 	r := chi.NewRouter()
 	r.Route("/s/{service:[a-z-]+}/{project}/{id}/badge", func(r chi.Router) {
 		//r.Use(_project.AssertProject)
-		r.Get("/", BadgeMyProject(q, "status"))
+		r.Get("/", BadgeMyProject(store, "status"))
 	})
 
 	ts := httptest.NewServer(r)

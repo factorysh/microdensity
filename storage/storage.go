@@ -29,6 +29,7 @@ type Storage interface {
 	SetLatest(*task.Task) error
 	GetLatest(service, project, branch string) (*task.Task, error)
 	GetVolumePath(*task.Task) string
+	EnsureVolumesDir(*task.Task) error
 }
 
 // FSStore contains all storage data and primitives directly on the FS
@@ -210,4 +211,9 @@ func (s *FSStore) GetLatest(service, project, branch string) (*task.Task, error)
 // GetVolumePath is used to get the root volume path of a task
 func (s *FSStore) GetVolumePath(t *task.Task) string {
 	return filepath.Join(s.taskRootPath(t), volumesDir)
+}
+
+// EnsureVolumesDir is used to create required volume dirs
+func (s *FSStore) EnsureVolumesDir(t *task.Task) error {
+	return s.volumes.Create(t)
 }
