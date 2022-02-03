@@ -22,7 +22,6 @@ type Application struct {
 	Services map[string]service.Service
 	Router   chi.Router
 	queue    *queue.Storage
-	router   chi.Router
 	volumes  *volumes.Volumes
 	logger   *zap.Logger
 }
