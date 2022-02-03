@@ -77,3 +77,23 @@ func TestAll(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, tasks, 1)
 }
+
+func TestDelete(t *testing.T) {
+	s, err := NewFSStore(defaultTestDir)
+	defer cleanUp()
+	assert.NoError(t, err)
+
+	err = s.Upsert(dummyTask)
+	assert.NoError(t, err)
+
+	err = s.Delete(dummyTask.Id.String())
+	assert.NoError(t, err)
+
+	_, err = os.ReadDir(filepath.Join(defaultTestDir,
+		dummyTask.Service,
+		dummyTask.Project,
+		dummyTask.Branch,
+		dummyTask.Id.String()))
+
+	assert.Error(t, err)
+}

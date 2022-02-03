@@ -170,12 +170,18 @@ func (s *FSStore) All() ([]*task.Task, error) {
 
 // Filter return all the tasks matching the required predicates from the filter function
 func (s *FSStore) Filter(filterFn func(*task.Task) bool) ([]*task.Task, error) {
+	// TODO: later
 	return nil, nil
 }
 
 // Delete takes an id and delete a task in the fs
 func (s *FSStore) Delete(id string) error {
-	return nil
+	t, err := s.Get(id)
+	if err != nil {
+		return err
+	}
+
+	return os.RemoveAll(s.taskRootPath(t))
 }
 
 // SetLatest is used save task as latest for this branch
