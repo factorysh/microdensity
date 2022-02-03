@@ -97,3 +97,39 @@ func TestDelete(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
+func TestSetLatest(t *testing.T) {
+	s, err := NewFSStore(defaultTestDir)
+	defer cleanUp()
+	assert.NoError(t, err)
+
+	err = s.Upsert(dummyTask)
+	assert.NoError(t, err)
+
+	err = s.SetLatest(dummyTask)
+	assert.NoError(t, err)
+
+	content, err := os.ReadFile(filepath.Join(defaultTestDir,
+		dummyTask.Service,
+		dummyTask.Project,
+		dummyTask.Branch,
+		"latest"))
+	assert.NoError(t, err)
+	assert.Equal(t, dummyTask.Id.String(), string(content))
+}
+
+func TestGetLateset(t *testing.T) {
+	s, err := NewFSStore(defaultTestDir)
+	defer cleanUp()
+	assert.NoError(t, err)
+
+	err = s.Upsert(dummyTask)
+	assert.NoError(t, err)
+
+	err = s.SetLatest(dummyTask)
+	assert.NoError(t, err)
+
+	task, err := s.GetLatest(dummyTask.Service, dummyTask.Project, dummyTask.Branch)
+	assert.NoError(t, err)
+	assert.Equal(t, dummyTask, task)
+}

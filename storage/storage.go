@@ -17,6 +17,7 @@ const DirMode fs.FileMode = 0755
 const volumesDir = "volumes"
 
 const taskFile = "task.json"
+const latestFile = "latest"
 
 // Storage describe all storage primitives
 type Storage interface {
@@ -62,6 +63,10 @@ func (s *FSStore) taskRootPath(t *task.Task) string {
 
 func (s *FSStore) taskFilePath(t *task.Task) string {
 	return filepath.Join(s.taskRootPath(t), taskFile)
+}
+
+func (s *FSStore) taskLatestPath(t *task.Task) string {
+	return filepath.Join(s.root, t.Service, t.Project, t.Branch, latestFile)
 }
 
 func taskFromJSON(path string) (*task.Task, error) {
@@ -189,12 +194,17 @@ func (s *FSStore) Delete(id string) error {
 
 // SetLatest is used save task as latest for this branch
 func (s *FSStore) SetLatest(t *task.Task) error {
-	return nil
+	return os.WriteFile(s.taskLatestPath(t), []byte(t.Id.String()), 0664)
 }
 
 // GetLatest is used to get latest task for a service, project, branch
 func (s *FSStore) GetLatest(service, project, branch string) (*task.Task, error) {
-	return nil, nil
+	content, err := os.ReadFile(filepath.Join(s.root, service, project, branch, latestFile))
+	if err != nil {
+		return nil, err
+	}
+
+	return s.Get(string(content))
 }
 
 // GetVolumePath is used to get the root volume path of a task
