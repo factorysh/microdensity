@@ -93,24 +93,18 @@ func TestApplication(t *testing.T) {
 
 */
 func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {
-	volDir, err := ioutil.TempDir(os.TempDir(), "volumes")
-	if err != nil {
-		return nil, nil, err
-	}
-	queueDir, err := ioutil.TempDir(os.TempDir(), "queue-")
+	dataDir, err := ioutil.TempDir(os.TempDir(), "data")
 	if err != nil {
 		return nil, nil, err
 	}
 
 	cfg := &conf.Conf{
 		JWKProvider: gitlabURL,
-		DataPath:    volDir,
-		Queue:       queueDir,
+		DataPath:    dataDir,
 	}
 
 	return cfg, func() {
-		os.RemoveAll(volDir)
-		os.RemoveAll(queueDir)
+		os.RemoveAll(dataDir)
 	}, nil
 
 }
