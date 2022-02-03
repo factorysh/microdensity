@@ -9,7 +9,6 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/dop251/goja"
-	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/task"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -19,7 +18,6 @@ var _ Service = (*FolderService)(nil)
 
 type FolderService struct {
 	name      string
-	qeue      *queue.Storage
 	jsruntime *goja.Runtime
 	validate  func(map[string]interface{}) (Arguments, error)
 	logger    *zap.Logger
@@ -102,8 +100,7 @@ func (f *FolderService) New(project string, args map[string]interface{}) (uuid.U
 		Args:    args,
 		State:   task.Ready,
 	}
-	err := f.qeue.Put(t)
-	return t.Id, err
+	return t.Id, nil
 }
 
 func (f *FolderService) Run(id uuid.UUID) error {

@@ -1,23 +1,27 @@
 package queue
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/factorysh/microdensity/run"
+	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/task"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDeq(t *testing.T) {
-	db, cleanFunc, err := newTestBbolt()
-	defer cleanFunc()
+	dir, err := ioutil.TempDir(os.TempDir(), "data-")
 	assert.NoError(t, err)
-	q, err := New(db)
+	defer os.RemoveAll(dir)
+	store, err := storage.NewFSStore(dir)
+	assert.NoError(t, err)
 
 	r, err := run.NewRunner("../", "/tmp/microdensity/volumes")
 	assert.NoError(t, err)
-	que := NewQueue(q, r)
+	que := NewQueue(store, r)
 
 	tsk1 := &task.Task{
 		Id:      uuid.New(),

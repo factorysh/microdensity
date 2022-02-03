@@ -1,22 +1,20 @@
 package application
 
 import (
-	"fmt"
 	"os"
 	"path"
 
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares/jwt"
 	jwtoroauth2 "github.com/factorysh/microdensity/middlewares/jwt_or_oauth2"
-	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/sessions"
+	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/tchap/zapext/v2/zapsentry"
-	"go.etcd.io/bbolt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -24,7 +22,7 @@ import (
 type Application struct {
 	Services map[string]service.Service
 	Router   chi.Router
-	queue    *queue.Storage
+	storage  storage.Storage
 	volumes  *volumes.Volumes
 	logger   *zap.Logger
 }
@@ -35,18 +33,12 @@ func New(cfg *conf.Conf) (*Application, error) {
 		return nil, err
 	}
 
-	storePath := path.Join(cfg.Queue, "microdensity.store")
-	fmt.Println("bbolt path", storePath)
-	s, err := bbolt.Open(
-		storePath,
-		0600, &bbolt.Options{})
+	storePath := path.Join(cfg.DataPath)
+	s, err := storage.NewFSStore(storePath)
 	if err != nil {
 		return nil, err
 	}
-	q, err := queue.New(s)
-	if err != nil {
-		return nil, err
-	}
+
 	var logger *zap.Logger
 	dsn := os.Getenv("SENTRY_DSN")
 	if dsn != "" {
@@ -71,7 +63,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		return nil, err
 	}
 
-	v, err := volumes.New(cfg.VolumePath)
+	v, err := volumes.New(cfg.DataPath)
 	if err != nil {
 		logger.Error("Volumes crash", zap.Error(err))
 		return nil, err
@@ -81,7 +73,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 
 	a := &Application{
 		Services: make(map[string]service.Service),
-		queue:    q,
+		storage:  s,
 		Router:   r,
 		volumes:  v,
 		logger:   logger,
