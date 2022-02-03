@@ -36,6 +36,8 @@ type FSStore struct {
 	volumes *volumes.Volumes
 }
 
+var _ Storage = (*FSStore)(nil)
+
 // NewFSStore inits a new filesystem store
 func NewFSStore(root string) (*FSStore, error) {
 	err := os.MkdirAll(root, DirMode)
@@ -198,5 +200,3 @@ func (s *FSStore) GetLatest(service, project, branch string) (*task.Task, error)
 func (s *FSStore) GetVolumePath(t *task.Task) string {
 	return filepath.Join(s.taskRootPath(t), volumesDir)
 }
-
-var _ Storage = (*FSStore)(nil)
