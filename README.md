@@ -19,3 +19,18 @@ GET /service/{service}/{projet}/latest
 GET /service/{service}/{projet}/{branch}/latest
 GET /service/{service}/{projet}/
 ``` 
+
+Big Picture
+-----------
+
+```
+                                                                 +---------+   +--------+
+  Gitlab CI                                                  +-->| Compose +-->| Docker |
+ +-----------------------------------------------+           |   +-------+-+   +--------+
+ |                                               |      +----+-----+     |
+ | curl --header 'PRIVATE-TOKEN: ${CI_JOB_JWT}' -+----->| µdensity |     +--> Volumes
+ |                                               |      +----------+             |
+ +-----------------------------------------------+             HTTP          +---v----+
+                                                   <-------------------------| Badges |
+                                                                             +--------+
+```
