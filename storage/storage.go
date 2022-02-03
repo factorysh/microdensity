@@ -62,6 +62,25 @@ func (s *FSStore) taskFilePath(t *task.Task) string {
 	return filepath.Join(s.taskRootPath(t), taskFile)
 }
 
+func taskFromJSON(path string) (*task.Task, error) {
+
+	// read json file
+	jsonFile, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer jsonFile.Close()
+
+	// decode json
+	var t task.Task
+	json.NewDecoder(jsonFile).Decode(&t)
+	if err != nil {
+		return nil, err
+	}
+
+	return &t, err
+}
+
 // Upsert takes a task and write it to the underlying fs
 func (s *FSStore) Upsert(t *task.Task) error {
 	// construct the tree on the FS
@@ -111,26 +130,42 @@ func (s *FSStore) Get(id string) (*task.Task, error) {
 		return nil, fmt.Errorf("task with id %s not found", id)
 	}
 
-	// read json file
-	jsonFile, err := os.Open(filepath.Join(taskRootPath, taskFile))
-	if err != nil {
-		return nil, err
-	}
-	defer jsonFile.Close()
-
-	// decode json
-	var t task.Task
-	json.NewDecoder(jsonFile).Decode(&t)
-	if err != nil {
-		return nil, err
-	}
-
-	return &t, err
+	return taskFromJSON(filepath.Join(taskRootPath, taskFile))
 }
 
 // All returns all the tasks for this storage
 func (s *FSStore) All() ([]*task.Task, error) {
-	return nil, nil
+	var tasks []*task.Task
+	err := filepath.WalkDir(s.root, func(path string, d fs.DirEntry, err error) error {
+		// check for errors
+		if err != nil {
+			return err
+		}
+
+		// do not work inside volumes dir
+		if d.Name() == volumesDir {
+			return filepath.SkipDir
+		}
+
+		if d.Name() == taskFile {
+			task, err := taskFromJSON(path)
+			if err != nil {
+				// FIXME: handle
+				fmt.Println(err)
+				return nil
+			}
+
+			tasks = append(tasks, task)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
 }
 
 // Filter return all the tasks matching the required predicates from the filter function

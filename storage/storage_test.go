@@ -54,7 +54,7 @@ func TestUpsert(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	s, err := NewFSStore(defaultTestDir)
-	// defer cleanUp()
+	defer cleanUp()
 	assert.NoError(t, err)
 
 	err = s.Upsert(dummyTask)
@@ -63,4 +63,17 @@ func TestGet(t *testing.T) {
 	task, err := s.Get(dummyTask.Id.String())
 	assert.NoError(t, err)
 	assert.Equal(t, dummyTask, task)
+}
+
+func TestAll(t *testing.T) {
+	s, err := NewFSStore(defaultTestDir)
+	defer cleanUp()
+	assert.NoError(t, err)
+
+	err = s.Upsert(dummyTask)
+	assert.NoError(t, err)
+
+	tasks, err := s.All()
+	assert.NoError(t, err)
+	assert.Len(t, tasks, 1)
 }
