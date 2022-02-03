@@ -29,7 +29,7 @@ type Application struct {
 	logger   *zap.Logger
 }
 
-func NewFromConfig(cfg *conf.Conf) (*Application, error) {
+func New(cfg *conf.Conf) (*Application, error) {
 	jwtAuth, err := jwt.NewJWTAuthenticator(cfg.JWKProvider)
 	if err != nil {
 		return nil, err
@@ -47,12 +47,7 @@ func NewFromConfig(cfg *conf.Conf) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	return New(q, &cfg.OAuth, jwtAuth, cfg.VolumePath)
-}
-
-func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenticator, volumePath string) (*Application, error) {
 	var logger *zap.Logger
-	var err error
 	dsn := os.Getenv("SENTRY_DSN")
 	if dsn != "" {
 		client, err := sentry.NewClient(sentry.ClientOptions{Dsn: dsn})
@@ -76,7 +71,7 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
 		return nil, err
 	}
 
-	v, err := volumes.New(volumePath)
+	v, err := volumes.New(cfg.VolumePath)
 	if err != nil {
 		logger.Error("Volumes crash", zap.Error(err))
 		return nil, err
@@ -97,7 +92,7 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	authMiddleware, err := jwtoroauth2.NewJWTOrOauth2(jwtAuth, oAuthConfig, &sessions)
+	authMiddleware, err := jwtoroauth2.NewJWTOrOauth2(jwtAuth, &cfg.OAuth, &sessions)
 	if err != nil {
 		logger.Error("JWT or OAth2 middleware crash", zap.Error(err))
 		return nil, err

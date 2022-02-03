@@ -15,7 +15,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
+// PostTaskHandler create a Task
+func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	serviceID := chi.URLParam(r, "serviceID")
 	project := chi.URLParam(r, "project")
 	l := a.logger.With(
@@ -87,7 +88,8 @@ func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (a *Application) task(w http.ResponseWriter, r *http.Request) {
+// TaskHandler show a Task
+func (a *Application) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	l := a.logger.With(
 		zap.String("service", chi.URLParam(r, "serviceID")),
 		zap.String("project", chi.URLParam(r, "project")),

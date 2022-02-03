@@ -2,9 +2,7 @@ package application
 
 import (
 	"crypto/rsa"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,13 +14,12 @@ import (
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/factorysh/microdensity/claims"
-	_jwt "github.com/factorysh/microdensity/middlewares/jwt"
+	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/mockup"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/service"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"go.etcd.io/bbolt"
 )
 
 type NaiveService struct {
@@ -99,31 +96,25 @@ func TestApplication(t *testing.T) {
 }
 
 func prepareTestingContext(t *testing.T, services map[string]service.Service) (key *rsa.PrivateKey,
+	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
+	defer gitlab.Close()
 	app *httptest.Server,
-	gitlab *httptest.Server,
+
 	q *queue.Storage,
 	cleanUp func()) {
-	block, _ := pem.Decode([]byte(applicationPrivateRSA))
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	assert.NoError(t, err)
-
-	gitlab = httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
-
-	jwtAuth, err := _jwt.NewJWTAuthenticator(gitlab.URL)
-	assert.NoError(t, err)
 
 	volDir, err := ioutil.TempDir(os.TempDir(), "volumes")
 	assert.NoError(t, err)
-
 	queueDir, err := ioutil.TempDir(os.TempDir(), "queue-")
 	assert.NoError(t, err)
-	s, err := bbolt.Open(
-		fmt.Sprintf("%s/bbolt.store", queueDir),
-		0600, &bbolt.Options{})
-	assert.NoError(t, err)
-	q, err = queue.New(s)
 
-	a, err := New(q, nil, jwtAuth, volDir)
+	cfg := &conf.Conf{
+		JWKProvider: gitlab.URL,
+		VolumePath:  volDir,
+		Queue:       queueDir,
+	}
+
+	a, err := New(cfg)
 	assert.NoError(t, err)
 	a.Services = services
 

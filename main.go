@@ -24,7 +24,7 @@ func main() {
 	}
 	cfg.Defaults()
 
-	a, err := application.NewFromConfig(cfg)
+	a, err := application.New(cfg)
 	if err != nil {
 		log.Fatal("Application crash", err)
 	}
