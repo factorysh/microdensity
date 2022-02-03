@@ -2,27 +2,17 @@ package application
 
 import (
 	"crypto/rsa"
-	"crypto/x509"
-	"encoding/json"
-	"encoding/pem"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"os"
-	"testing"
 	"time"
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/factorysh/microdensity/claims"
-	_jwt "github.com/factorysh/microdensity/middlewares/jwt"
+	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/mockup"
-	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/service"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"go.etcd.io/bbolt"
 )
 
 type NaiveService struct {
@@ -61,6 +51,9 @@ MsmrItp6cgO6YN/R/LhMSsPgxDrgGLP1GIT8hsQswt6RLLJL4jQ/mURUDm/SuM6b
 bhfhLtK7l19RUDS9g702dcr+z7UxZS97SztCWyEO/mjs
 -----END RSA PRIVATE KEY-----`
 
+var key = MustParseRSAKey(applicationPrivateRSA)
+
+/*
 func TestApplication(t *testing.T) {
 
 	var services = map[string]service.Service{
@@ -98,43 +91,28 @@ func TestApplication(t *testing.T) {
 	assert.Equal(t, 200, r.StatusCode)
 }
 
-func prepareTestingContext(t *testing.T, services map[string]service.Service) (key *rsa.PrivateKey,
-	app *httptest.Server,
-	gitlab *httptest.Server,
-	q *queue.Storage,
-	cleanUp func()) {
-	block, _ := pem.Decode([]byte(applicationPrivateRSA))
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	assert.NoError(t, err)
-
-	gitlab = httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
-
-	jwtAuth, err := _jwt.NewJWTAuthenticator(gitlab.URL)
-	assert.NoError(t, err)
-
+*/
+func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {
 	volDir, err := ioutil.TempDir(os.TempDir(), "volumes")
-	assert.NoError(t, err)
-
+	if err != nil {
+		return nil, nil, err
+	}
 	queueDir, err := ioutil.TempDir(os.TempDir(), "queue-")
-	assert.NoError(t, err)
-	s, err := bbolt.Open(
-		fmt.Sprintf("%s/bbolt.store", queueDir),
-		0600, &bbolt.Options{})
-	assert.NoError(t, err)
-	q, err = queue.New(s)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	a, err := New(q, nil, jwtAuth, volDir)
-	assert.NoError(t, err)
-	a.Services = services
+	cfg := &conf.Conf{
+		JWKProvider: gitlabURL,
+		VolumePath:  volDir,
+		Queue:       queueDir,
+	}
 
-	app = httptest.NewServer(a.Router)
-
-	return key, app, gitlab, q, func() {
+	return cfg, func() {
 		os.RemoveAll(volDir)
 		os.RemoveAll(queueDir)
-		gitlab.Close()
-		app.Close()
-	}
+	}, nil
+
 }
 
 func freshToken(key *rsa.PrivateKey) (*jwt.Token, error) {

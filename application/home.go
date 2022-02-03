@@ -7,6 +7,7 @@ import (
 	"github.com/factorysh/microdensity/version"
 )
 
+// HomeHandle display the home page
 func HomeHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("content-type", "text/plain")
 	w.Write([]byte(`
@@ -15,7 +16,7 @@ func HomeHandler(w http.ResponseWriter, _ *http.Request) {
 /  __| '_ \ / _ \/ __| |/ / | '_ ' _ \| | | | \ \ /\ / / _ \ '_ \
 | (__| | | |  __/ (__|   <  | | | | | | |_| |  \ V  V /  __/ |_) |
 \ ___|_| |_|\___|\___|_|\_\ |_| |_| |_|\__, |   \_/\_/ \___|_.__/
-	      			        |___/
+	                                    |___/
 	`))
 	fmt.Fprintf(w, "Version: %s", version.Version())
 }

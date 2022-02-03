@@ -1,7 +1,9 @@
 package application
 
 import (
+	"fmt"
 	"os"
+	"path"
 
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares/jwt"
@@ -14,6 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/tchap/zapext/v2/zapsentry"
+	"go.etcd.io/bbolt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -26,9 +29,25 @@ type Application struct {
 	logger   *zap.Logger
 }
 
-func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenticator, volumePath string) (*Application, error) {
+func New(cfg *conf.Conf) (*Application, error) {
+	jwtAuth, err := jwt.NewJWTAuthenticator(cfg.JWKProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	storePath := path.Join(cfg.Queue, "microdensity.store")
+	fmt.Println("bbolt path", storePath)
+	s, err := bbolt.Open(
+		storePath,
+		0600, &bbolt.Options{})
+	if err != nil {
+		return nil, err
+	}
+	q, err := queue.New(s)
+	if err != nil {
+		return nil, err
+	}
 	var logger *zap.Logger
-	var err error
 	dsn := os.Getenv("SENTRY_DSN")
 	if dsn != "" {
 		client, err := sentry.NewClient(sentry.ClientOptions{Dsn: dsn})
@@ -44,6 +63,7 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
 		}
 		logger.Info("There is no Sentry set")
 	}
+
 	sessions := sessions.New()
 	err = sessions.Start(15)
 	if err != nil {
@@ -51,7 +71,7 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
 		return nil, err
 	}
 
-	v, err := volumes.New(volumePath)
+	v, err := volumes.New(cfg.VolumePath)
 	if err != nil {
 		logger.Error("Volumes crash", zap.Error(err))
 		return nil, err
@@ -72,24 +92,24 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	authMiddleware, err := jwtoroauth2.NewJWTOrOauth2(jwtAuth, oAuthConfig, &sessions)
+	authMiddleware, err := jwtoroauth2.NewJWTOrOauth2(jwtAuth, &cfg.OAuth, &sessions)
 	if err != nil {
 		logger.Error("JWT or OAth2 middleware crash", zap.Error(err))
 		return nil, err
 	}
 	r.Get("/", HomeHandler)
 
-	r.Get("/services", a.services)
+	r.Get("/services", a.ServicesHandler)
 	r.Route("/service/{serviceID}", func(r chi.Router) {
 		r.Use(authMiddleware.Middleware())
-		r.Use(a.serviceMiddleware)
-		r.Get("/", a.service)
-		r.Post("/{project}/{branch}/{commit}", a.newTask)
-		r.Get("/-{taskID}", a.task)
+		r.Use(a.ServiceMiddleware)
+		r.Get("/", a.ServiceHandler)
+		r.Post("/{project}/{branch}/{commit}", a.PostTaskHandler)
+		r.Get("/-{taskID}", a.TaskHandler)
 		r.Route("/{project}", func(r chi.Router) {
 			r.Route("/{branch}", func(r chi.Router) {
 				r.Route("/{commit}", func(r chi.Router) {
-					r.Get("/", a.task)
+					r.Get("/", a.TaskHandler)
 				})
 				r.Get("/latest", nil)
 			})

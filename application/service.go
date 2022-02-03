@@ -9,7 +9,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (a *Application) services(w http.ResponseWriter, r *http.Request) {
+// ServicesHandler show all services
+func (a *Application) ServicesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	ss := make([]string, len(a.Services))
@@ -33,7 +34,8 @@ func (a *Application) findServiceByName(name string) service.Service {
 	return nil
 }
 
-func (a *Application) service(w http.ResponseWriter, r *http.Request) {
+// ServiceHandler show one service
+func (a *Application) ServiceHandler(w http.ResponseWriter, r *http.Request) {
 	if serviceId := chi.URLParam(r, "serviceID"); serviceId != "" {
 		service := a.findServiceByName(serviceId)
 		if service == nil {
@@ -44,7 +46,7 @@ func (a *Application) service(w http.ResponseWriter, r *http.Request) {
 }
 
 // Http middleware
-func (a *Application) serviceMiddleware(next http.Handler) http.Handler {
+func (a *Application) ServiceMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		serviceId := chi.URLParam(r, "serviceID")
 		if serviceId == "" {

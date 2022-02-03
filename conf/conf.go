@@ -13,6 +13,7 @@ type Conf struct {
 	Queue       string    `yaml:"queue"`   // Queue path
 	JWKProvider string    `yaml:"jwk_provider"`
 	Listen      string    `yaml:"listen"` // http listen address
+	VolumePath  string    `yaml:"volume_path"`
 }
 
 func (c *Conf) Defaults() {
