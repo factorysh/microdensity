@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/factorysh/microdensity/service"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -25,19 +24,10 @@ func (a *Application) ServicesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a *Application) findServiceByName(name string) service.Service {
-	for _, s := range a.Services {
-		if s.Name() == name {
-			return s
-		}
-	}
-	return nil
-}
-
 // ServiceHandler show one service
 func (a *Application) ServiceHandler(w http.ResponseWriter, r *http.Request) {
 	if serviceId := chi.URLParam(r, "serviceID"); serviceId != "" {
-		service := a.findServiceByName(serviceId)
+		service := a.Services[serviceId]
 		if service == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -53,7 +43,7 @@ func (a *Application) ServiceMiddleware(next http.Handler) http.Handler {
 			http.Error(w, http.StatusText(404), 404)
 			return
 		}
-		service := a.findServiceByName(serviceId)
+		service := a.Services[serviceId]
 		if service == nil {
 			http.Error(w, http.StatusText(404), 404)
 			return
