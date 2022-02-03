@@ -22,7 +22,7 @@ func (r *rc) Close() error {
 	return nil
 }
 
-func TestCreateTask(t *testing.T) {
+func _TestCreateTask(t *testing.T) {
 	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
 	defer gitlab.Close()
 
