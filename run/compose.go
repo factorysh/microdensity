@@ -19,6 +19,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
 
@@ -33,6 +34,7 @@ type ComposeRun struct {
 	id      uuid.UUID
 	runCtx  context.Context
 	project *types.Project
+	logger  *zap.Logger
 }
 
 func dockerConfig() (*configfile.ConfigFile, error) {
@@ -69,25 +71,36 @@ func (c *ComposeRun) Cancel() {
 }
 
 func NewComposeRun(home string) (*ComposeRun, error) {
+	logger, err := zap.NewProduction()
+	if err != nil {
+		return nil, err
+	}
+	l := logger.With(zap.String("home", home))
+
 	dockercfg, err := dockerConfig()
 	if err != nil {
+		l.Error("Docker config drama", zap.Error(err))
 		return nil, err
 	}
 
 	docker, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
+		l.Error("Docker client drama", zap.Error(err))
 		return nil, err
 	}
 
 	_, err = docker.Ping(context.TODO())
 	if err != nil {
+		l.Error("Docker doesn't ping", zap.Error(err))
 		return nil, err
 	}
 
 	project, details, err := LoadCompose(home)
 	if err != nil {
+		l.Error("Load compose error", zap.Error(err))
 		return nil, err
 	}
+	l = l.With(zap.String("project", project.Name))
 
 	srv := compose.NewComposeService(docker, dockercfg)
 	grph := compose.NewGraph(project.Services, compose.ServiceStopped)
@@ -100,13 +113,18 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 		for i, r := range roots {
 			rr[i] = r.Service
 		}
-		return nil, fmt.Errorf("i need only one root not %v", rr)
+		err = fmt.Errorf("i need only one root not %v", rr)
+		l.Error("Compose graph error", zap.Error(err))
+		return nil, err
 	}
 
+	// FIXME name is project.Name ?
 	_, name := path.Split(strings.TrimSuffix(home, "/"))
 
 	// use default compose network name
-	ensureNetwork(docker, fmt.Sprintf("%s_default", name))
+	networkName := fmt.Sprintf("%s_default", name)
+	ensureNetwork(docker, networkName)
+	l.Info("Ensure Network", zap.String("name", networkName))
 
 	return &ComposeRun{
 		home:    home,
@@ -114,11 +132,13 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 		service: srv,
 		run:     roots[0].Service,
 		name:    name,
+		logger:  logger,
 	}, nil
 
 }
 
-func (c *ComposeRun) Prepare(args map[string]string, volumesRoot string, id uuid.UUID) error {
+// Prepare set a quiet compose environment, waiting for its wake
+func (c *ComposeRun) Prepare(envs map[string]string, volumesRoot string, id uuid.UUID) error {
 	var err error
 	c.id = id
 	c.runCtx = context.TODO()
@@ -130,18 +150,24 @@ func (c *ComposeRun) Prepare(args map[string]string, volumesRoot string, id uuid
 				Content:  c.details.ConfigFiles[0].Content,
 			},
 		},
-		Environment: args,
+		Environment: envs,
 	}
 	c.project, err = loader.Load(details, func(opt *loader.Options) {
 		opt.Name = c.name
 		opt.SkipInterpolation = false
 	})
 
-	c.PrepareVolumes(volumesRoot)
-
 	if err != nil {
+		c.logger.Error("compose load", zap.Error(err))
 		return err
 	}
+
+	err = c.PrepareVolumes(volumesRoot)
+	if err != nil {
+		c.logger.Error("Volumes preparation error", zap.Error(err))
+		return err
+	}
+
 	/*
 		You can watch normalized YAML with
 		b := &bytes.Buffer{}
@@ -172,7 +198,12 @@ func (c *ComposeRun) PrepareVolumes(prependPath string) error {
 	return nil
 }
 
+// Run a compose service, writing the STDOUT and STDERR outputs, returns the UNIX return code
 func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, error) {
+	c.logger.Info("Run service",
+		zap.String("name", c.project.Name),
+		zap.String("service", c.run),
+		zap.String("id", c.id.String()))
 	return c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
 		Name:       fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
 		Service:    c.run,
@@ -192,6 +223,7 @@ func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, err
 	})
 }
 
+// Lazy network creation
 func ensureNetwork(cli *client.Client, networkName string) error {
 	networks, err := cli.NetworkList(context.Background(), dtypes.NetworkListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
