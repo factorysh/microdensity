@@ -99,17 +99,17 @@ func New(cfg *conf.Conf) (*Application, error) {
 	}
 	r.Get("/", HomeHandler)
 
-	r.Get("/services", a.services)
+	r.Get("/services", a.ServicesHandler)
 	r.Route("/service/{serviceID}", func(r chi.Router) {
 		r.Use(authMiddleware.Middleware())
-		r.Use(a.serviceMiddleware)
-		r.Get("/", a.service)
-		r.Post("/{project}/{branch}/{commit}", a.newTask)
-		r.Get("/-{taskID}", a.task)
+		r.Use(a.ServiceMiddleware)
+		r.Get("/", a.ServiceHandler)
+		r.Post("/{project}/{branch}/{commit}", a.PostTaskHandler)
+		r.Get("/-{taskID}", a.TaskHandler)
 		r.Route("/{project}", func(r chi.Router) {
 			r.Route("/{branch}", func(r chi.Router) {
 				r.Route("/{commit}", func(r chi.Router) {
-					r.Get("/", a.task)
+					r.Get("/", a.TaskHandler)
 				})
 				r.Get("/latest", nil)
 			})
