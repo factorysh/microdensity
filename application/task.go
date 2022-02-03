@@ -77,6 +77,11 @@ func (a *Application) newTask(w http.ResponseWriter, r *http.Request) {
 		l.Warn("Volume creation", zap.Error(err))
 		panic(err)
 	}
+	err = a.volumes.Sync(t)
+	if err != nil {
+		l.Warn("Task sync", zap.Error(err))
+		panic(err)
+	}
 	err = a.queue.Put(t)
 	if err != nil {
 		l.Warn("Queue error", zap.Error(err))

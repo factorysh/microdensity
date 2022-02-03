@@ -38,14 +38,17 @@ func (v *Volumes) Create(t *task.Task) error {
 	if err != nil {
 		return err
 	}
-	err = os.MkdirAll(v.Path(t.Service, t.Project, t.Branch, t.Id.String(), "volumes"), DirMode)
-	if err != nil {
-		return err
-	}
+	return os.MkdirAll(v.Path(t.Service, t.Project, t.Branch, t.Id.String(), "volumes"), DirMode)
+}
+
+// Sync task to corresponding volume
+func (v *Volumes) Sync(t *task.Task) error {
 	f, err := os.OpenFile(v.Path(t.Service, t.Project, t.Branch, t.Id.String(), "task.json"), os.O_CREATE+os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
+	defer f.Close()
+
 	return json.NewEncoder(f).Encode(t)
 }
 

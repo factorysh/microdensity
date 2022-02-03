@@ -36,7 +36,7 @@ type Task struct {
 	Commit   string                 `json:"commit"`
 	Creation time.Time              `json:"creation"`
 	Args     map[string]interface{} `json:"Args"`
-	State    State
+	State    State                  `json:"State"`
 }
 
 func (t *Task) Validate() error {
