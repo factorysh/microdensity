@@ -18,7 +18,6 @@ require (
 	github.com/oleiade/lane v1.0.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tchap/zapext/v2 v2.1.1
-	go.etcd.io/bbolt v1.3.6
 	go.uber.org/zap v1.20.0
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	gopkg.in/square/go-jose.v2 v2.6.0
