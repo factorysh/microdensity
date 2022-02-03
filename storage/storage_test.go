@@ -51,3 +51,16 @@ func TestUpsert(t *testing.T) {
 
 	assert.Contains(t, fnames, "task.json")
 }
+
+func TestGet(t *testing.T) {
+	s, err := NewFSStore(defaultTestDir)
+	// defer cleanUp()
+	assert.NoError(t, err)
+
+	err = s.Upsert(dummyTask)
+	assert.NoError(t, err)
+
+	task, err := s.Get(dummyTask.Id.String())
+	assert.NoError(t, err)
+	assert.Equal(t, dummyTask, task)
+}

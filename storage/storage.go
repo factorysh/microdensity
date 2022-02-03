@@ -2,6 +2,7 @@ package storage
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -79,7 +80,52 @@ func (s *FSStore) Upsert(t *task.Task) error {
 
 // Get takes an id and return a task
 func (s *FSStore) Get(id string) (*task.Task, error) {
-	return nil, nil
+
+	taskRootPath := ""
+	err := filepath.WalkDir(s.root, func(path string, d fs.DirEntry, err error) error {
+		// check for errors
+		if err != nil {
+			return err
+		}
+
+		// do not work inside volumes dir
+		if d.Name() == volumesDir {
+			return filepath.SkipDir
+		}
+
+		// if task not found
+		if taskRootPath == "" && d.Name() == id {
+			taskRootPath = path
+		}
+
+		return nil
+	})
+
+	// if an error occured return
+	if err != nil {
+		return nil, err
+	}
+
+	// if not found
+	if taskRootPath == "" {
+		return nil, fmt.Errorf("task with id %s not found", id)
+	}
+
+	// read json file
+	jsonFile, err := os.Open(filepath.Join(taskRootPath, taskFile))
+	if err != nil {
+		return nil, err
+	}
+	defer jsonFile.Close()
+
+	// decode json
+	var t task.Task
+	json.NewDecoder(jsonFile).Decode(&t)
+	if err != nil {
+		return nil, err
+	}
+
+	return &t, err
 }
 
 // All returns all the tasks for this storage
