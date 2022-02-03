@@ -16,6 +16,7 @@ TESTS= github.com/factorysh/microdensity/task \
 		github.com/factorysh/microdensity/gitlab \
 		github.com/factorysh/microdensity/oauth \
 		github.com/factorysh/microdensity/volumes \
+		github.com/factorysh/microdensity/storage \
 
 test:
 	go test --cover ${TESTS}
