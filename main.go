@@ -5,14 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
 
 	"github.com/factorysh/microdensity/application"
 	"github.com/factorysh/microdensity/conf"
-	"github.com/factorysh/microdensity/middlewares/jwt"
-	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/version"
-	"go.etcd.io/bbolt"
 )
 
 func main() {
@@ -28,25 +24,7 @@ func main() {
 	}
 	cfg.Defaults()
 
-	jwtAuth, err := jwt.NewJWTAuthenticator(cfg.JWKProvider)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	storePath := path.Join(cfg.Queue, "microdensity.store")
-	fmt.Println("bbolt path", storePath)
-	s, err := bbolt.Open(
-		storePath,
-		0600, &bbolt.Options{})
-	if err != nil {
-		log.Fatal("bbolt error", err)
-	}
-	q, err := queue.New(s)
-	if err != nil {
-		log.Fatal("Queue error", err)
-	}
-	// FIXME: path
-	a, err := application.New(q, &cfg.OAuth, jwtAuth, "/tmp/microdensity")
+	a, err := application.NewFromConfig(cfg)
 	if err != nil {
 		log.Fatal("Application crash", err)
 	}

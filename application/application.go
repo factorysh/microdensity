@@ -1,7 +1,9 @@
 package application
 
 import (
+	"fmt"
 	"os"
+	"path"
 
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares/jwt"
@@ -14,6 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/tchap/zapext/v2/zapsentry"
+	"go.etcd.io/bbolt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -24,6 +27,27 @@ type Application struct {
 	queue    *queue.Storage
 	volumes  *volumes.Volumes
 	logger   *zap.Logger
+}
+
+func NewFromConfig(cfg *conf.Conf) (*Application, error) {
+	jwtAuth, err := jwt.NewJWTAuthenticator(cfg.JWKProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	storePath := path.Join(cfg.Queue, "microdensity.store")
+	fmt.Println("bbolt path", storePath)
+	s, err := bbolt.Open(
+		storePath,
+		0600, &bbolt.Options{})
+	if err != nil {
+		return nil, err
+	}
+	q, err := queue.New(s)
+	if err != nil {
+		return nil, err
+	}
+	return New(q, &cfg.OAuth, jwtAuth, cfg.VolumePath)
 }
 
 func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenticator, volumePath string) (*Application, error) {
@@ -44,6 +68,7 @@ func New(q *queue.Storage, oAuthConfig *conf.OAuthConf, jwtAuth *jwt.JWTAuthenti
 		}
 		logger.Info("There is no Sentry set")
 	}
+
 	sessions := sessions.New()
 	err = sessions.Start(15)
 	if err != nil {
