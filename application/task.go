@@ -2,7 +2,6 @@ package application
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -52,10 +51,10 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	// validate the arguments
 	_, err = service.Validate(args)
 	if err != nil {
-		l.Warn("Validation error", zap.Error(err))
+		l.Warn("Validation error",
+			zap.Any("args", args),
+			zap.Error(err))
 		w.WriteHeader(400)
-
-		fmt.Fprintln(w, err)
 		return
 	}
 	id, err := uuid.NewUUID()

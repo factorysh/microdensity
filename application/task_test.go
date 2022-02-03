@@ -37,11 +37,15 @@ func _TestCreateTask(t *testing.T) {
 		getStatus    int
 		sLen         int
 	}{
-		{name: "Valid args",
-			sLen: 1, args: map[string]interface{}{"HELLO": "Bob"},
+		{
+			name:         "Valid args",
+			sLen:         1,
+			args:         map[string]interface{}{"HELLO": "Bob"},
 			createStatus: http.StatusOK,
 			getStatus:    http.StatusOK},
-		{name: "Invalid args", sLen: 0,
+		{
+			name:         "Invalid args",
+			sLen:         0,
 			args:         map[string]interface{}{"nop": "Bob"},
 			createStatus: http.StatusBadRequest,
 			getStatus:    http.StatusBadRequest},
@@ -80,7 +84,7 @@ func _TestCreateTask(t *testing.T) {
 
 			l, err := app.storage.All()
 			assert.NoError(t, err)
-			assert.Len(t, l, tc.sLen)
+			assert.Len(t, l, tc.sLen, tc)
 
 			req, err = mkRequest(key)
 			assert.NoError(t, err)
