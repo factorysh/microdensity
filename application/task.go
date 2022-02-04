@@ -46,9 +46,11 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	err = render.DecodeJSON(r.Body, &args)
 	if err != nil {
 		l.Warn("Body JSON decode error", zap.Error(err))
-		w.Header().Set("content-type", "application/json; charset=utf-8")
 		w.WriteHeader(400)
-		w.Write([]byte(`{"error":"JSON error"}`))
+		render.JSON(w, r, map[string]string{
+			"error": err.Error(),
+		})
+		return
 	}
 
 	// validate the arguments
