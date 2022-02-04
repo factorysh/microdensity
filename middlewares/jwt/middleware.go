@@ -55,6 +55,7 @@ func (j *JWTAuthenticator) Handler(isBlocking bool) func(next http.Handler) http
 				r = r.WithContext(claims.ToCtx(r.Context()))
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.User, claims.UserLogin))
 				r = r.WithContext(context.WithValue(r.Context(), httpcontext.RequestedProject, claims.ProjectPath))
+				r = r.WithContext(claims.ToCtx(r.Context()))
 			} else {
 				l.Info("No JWT token, but it's not blocking")
 			}
