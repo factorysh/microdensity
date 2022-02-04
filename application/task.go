@@ -85,16 +85,17 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		Args:     args,
 		State:    task.Ready,
 	}
-	err = a.storage.EnsureVolumesDir(t)
-	if err != nil {
-		l.Warn("Volume creation", zap.Error(err))
-		panic(err)
-	}
 	err = a.storage.Upsert(t)
 	if err != nil {
 		l.Warn("Queue error", zap.Error(err))
 		panic(err)
 	}
+	err = a.storage.EnsureVolumesDir(t)
+	if err != nil {
+		l.Warn("Volume creation", zap.Error(err))
+		panic(err)
+	}
+	a.queue.Put(t)
 	json.NewEncoder(w).Encode(map[string]string{
 		"id": id.String(),
 	})
