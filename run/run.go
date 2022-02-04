@@ -58,7 +58,7 @@ func (r *Runner) Prepare(t *task.Task) error {
 		return err
 	}
 
-	err = runnable.Prepare(nil, r.volumes.Path(t.Project, t.Branch, t.Id.String()), t.Id)
+	err = runnable.Prepare(nil, r.volumes.Path(t.Service, t.Project, t.Branch, t.Id.String()), t.Id)
 	if err != nil {
 		return err
 	}
