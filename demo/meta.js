@@ -16,3 +16,14 @@ function validate(params) {
         }
     };
 }
+
+function badge(slug, data) {
+    if (slug != "status") {
+        throw(`Status unknown ${slug}`);
+    }
+    return {
+        subject: 'status',
+        status: 'bof',
+        color: '#5272B4',
+    };
+}
