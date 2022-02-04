@@ -104,10 +104,18 @@ func TestApplication(t *testing.T) {
 	req.Method = http.MethodGet
 	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo", srvApp.URL))
 	assert.NoError(t, err)
-
 	r, err = cli.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, 200, r.StatusCode)
+
+	req, err = mkRequest(key)
+	assert.NoError(t, err)
+	req.Method = http.MethodGet
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/wombat", srvApp.URL))
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 404, r.StatusCode)
 }
 
 func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {
