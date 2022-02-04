@@ -20,7 +20,7 @@ type FolderService struct {
 	name      string
 	jsruntime *goja.Runtime
 	validate  func(map[string]interface{}) (Arguments, error)
-	badge     func(project, branch, commit, badge string) (*Badge, error)
+	badge     func(project, branch, commit, badge string) (Badge, error)
 	logger    *zap.Logger
 }
 
@@ -30,6 +30,7 @@ type Arguments struct {
 }
 
 func NewFolder(_path string) (*FolderService, error) {
+	_path = path.Clean(_path)
 	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, err
@@ -79,11 +80,17 @@ func NewFolder(_path string) (*FolderService, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = vm.ExportTo(vm.Get("badge"), &service.badge)
+		jsBadge := vm.Get("badge")
+		if jsBadge == nil {
+			fmt.Println(string(src))
+			err = fmt.Errorf("badge value not found")
+			return nil, err
+		}
+		err = vm.ExportTo(jsBadge, &service.badge)
 		if err != nil {
 			return nil, err
 		}
-		l.Info("js is ready", zap.Float64("js cooking time (ms)", float64(time.Since(chrono))/1000000))
+		l.Info("js is ready", zap.Float64("js cooking time (µs)", float64(time.Since(chrono))/1000))
 		service.jsruntime = vm
 	}
 
@@ -110,7 +117,7 @@ func (f *FolderService) New(project string, args map[string]interface{}) (uuid.U
 	return t.Id, nil
 }
 
-func (f *FolderService) Badge(project, branch, commit, badge string) (*Badge, error) {
+func (f *FolderService) Badge(project, branch, commit, badge string) (Badge, error) {
 	chrono := time.Now()
 	defer f.logger.Info("Badge",
 		zap.String("service", f.name),

@@ -16,3 +16,14 @@ function validate(params) {
         }
     };
 }
+
+function badge(project, branch, commit, badge) {
+    if (badge != "status") {
+        throw(`Badge unknown ${slug}`);
+    }
+    return {
+        subject: 'status',
+        status: 'bof',
+        color: '#5272B4',
+    };
+}

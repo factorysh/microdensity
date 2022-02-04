@@ -12,7 +12,7 @@ type Service interface {
 	Run(id uuid.UUID) error
 
 	// Build a Badge for a project/branch/commit and badge name
-	Badge(project, branch, commit, badge string) (*Badge, error)
+	Badge(project, branch, commit, badge string) (Badge, error)
 
 	// TODO
 	//Watch(id uuid.UUID) error

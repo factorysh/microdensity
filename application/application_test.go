@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -31,6 +32,14 @@ func (n *NaiveService) Name() string {
 
 func (n *NaiveService) Validate(map[string]interface{}) (service.Arguments, error) {
 	return service.Arguments{}, nil
+}
+
+func (n *NaiveService) Badge(project, branch, commit, badge string) (service.Badge, error) {
+	return service.Badge{
+		Subject: "CI",
+		Status:  "testing",
+		Color:   "lime",
+	}, nil
 }
 
 func (n *NaiveService) New(project string, args map[string]interface{}) (uuid.UUID, error) {
@@ -124,10 +133,15 @@ func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {
 		return nil, nil, err
 	}
 
+	serviceDir, err := filepath.Abs("../demo/services")
+	if err != nil {
+		return nil, nil, err
+	}
+
 	cfg := &conf.Conf{
 		JWKProvider: gitlabURL,
 		DataPath:    dataDir,
-		Services:    "../demo-services",
+		Services:    serviceDir,
 	}
 
 	return cfg, func() {
