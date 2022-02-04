@@ -62,9 +62,15 @@ func (q *Queue) Len() int {
 }
 
 // Put a new item into the queue and the storage
-func (q *Queue) Put(item *task.Task) {
+func (q *Queue) Put(item *task.Task) error {
 	q.Lock()
 	defer q.Unlock()
+
+	err := q.runner.Prepare(item)
+	if err != nil {
+		return err
+	}
+
 	q.items.Enqueue(item)
 
 	queueAdded.Inc()
@@ -76,6 +82,8 @@ func (q *Queue) Put(item *task.Task) {
 		q.logger.Info("Start queue")
 		go q.DequeueWhile()
 	}
+
+	return nil
 }
 
 // dequeue one item
