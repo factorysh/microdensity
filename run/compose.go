@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
@@ -205,7 +206,8 @@ func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, err
 		zap.String("service", c.run),
 		zap.String("working dir", c.project.WorkingDir),
 		zap.String("id", c.id.String()))
-	return c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
+	chrono := time.Now()
+	n, err := c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
 		Name:    fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
 		Service: c.run,
 		Detach:  false,
@@ -223,6 +225,17 @@ func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, err
 		},
 		Index: 0,
 	})
+	l := c.logger.With(
+		zap.String("id", c.id.String()),
+		zap.Int("return code", n),
+		zap.Float64("timing µs", float64(time.Since(chrono))/1000),
+	)
+	if err == nil {
+		l.Info("End run")
+	} else {
+		l.Error("Run error", zap.Error(err))
+	}
+	return n, err
 }
 
 // Lazy network creation
