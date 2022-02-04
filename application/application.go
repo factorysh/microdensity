@@ -17,6 +17,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tchap/zapext/v2/zapsentry"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -109,6 +110,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		return nil, err
 	}
 	r.Get("/", HomeHandler)
+	r.Get("/metrics", promhttp.Handler().ServeHTTP)
 
 	r.Get("/services", a.ServicesHandler)
 	r.Route("/service/{serviceID}", func(r chi.Router) {
