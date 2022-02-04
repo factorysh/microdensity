@@ -42,16 +42,20 @@ type ComposeRun struct {
 
 func dockerConfig() (*configfile.ConfigFile, error) {
 	dockercfg := &configfile.ConfigFile{}
+	var home string
 	me, err := user.Current()
 	if err != nil {
-		return nil, err
+		// In docker container, you can -u an unknown user
+		home = os.TempDir()
+	} else {
+		home = me.HomeDir
 	}
 
-	pth := path.Join(me.HomeDir, "/.docker/config.json")
+	pth := path.Join(home, "/.docker/config.json")
 	_, err = os.Stat(pth)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err := os.MkdirAll(path.Join(me.HomeDir, "/.docker"), 0700)
+			err := os.MkdirAll(path.Join(home, "/.docker"), 0700)
 			if err != nil {
 				return nil, err
 			}
