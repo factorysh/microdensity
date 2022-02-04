@@ -17,7 +17,7 @@ function validate(params) {
     };
 }
 
-function badge(slug, data) {
+function badge(project, branch, commit, badge) {
     if (slug != "status") {
         throw(`Status unknown ${slug}`);
     }

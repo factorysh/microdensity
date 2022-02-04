@@ -10,6 +10,10 @@ type Service interface {
 	// Run can use the user's Sentry ID
 	New(project string, args map[string]interface{}) (uuid.UUID, error)
 	Run(id uuid.UUID) error
+
+	// Build a Badge for a project/branch/commit and badge name
+	Badge(project, branch, commit, badge string) (*Badge, error)
+
 	// TODO
 	//Watch(id uuid.UUID) error
 	// What's service name?
