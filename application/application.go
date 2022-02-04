@@ -101,7 +101,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
+	//r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	authMiddleware, err := jwtoroauth2.NewJWTOrOauth2(jwtAuth, &cfg.OAuth, &sessions)
