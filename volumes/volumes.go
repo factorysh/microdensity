@@ -70,6 +70,12 @@ func (v *Volumes) Get(service, project, branch, commit string) (*task.Task, erro
 		zap.String("commit", commit),
 		zap.String("path", p),
 	)
+	_, err := os.Stat(p)
+	if err != nil {
+		l.Error("Stat error", zap.Error(err))
+		return nil, err
+	}
+
 	commits, err := ioutil.ReadDir(p)
 	if err != nil {
 		l.Error("Readall error", zap.Error(err))
