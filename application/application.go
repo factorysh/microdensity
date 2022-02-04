@@ -3,6 +3,7 @@ package application
 import (
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares/jwt"
@@ -69,10 +70,16 @@ func New(cfg *conf.Conf) (*Application, error) {
 		return nil, err
 	}
 
+	svcs, err := loadServices(cfg.Services)
+	if err != nil {
+		logger.Error("Services crash", zap.Error(err))
+		return nil, err
+	}
+
 	r := chi.NewRouter()
 
 	a := &Application{
-		Services: make(map[string]service.Service),
+		Services: svcs,
 		storage:  s,
 		Router:   r,
 		volumes:  v,
@@ -109,4 +116,24 @@ func New(cfg *conf.Conf) (*Application, error) {
 	})
 
 	return a, nil
+}
+
+// loop into all services sub dirs and create a service using files found
+func loadServices(path string) (map[string]service.Service, error) {
+	svcs := make(map[string]service.Service)
+
+	subs, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, sub := range subs {
+		svc, err := service.NewFolder(filepath.Join(path, sub.Name()))
+		if err != nil {
+			return nil, err
+		}
+		svcs[sub.Name()] = svc
+	}
+
+	return svcs, nil
 }

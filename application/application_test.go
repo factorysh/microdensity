@@ -101,6 +101,7 @@ func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {
 	cfg := &conf.Conf{
 		JWKProvider: gitlabURL,
 		DataPath:    dataDir,
+		Services:    "../demo-services",
 	}
 
 	return cfg, func() {
