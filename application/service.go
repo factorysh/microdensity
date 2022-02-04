@@ -27,6 +27,9 @@ func (a *Application) ServiceHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
+		render.JSON(w, r, map[string]interface{}{
+			"name": serviceId,
+		})
 	}
 }
 
