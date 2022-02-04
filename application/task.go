@@ -36,7 +36,7 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		l.Warn("Claims error", zap.Error(err))
 		panic(err)
 	}
-	if project != url.QueryEscape(claims.ProjectPath) {
+	if project != url.QueryEscape(claims.ProjectPath) && project != claims.ID {
 		l.Warn("Path mismatch with claims", zap.String("claims.Path", claims.ProjectPath))
 		w.WriteHeader(403)
 		return
