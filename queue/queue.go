@@ -10,6 +10,7 @@ import (
 	"github.com/oleiade/lane"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.uber.org/zap"
 )
 
 var (
@@ -32,16 +33,23 @@ type Queue struct {
 	storage    storage.Storage
 	BatchEnded chan bool
 	working    bool
+	logger     *zap.Logger
 }
 
 // NewQueue inits a new queue struct
 func NewQueue(s storage.Storage, runner *run.Runner) Queue {
+	logger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
 	queueSize.Set(0)
+	logger.Info("New queue")
 	return Queue{
 		items:      lane.NewQueue(),
 		BatchEnded: make(chan bool, 1),
 		runner:     runner,
 		storage:    s,
+		logger:     logger,
 	}
 }
 
@@ -61,9 +69,11 @@ func (q *Queue) Put(item *task.Task) {
 
 	queueAdded.Inc()
 	queueSize.Inc()
+	q.logger.Info("queue add", zap.Any("task", item))
 
 	if !q.working {
 		q.working = true
+		q.logger.Info("Start queue")
 		go q.DequeueWhile()
 	}
 }
@@ -74,6 +84,7 @@ func (q *Queue) dequeue() interface{} {
 	defer q.Unlock()
 
 	queueSize.Dec()
+	q.logger.Info("Queue dequeue")
 	return q.items.Dequeue()
 }
 
