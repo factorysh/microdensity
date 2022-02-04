@@ -12,7 +12,6 @@ TESTS= github.com/factorysh/microdensity/task \
 		github.com/factorysh/microdensity/middlewares \
 		github.com/factorysh/microdensity/sessions \
 		github.com/factorysh/microdensity/badge \
-		github.com/factorysh/microdensity/application \
 		github.com/factorysh/microdensity/gitlab \
 		github.com/factorysh/microdensity/oauth \
 		github.com/factorysh/microdensity/volumes \
@@ -25,3 +24,4 @@ test-all:
 	go test --cover ${TESTS} \
 		github.com/factorysh/microdensity/run \
 		github.com/factorysh/microdensity/queue \
+		github.com/factorysh/microdensity/application \
