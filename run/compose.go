@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"os/user"
+
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/config/configfile"
@@ -39,25 +41,34 @@ type ComposeRun struct {
 }
 
 func dockerConfig() (*configfile.ConfigFile, error) {
-	pth := path.Join(os.Getenv("HOME"), "/.docker/config.json")
-	_, err := os.Stat(pth)
 	dockercfg := &configfile.ConfigFile{}
+	me, err := user.Current()
+	if err != nil {
+		return nil, err
+	}
+
+	pth := path.Join(me.HomeDir, "/.docker/config.json")
+	_, err = os.Stat(pth)
 	if err != nil {
 		if os.IsNotExist(err) {
-			f, err := os.Open(pth)
+			err := os.MkdirAll(path.Join(me.HomeDir, "/.docker"), 0700)
 			if err != nil {
 				return nil, err
 			}
-			defer f.Close()
-			err = dockercfg.LoadFromReader(f)
-			if err != nil {
-				return nil, err
-			}
+			dockercfg = configfile.New(pth)
 		} else {
 			return nil, err
 		}
 	} else {
-		dockercfg = configfile.New(pth)
+		f, err := os.Open(pth)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+		err = dockercfg.LoadFromReader(f)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return dockercfg, nil
 }
