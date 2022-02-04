@@ -2,26 +2,21 @@ package application
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 )
 
 // ServicesHandler show all services
 func (a *Application) ServicesHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
 	ss := make([]string, len(a.Services))
 	i := 0
 	for _, service := range a.Services {
 		ss[i] = service.Name()
 		i++
 	}
-	err := json.NewEncoder(w).Encode(ss)
-	if err != nil {
-		panic(err)
-	}
+	render.JSON(w, r, ss)
 }
 
 // ServiceHandler show one service
