@@ -1,0 +1,13 @@
+---
+
+services:
+  background:
+    image: busybox
+    command: sleep 50000
+  hello:
+    depends_on:
+      - background
+    image: busybox
+    command: sh -c "echo 'proof' > /cache/proof && echo '${HELLO:-World}'"
+    volumes:
+      - "./cache:/cache"
