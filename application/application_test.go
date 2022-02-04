@@ -2,9 +2,14 @@ package application
 
 import (
 	"crypto/rsa"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
+	"testing"
 	"time"
 
 	"github.com/cristalhq/jwt/v3"
@@ -13,6 +18,7 @@ import (
 	"github.com/factorysh/microdensity/mockup"
 	"github.com/factorysh/microdensity/service"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 type NaiveService struct {
@@ -53,22 +59,35 @@ bhfhLtK7l19RUDS9g702dcr+z7UxZS97SztCWyEO/mjs
 
 var key = MustParseRSAKey(applicationPrivateRSA)
 
-/*
 func TestApplication(t *testing.T) {
+	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
+	defer gitlab.Close()
 
-	var services = map[string]service.Service{
+	cfg, cb, err := SpawnConfig(gitlab.URL)
+	defer cb()
+	assert.NoError(t, err)
+
+	dataPath, err := ioutil.TempDir(os.TempDir(), "-tasks-test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(dataPath)
+	cfg.DataPath = dataPath
+
+	app, err := New(cfg)
+	assert.NoError(t, err)
+	app.Services = map[string]service.Service{
 		"demo": &NaiveService{
 			name: "demo",
 		},
 	}
-	key, app, _, _, cleanUp := prepareTestingContext(t, services)
-	defer cleanUp()
+
+	srvApp := httptest.NewServer(app.Router)
+	defer srvApp.Close()
 
 	cli := http.Client{}
 	req, err := mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
-	req.URL, err = url.Parse(fmt.Sprintf("%s/services", app.URL))
+	req.URL, err = url.Parse(fmt.Sprintf("%s/services", srvApp.URL))
 	assert.NoError(t, err)
 
 	r, err := cli.Do(req)
@@ -83,7 +102,7 @@ func TestApplication(t *testing.T) {
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo", app.URL))
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo", srvApp.URL))
 	assert.NoError(t, err)
 
 	r, err = cli.Do(req)
@@ -91,7 +110,6 @@ func TestApplication(t *testing.T) {
 	assert.Equal(t, 200, r.StatusCode)
 }
 
-*/
 func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {
 	dataDir, err := ioutil.TempDir(os.TempDir(), "data")
 	if err != nil {
