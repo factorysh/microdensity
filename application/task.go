@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	_claims "github.com/factorysh/microdensity/claims"
@@ -45,7 +46,9 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	err = render.DecodeJSON(r.Body, &args)
 	if err != nil {
 		l.Warn("Body JSON decode error", zap.Error(err))
-		panic(err)
+		w.Header().Set("content-type", "application/json; charset=utf-8")
+		w.WriteHeader(400)
+		w.Write([]byte(`{"error":"JSON error"}`))
 	}
 
 	// validate the arguments
@@ -54,8 +57,15 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		l.Warn("Validation error",
 			zap.Any("args", args),
 			zap.Error(err))
+		//panic(err)
+		w.Header().Set("content-type", "application/json; charset=utf-8")
 		w.WriteHeader(400)
-		render.JSON(w, r, err)
+		err = json.NewEncoder(w).Encode(map[string]string{
+			"error": err.Error(),
+		})
+		if err != nil {
+			panic(err)
+		}
 		return
 	}
 	id, err := uuid.NewUUID()
@@ -91,6 +101,7 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 // TaskHandler show a Task
 func (a *Application) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	l := a.logger.With(
+		zap.String("url", r.URL.String()),
 		zap.String("service", chi.URLParam(r, "serviceID")),
 		zap.String("project", chi.URLParam(r, "project")),
 		zap.String("branch", chi.URLParam(r, "branch")),
@@ -104,7 +115,11 @@ func (a *Application) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		l.Warn("Task get error", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
+		if os.IsNotExist(err) {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
 		return
 	}
 	err = json.NewEncoder(w).Encode(t)

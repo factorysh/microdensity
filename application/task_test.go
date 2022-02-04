@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/factorysh/microdensity/mockup"
@@ -48,11 +50,16 @@ func TestCreateTask(t *testing.T) {
 			sLen:         0,
 			args:         map[string]interface{}{"nop": "Bob"},
 			createStatus: http.StatusBadRequest,
-			getStatus:    http.StatusBadRequest},
+			getStatus:    http.StatusNotFound},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			dataPath, err := ioutil.TempDir(os.TempDir(), "-tasks-test")
+			assert.NoError(t, err)
+			defer os.RemoveAll(dataPath)
+			cfg.DataPath = dataPath
+
 			svc, err := service.NewFolder("../demo")
 			assert.NoError(t, err)
 
@@ -65,11 +72,12 @@ func TestCreateTask(t *testing.T) {
 			srvApp := httptest.NewServer(app.Router)
 			defer srvApp.Close()
 
+			taskPath := "service/demo/group%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5"
 			cli := http.Client{}
 			req, err := mkRequest(key)
 			assert.NoError(t, err)
 			req.Method = "POST"
-			req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", srvApp.URL))
+			req.URL, err = url.Parse(fmt.Sprintf("%s/%s", srvApp.URL, taskPath))
 			assert.NoError(t, err)
 			b := &rc{
 				&bytes.Buffer{},
@@ -80,6 +88,9 @@ func TestCreateTask(t *testing.T) {
 			req.Body = b
 			r, err := cli.Do(req)
 			assert.NoError(t, err)
+			rbody, err := ioutil.ReadAll(r.Body)
+			assert.NoError(t, err)
+			fmt.Println("body", string(rbody))
 			assert.Equal(t, tc.createStatus, r.StatusCode)
 
 			/*
@@ -92,12 +103,11 @@ func TestCreateTask(t *testing.T) {
 			req, err = mkRequest(key)
 			assert.NoError(t, err)
 			req.Method = "GET"
-			req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group%%2Fproject/main/8e54b1d8c5f0859370196733feeb00da022adeb5", srvApp.URL))
+			req.URL, err = url.Parse(fmt.Sprintf("%s/%s", srvApp.URL, taskPath))
 			assert.NoError(t, err)
 			r, err = cli.Do(req)
 			assert.NoError(t, err)
-			// FIXME Where is my 400 when args is not valid?!
-			//assert.Equal(t, tc.getStatus, r.StatusCode)
+			assert.Equal(t, tc.getStatus, r.StatusCode)
 		})
 	}
 
