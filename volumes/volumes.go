@@ -72,7 +72,11 @@ func (v *Volumes) Get(service, project, branch, commit string) (*task.Task, erro
 	)
 	_, err := os.Stat(p)
 	if err != nil {
-		l.Error("Stat error", zap.Error(err))
+		if os.IsNotExist(err) {
+			l.Warn("Volume not found")
+		} else {
+			l.Error("Stat error", zap.Error(err))
+		}
 		return nil, err
 	}
 
