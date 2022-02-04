@@ -205,10 +205,11 @@ func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, err
 		zap.String("service", c.run),
 		zap.String("id", c.id.String()))
 	return c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
-		Name:       fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
-		Service:    c.run,
-		Detach:     false,
-		AutoRemove: true,
+		Name:    fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
+		Service: c.run,
+		Detach:  false,
+		// FIXME: true
+		AutoRemove: false,
 		Privileged: false,
 		QuietPull:  true,
 		Tty:        false,
