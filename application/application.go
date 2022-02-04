@@ -8,6 +8,8 @@ import (
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares/jwt"
 	jwtoroauth2 "github.com/factorysh/microdensity/middlewares/jwt_or_oauth2"
+	"github.com/factorysh/microdensity/queue"
+	"github.com/factorysh/microdensity/run"
 	"github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/sessions"
 	"github.com/factorysh/microdensity/storage"
@@ -26,6 +28,7 @@ type Application struct {
 	storage  storage.Storage
 	volumes  *volumes.Volumes
 	logger   *zap.Logger
+	queue    *queue.Queue
 }
 
 func New(cfg *conf.Conf) (*Application, error) {
@@ -76,6 +79,14 @@ func New(cfg *conf.Conf) (*Application, error) {
 		return nil, err
 	}
 
+	runner, err := run.NewRunner(cfg.Services, cfg.DataPath)
+	if err != nil {
+		logger.Error("Runner crash", zap.Error(err))
+		return nil, err
+	}
+
+	q := queue.NewQueue(s, runner)
+
 	r := chi.NewRouter()
 
 	a := &Application{
@@ -84,6 +95,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		Router:   r,
 		volumes:  v,
 		logger:   logger,
+		queue:    &q,
 	}
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
