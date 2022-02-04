@@ -8,6 +8,20 @@ import (
 	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/task"
 	"github.com/oleiade/lane"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+)
+
+var (
+	queueAdded = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "microdensity_queue_task_added_total",
+		Help: "The total number task added",
+	})
+
+	queueSize = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "microdensity_queue_size",
+		Help: "Queue size",
+	})
 )
 
 // Queue struct use to put and get job items
@@ -22,6 +36,7 @@ type Queue struct {
 
 // NewQueue inits a new queue struct
 func NewQueue(s storage.Storage, runner *run.Runner) Queue {
+	queueSize.Set(0)
 	return Queue{
 		items:      lane.NewQueue(),
 		BatchEnded: make(chan bool, 1),
@@ -44,6 +59,9 @@ func (q *Queue) Put(item *task.Task) {
 	defer q.Unlock()
 	q.items.Enqueue(item)
 
+	queueAdded.Inc()
+	queueSize.Inc()
+
 	if !q.working {
 		q.working = true
 		go q.DequeueWhile()
@@ -55,6 +73,7 @@ func (q *Queue) dequeue() interface{} {
 	q.Lock()
 	defer q.Unlock()
 
+	queueSize.Dec()
 	return q.items.Dequeue()
 }
 
