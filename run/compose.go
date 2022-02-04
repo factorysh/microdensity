@@ -203,6 +203,7 @@ func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, err
 	c.logger.Info("Run service",
 		zap.String("name", c.project.Name),
 		zap.String("service", c.run),
+		zap.String("working dir", c.project.WorkingDir),
 		zap.String("id", c.id.String()))
 	return c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
 		Name:    fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
