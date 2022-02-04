@@ -2,7 +2,6 @@ package volumes
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"sort"
 
 	"github.com/factorysh/microdensity/task"
+	"go.uber.org/zap"
 )
 
 // DirMode is the default dirmode for volumes
@@ -17,45 +17,75 @@ const DirMode fs.FileMode = 0755
 
 // New inits a new volumes struct
 func New(root string) (*Volumes, error) {
-	err := os.MkdirAll(root, DirMode)
+	logger, err := zap.NewProduction()
 	if err != nil {
+		return nil, err
+	}
+	err = os.MkdirAll(root, DirMode)
+	if err != nil {
+		logger.Error("Volume mkdir error",
+			zap.String("root", root),
+			zap.Error(err))
 		return nil, err
 	}
 
 	return &Volumes{
-		root: root,
+		root:   root,
+		logger: logger,
 	}, nil
 }
 
 // Volumes struct used to handle volumes CRUD
 type Volumes struct {
-	root string
+	root   string
+	logger *zap.Logger
 }
 
 // Create a new volume
 func (v *Volumes) Create(t *task.Task) error {
+	l := v.logger.With(
+		zap.String("root", v.root),
+		zap.Any("task", t),
+	)
 	err := t.Validate()
+
 	if err != nil {
+		l.Warn("Validation failed", zap.Error(err))
 		return err
 	}
-	return os.MkdirAll(v.Path(t.Service, t.Project, t.Branch, t.Id.String(), "volumes"), DirMode)
+	err = os.MkdirAll(v.Path(t.Service, t.Project, t.Branch, t.Id.String(), "volumes"), DirMode)
+	if err != nil {
+		l.Error("mkdir all error", zap.Error(err))
+	}
+	return err
 }
 
 func (v *Volumes) Get(service, project, branch, commit string) (*task.Task, error) {
 	p := v.Path(service, project, branch)
+	l := v.logger.With(
+		zap.String("root", v.root),
+		zap.String("service", service),
+		zap.String("project", project),
+		zap.String("branch", branch),
+		zap.String("commit", commit),
+		zap.String("path", p),
+	)
 	commits, err := ioutil.ReadDir(p)
 	if err != nil {
-		fmt.Println("path", p)
+		l.Error("Readall error", zap.Error(err))
 		return nil, err
 	}
 	for _, com := range commits {
+		l = l.With(zap.String("commit", com.Name()))
 		f, err := os.OpenFile(v.Path(service, project, branch, com.Name(), "task.json"), os.O_RDONLY, 0)
 		if err != nil {
+			l.Error("open commit file", zap.Error(err))
 			return nil, err
 		}
 		var t task.Task
 		err = json.NewDecoder(f).Decode(&t)
 		if err != nil {
+			l.Error("JSON decode", zap.Error(err))
 			return nil, err
 		}
 		if t.Commit == commit {
@@ -74,6 +104,11 @@ func (v *Volumes) Path(elem ...string) string {
 func (v *Volumes) ByProjectByBranch(project string, branch string) ([]string, error) {
 	vols, err := ioutil.ReadDir(v.Path(project, branch))
 	if err != nil || !containsFiles(vols) {
+		v.logger.Error("by project by branch",
+			zap.String("project", project),
+			zap.String("brnach", branch),
+			zap.Error(err),
+		)
 		return nil, err
 	}
 
