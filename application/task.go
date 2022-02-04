@@ -98,6 +98,7 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	err = a.queue.Put(t)
 	if err != nil {
 		l.Warn("Task prepare/put", zap.Error(err))
+		panic(err)
 	}
 	json.NewEncoder(w).Encode(map[string]string{
 		"id": id.String(),
