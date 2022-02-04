@@ -55,6 +55,7 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 			zap.Any("args", args),
 			zap.Error(err))
 		w.WriteHeader(400)
+		render.JSON(w, r, err)
 		return
 	}
 	id, err := uuid.NewUUID()
