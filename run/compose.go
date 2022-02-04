@@ -201,11 +201,11 @@ func (c *ComposeRun) PrepareVolumes(prependPath string) error {
 // Run a compose service, writing the STDOUT and STDERR outputs, returns the UNIX return code
 func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, error) {
 	var err error
-	stderr, err = os.Open("/tmp/microdensity.stderr")
+	stderr, err = os.OpenFile("/tmp/microdensity.stderr", os.O_RDWR, 0644)
 	if err != nil {
 		return 0, err
 	}
-	stdout, err = os.Open("/tmp/microdensity.stdout")
+	stdout, err = os.OpenFile("/tmp/microdensity.stdout", os.O_RDWR, 0644)
 	if err != nil {
 		return 0, err
 	}
