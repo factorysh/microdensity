@@ -124,7 +124,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 				r.Route("/{commit}", func(r chi.Router) {
 					r.Get("/", a.TaskHandler)
 				})
-				r.Get("/latest", nil)
+				r.Get("/latest", a.LastTaskHandler)
 			})
 		})
 	})

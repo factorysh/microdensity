@@ -135,3 +135,32 @@ func (a *Application) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 }
+
+func (a *Application) LastTaskHandler(w http.ResponseWriter, r *http.Request) {
+	l := a.logger.With(
+		zap.String("url", r.URL.String()),
+		zap.String("service", chi.URLParam(r, "serviceID")),
+		zap.String("project", chi.URLParam(r, "project")),
+		zap.String("branch", chi.URLParam(r, "branch")),
+	)
+	t, err := a.volumes.GetLatest(
+		chi.URLParam(r, "serviceID"),
+		chi.URLParam(r, "project"),
+		chi.URLParam(r, "branch"),
+	)
+	if err != nil {
+		l.Warn("Task get error", zap.Error(err))
+		if os.IsNotExist(err) {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return
+	}
+	if t == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	render.JSON(w, r, t)
+
+}
