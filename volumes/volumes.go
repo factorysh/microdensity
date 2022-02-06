@@ -60,6 +60,46 @@ func (v *Volumes) Create(t *task.Task) error {
 	return err
 }
 
+func (v *Volumes) GetLatest(service, project, branch string) (*task.Task, error) {
+	p := v.Path(service, project, branch)
+	l := v.logger.With(
+		zap.String("root", v.root),
+		zap.String("service", service),
+		zap.String("project", project),
+		zap.String("branch", branch),
+		zap.String("path", p),
+	)
+	_, err := os.Stat(p)
+	if err != nil {
+		if os.IsNotExist(err) {
+			l.Warn("Volume not found")
+		} else {
+			l.Error("Stat error", zap.Error(err))
+		}
+		return nil, err
+	}
+
+	commits, err := ioutil.ReadDir(p)
+	if err != nil {
+		l.Error("Readall error", zap.Error(err))
+		return nil, err
+	}
+	com := commits[0]
+	l = l.With(zap.String("commit", com.Name()))
+	f, err := os.OpenFile(v.Path(service, project, branch, com.Name(), "task.json"), os.O_RDONLY, 0)
+	if err != nil {
+		l.Error("open commit file", zap.Error(err))
+		return nil, err
+	}
+	var t task.Task
+	err = json.NewDecoder(f).Decode(&t)
+	if err != nil {
+		l.Error("JSON decode", zap.Error(err))
+		return nil, err
+	}
+	return &t, nil
+}
+
 func (v *Volumes) Get(service, project, branch, commit string) (*task.Task, error) {
 	p := v.Path(service, project, branch)
 	l := v.logger.With(
