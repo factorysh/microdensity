@@ -84,6 +84,12 @@ func (v *Volumes) GetLatest(service, project, branch string) (*task.Task, error)
 		l.Error("Readall error", zap.Error(err))
 		return nil, err
 	}
+
+	if len(commits) == 0 {
+		l.Info("No commits")
+		return nil, nil
+	}
+
 	com := commits[0]
 	l = l.With(zap.String("commit", com.Name()))
 	f, err := os.OpenFile(v.Path(service, project, branch, com.Name(), "task.json"), os.O_RDONLY, 0)
