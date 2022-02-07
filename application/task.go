@@ -2,11 +2,14 @@ package application
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
 
+	_badge "github.com/factorysh/microdensity/badge"
 	_claims "github.com/factorysh/microdensity/claims"
 	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
@@ -142,4 +145,44 @@ func (a *Application) TaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Application) TaskMyBadgeHandler(w http.ResponseWriter, r *http.Request) {
+	l := a.logger.With(
+		zap.String("url", r.URL.String()),
+		zap.String("service", chi.URLParam(r, "serviceID")),
+		zap.String("project", chi.URLParam(r, "project")),
+		zap.String("branch", chi.URLParam(r, "branch")),
+		zap.String("commit", chi.URLParam(r, "commit")),
+		zap.String("branch", chi.URLParam(r, "branch")),
+	)
+	p := a.volumes.Path(
+		chi.URLParam(r, "serviceID"),
+		chi.URLParam(r, "project"),
+		chi.URLParam(r, "branch"),
+		chi.URLParam(r, "commit"),
+		fmt.Sprintf("%s.badge", chi.URLParam(r, "badge")),
+	)
+	_, err := os.Stat(p)
+	if err != nil {
+		l.Warn("Task get error", zap.Error(err))
+		if os.IsNotExist(err) {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return
+	}
+	l = l.With(zap.String("path", p))
+	b, err := ioutil.ReadFile(p)
+	if err != nil {
+		l.Error("reading file", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	var badge _badge.Badge
+	err = json.Unmarshal(b, &badge)
+	if err != nil {
+		l.Error("JSON unmarshal", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	badge.Render(w, r)
 }
