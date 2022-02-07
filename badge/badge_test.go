@@ -20,7 +20,7 @@ import (
 func TestBadge(t *testing.T) {
 	dir, err := ioutil.TempDir(os.TempDir(), "data-")
 	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
+	// defer os.RemoveAll(dir)
 	store, err := storage.NewFSStore(dir)
 	assert.NoError(t, err)
 
@@ -33,7 +33,7 @@ func TestBadge(t *testing.T) {
 	r := chi.NewRouter()
 	r.Route("/s/{service:[a-z-]+}/{project}/{id}/badge", func(r chi.Router) {
 		//r.Use(_project.AssertProject)
-		r.Get("/", BadgeMyProject(store, "status"))
+		r.Get("/", StatusBadge(store))
 	})
 
 	ts := httptest.NewServer(r)
