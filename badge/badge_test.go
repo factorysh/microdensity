@@ -33,7 +33,7 @@ func TestBadge(t *testing.T) {
 	r := chi.NewRouter()
 	r.Route("/s/{service:[a-z-]+}/{project}/{id}/badge", func(r chi.Router) {
 		//r.Use(_project.AssertProject)
-		r.Get("/", StatusBadge(store))
+		r.Get("/", StatusBadge(store, false))
 	})
 
 	ts := httptest.NewServer(r)

@@ -6,7 +6,6 @@ import (
 	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/narqo/go-badge"
 )
 
@@ -42,29 +41,28 @@ func (s statusToColors) Get(state task.State) badge.Color {
 }
 
 // StatusBadge handles request to for a badge task status request
-func StatusBadge(s storage.Storage) func(http.ResponseWriter, *http.Request) {
+func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		service := chi.URLParam(r, "service")
 		project := chi.URLParam(r, "project")
-		id := chi.URLParam(r, "id")
-		uid, err := uuid.Parse(id)
-		if err != nil {
-			panic(err)
-		}
-		t, err := s.Get(uid.String())
-		if err != nil {
-			panic(err)
-		}
-		if t == nil {
+		branch := chi.URLParam(r, "branch")
+		commit := chi.URLParam(r, "commit")
+
+		t, err := s.GetByCommit(service, project, branch, commit, latest)
+
+		if t == nil || err != nil {
 			err = writeBadge("status", "?!", colors.Default, w)
 			if err != nil {
 				panic(err)
 			}
 			return
 		}
+
 		if t.Project != project {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		writeBadge("status", t.State.String(), colors.Get(t.State), w)
 		if err != nil {
 			panic(err)

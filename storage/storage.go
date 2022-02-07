@@ -23,6 +23,7 @@ const latestFile = "latest"
 type Storage interface {
 	Upsert(*task.Task) error
 	Get(id string) (*task.Task, error)
+	GetByCommit(service, project, branch, commit string, latest bool) (*task.Task, error)
 	All() ([]*task.Task, error)
 	Filter(func(*task.Task) bool) ([]*task.Task, error)
 	Delete(id string) error
@@ -140,6 +141,27 @@ func (s *FSStore) Get(id string) (*task.Task, error) {
 	}
 
 	return taskFromJSON(filepath.Join(taskRootPath, taskFile))
+}
+
+// GetByCommit gets the task using the full path from service to commit
+func (s *FSStore) GetByCommit(service, project, branch, commit string, latest bool) (*task.Task, error) {
+	var err error
+	taskPath := filepath.Join(s.root, service, project, branch)
+
+	if latest {
+		taskPath = filepath.Join(taskPath, latestFile)
+		_, err = os.Stat(taskPath)
+	} else {
+		taskPath = filepath.Join(taskPath, commit, taskFile)
+		_, err = os.Stat(taskPath)
+
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return taskFromJSON(taskPath)
 }
 
 // All returns all the tasks for this storage
