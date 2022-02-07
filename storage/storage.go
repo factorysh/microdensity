@@ -145,23 +145,36 @@ func (s *FSStore) Get(id string) (*task.Task, error) {
 
 // GetByCommit gets the task using the full path from service to commit
 func (s *FSStore) GetByCommit(service, project, branch, commit string, latest bool) (*task.Task, error) {
-	var err error
-	taskPath := filepath.Join(s.root, service, project, branch)
 
+	// if latest return early
 	if latest {
-		taskPath = filepath.Join(taskPath, latestFile)
-		_, err = os.Stat(taskPath)
-	} else {
-		taskPath = filepath.Join(taskPath, commit, taskFile)
-		_, err = os.Stat(taskPath)
-
+		latest, err := s.GetLatest(service, project, branch)
+		if err != nil {
+			return nil, err
+		}
+		return latest, nil
 	}
 
+	// if not latest, do the heavy stuff
+	var t *task.Task
+	basePath := filepath.Join(s.root, service, project, branch)
+	dirs, err := os.ReadDir(basePath)
 	if err != nil {
 		return nil, err
 	}
 
-	return taskFromJSON(taskPath)
+	for _, dir := range dirs {
+		t, err = s.Get(dir.Name())
+		if err != nil {
+			continue
+		}
+
+		if t.Commit == commit {
+			return t, nil
+		}
+	}
+
+	return nil, fmt.Errorf("task with commit `%s` not found", commit)
 }
 
 // All returns all the tasks for this storage
