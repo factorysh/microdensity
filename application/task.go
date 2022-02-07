@@ -2,6 +2,7 @@ package application
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -166,7 +167,7 @@ func (a *Application) TaskMyBadgeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	p := filepath.Join(a.storage.GetVolumePath(t), "/data", bdg)
+	p := filepath.Join(a.storage.GetVolumePath(t), "/data", fmt.Sprintf("%s.badge", bdg))
 
 	_, err = os.Stat(p)
 	if err != nil {
