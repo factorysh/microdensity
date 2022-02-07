@@ -40,8 +40,23 @@ func (s statusToColors) Get(state task.State) badge.Color {
 	return c
 }
 
+type Badge struct {
+	Subject string `json:"subject"`
+	Status  string `json:"status"`
+	Color   string `json:"color"`
+}
+
+func (b *Badge) Render(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "image/svg+xml")
+	err := badge.Render(b.Subject, b.Status, badge.Color(b.Color), w)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // StatusBadge handles request to for a badge task status request
 func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http.Request) {
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		service := chi.URLParam(r, "serviceID")
 		project := chi.URLParam(r, "project")
