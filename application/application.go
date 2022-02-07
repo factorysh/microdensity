@@ -125,6 +125,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 				r.Route("/{commit}", func(r chi.Router) {
 					r.Get("/", a.TaskHandler)
 					r.Get("/status", badge.StatusBadge(a.storage, false))
+					r.Get("/badge/{badge}", a.TaskMyBadgeHandler)
 				})
 				r.Get("/latest", nil)
 				r.Get("/latest/status", badge.StatusBadge(a.storage, true))

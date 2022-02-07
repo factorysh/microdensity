@@ -140,3 +140,6 @@ func (a *Application) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 }
+
+func (a *Application) TaskMyBadgeHandler(w http.ResponseWriter, r *http.Request) {
+}
