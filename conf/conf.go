@@ -9,7 +9,7 @@ import (
 type Conf struct {
 	Issuer      string    // FIXME what the hell is an issuer?
 	OAuth       OAuthConf `yaml:"OAuth"`
-	Services    string    `yaml:"service"` // Service folder
+	Services    string    `yaml:"services"` // Service folder
 	JWKProvider string    `yaml:"jwk_provider"`
 	Listen      string    `yaml:"listen"` // http listen address
 	DataPath    string    `yaml:"data_path"`
