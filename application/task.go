@@ -162,6 +162,7 @@ func (a *Application) TaskMyBadgeHandler(w http.ResponseWriter, r *http.Request)
 	t, err := a.storage.GetByCommit(service, project, branch, commit, false)
 	if err != nil {
 		l.Warn("Task get error", zap.Error(err))
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
