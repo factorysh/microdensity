@@ -216,12 +216,21 @@ func (c *ComposeRun) PrepareVolumes(prependPath string) error {
 
 // Run a compose service, writing the STDOUT and STDERR outputs, returns the UNIX return code
 func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, error) {
-	c.logger.Info("Run service",
+	l := c.logger.With(
 		zap.String("name", c.project.Name),
 		zap.String("service", c.run),
 		zap.String("working dir", c.project.WorkingDir),
-		zap.String("id", c.id.String()))
+		zap.String("id", c.id.String()),
+	)
 	chrono := time.Now()
+	u, err := user.Current()
+	if err != nil {
+		l.Error("Current user")
+		return -1, err
+	}
+	l.With(zap.String("uid", u.Uid))
+
+	l.Info("Run service")
 	n, err := c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
 		Name:    fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
 		Service: c.run,
@@ -234,13 +243,14 @@ func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, err
 		Stdin:      os.Stdin,
 		Stdout:     stdout,
 		Stderr:     stderr,
+		User:       u.Uid,
 		NoDeps:     false,
 		Labels: types.Labels{
 			"sh.factory.density.id": c.id.String(),
 		},
 		Index: 0,
 	})
-	l := c.logger.With(
+	l = c.logger.With(
 		zap.String("id", c.id.String()),
 		zap.Int("return code", n),
 		zap.Float64("timing µs", float64(time.Since(chrono))/1000),
