@@ -43,7 +43,7 @@ func (s statusToColors) Get(state task.State) badge.Color {
 // StatusBadge handles request to for a badge task status request
 func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		service := chi.URLParam(r, "service")
+		service := chi.URLParam(r, "serviceID")
 		project := chi.URLParam(r, "project")
 		branch := chi.URLParam(r, "branch")
 		commit := chi.URLParam(r, "commit")
