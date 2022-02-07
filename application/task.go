@@ -157,7 +157,7 @@ func (a *Application) TaskMyBadgeHandler(w http.ResponseWriter, r *http.Request)
 	project := chi.URLParam(r, "project")
 	branch := chi.URLParam(r, "branch")
 	commit := chi.URLParam(r, "commit")
-	badge := chi.URLParam(r, "badge")
+	bdg := chi.URLParam(r, "badge")
 
 	t, err := a.storage.GetByCommit(service, project, branch, commit, false)
 	if err != nil {
@@ -165,7 +165,7 @@ func (a *Application) TaskMyBadgeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	p := filepath.Join(a.storage.GetVolumePath(t), "/data", badge)
+	p := filepath.Join(a.storage.GetVolumePath(t), "/data", bdg)
 
 	_, err = os.Stat(p)
 	if err != nil {
