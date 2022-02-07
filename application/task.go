@@ -2,11 +2,11 @@ package application
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	_badge "github.com/factorysh/microdensity/badge"
@@ -153,14 +153,21 @@ func (a *Application) TaskMyBadgeHandler(w http.ResponseWriter, r *http.Request)
 		zap.String("commit", chi.URLParam(r, "commit")),
 		zap.String("branch", chi.URLParam(r, "branch")),
 	)
-	p := a.volumes.Path(
-		chi.URLParam(r, "serviceID"),
-		chi.URLParam(r, "project"),
-		chi.URLParam(r, "branch"),
-		chi.URLParam(r, "commit"),
-		fmt.Sprintf("%s.badge", chi.URLParam(r, "badge")),
-	)
-	_, err := os.Stat(p)
+	service := chi.URLParam(r, "serviceID")
+	project := chi.URLParam(r, "project")
+	branch := chi.URLParam(r, "branch")
+	commit := chi.URLParam(r, "commit")
+	badge := chi.URLParam(r, "badge")
+
+	t, err := a.storage.GetByCommit(service, project, branch, commit, false)
+	if err != nil {
+		l.Warn("Task get error", zap.Error(err))
+		return
+	}
+
+	p := filepath.Join(a.storage.GetVolumePath(t), "/data", badge)
+
+	_, err = os.Stat(p)
 	if err != nil {
 		l.Warn("Task get error", zap.Error(err))
 		if os.IsNotExist(err) {
