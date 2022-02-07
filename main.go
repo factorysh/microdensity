@@ -37,6 +37,7 @@ func main() {
 		l.Error("Application", zap.Error(err))
 		os.Exit(1)
 	}
-	fmt.Println("Listen", cfg.Listen)
+
+	l.Info("starting")
 	http.ListenAndServe(cfg.Listen, a.Router)
 }
