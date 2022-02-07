@@ -1,8 +1,7 @@
 µdensity
 ========
 
-Do stuff
-
+Gitlab CI triggers asynchone analysis and display badges and files.
 
 Paths
 -----
@@ -11,11 +10,8 @@ Paths
 POST /service/{service}/{projet}/{branch}
     return run id
 
-GET /service/{service}/{projet}/{branch}
+GET /service/{service}/{projet}/{branch}/{commit}
 
-GET /service/{service}/{projet}/{run}
-GET /service/{service}/{projet}/{run}/_status
-GET /service/{service}/{projet}/latest
 GET /service/{service}/{projet}/{branch}/latest
 GET /service/{service}/{projet}/
 ``` 
