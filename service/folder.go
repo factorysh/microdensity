@@ -80,16 +80,6 @@ func NewFolder(_path string) (*FolderService, error) {
 		if err != nil {
 			return nil, err
 		}
-		jsBadge := vm.Get("badge")
-		if jsBadge == nil {
-			fmt.Println(string(src))
-			err = fmt.Errorf("badge value not found")
-			return nil, err
-		}
-		err = vm.ExportTo(jsBadge, &service.badge)
-		if err != nil {
-			return nil, err
-		}
 		l.Info("js is ready", zap.Float64("js cooking time (µs)", float64(time.Since(chrono))/1000))
 		service.jsruntime = vm
 	}
