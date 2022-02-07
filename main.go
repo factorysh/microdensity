@@ -9,6 +9,7 @@ import (
 	"github.com/factorysh/microdensity/application"
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/version"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -17,16 +18,24 @@ func main() {
 	if configPath == "" {
 		configPath = "/etc/microdensity.yml"
 	}
-	fmt.Println("Config path", configPath)
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("can't initialize zap logger: %v", err)
+	}
+	defer logger.Sync()
+	l := logger.With(zap.String("config path", configPath))
 	cfg, err := conf.Open(configPath)
 	if err != nil {
-		log.Fatal(err)
+		l.Error("Opening conf", zap.Error(err))
+		os.Exit(1)
 	}
 	cfg.Defaults()
+	l = l.With(zap.Any("config", cfg))
 
 	a, err := application.New(cfg)
 	if err != nil {
-		log.Fatal("Application crash", err)
+		l.Error("Application", zap.Error(err))
+		os.Exit(1)
 	}
 	fmt.Println("Listen", cfg.Listen)
 	http.ListenAndServe(cfg.Listen, a.Router)
