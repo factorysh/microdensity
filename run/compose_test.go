@@ -34,7 +34,7 @@ func TestCompose(t *testing.T) {
 		t.Skip("Skipping testing in CI environment")
 	}
 
-	cr, err := NewComposeRun("../demo/")
+	cr, err := NewComposeRun("../demo/services/demo")
 	assert.NoError(t, err)
 	buff := &bytes.Buffer{}
 
