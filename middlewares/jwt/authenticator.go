@@ -51,7 +51,6 @@ func NewJWTAuthenticator(gitlab string) (*JWTAuthenticator, error) {
 		alg := _jwt.Algorithm(k.Algorithm)
 		l = l.With(zap.String("kid", k.KeyID), zap.String("algo", k.Algorithm))
 		var err error
-		fmt.Println("algo", k.Algorithm)
 		switch {
 		case strings.HasPrefix(k.Algorithm, "HS"):
 			j.verifier[k.KeyID], err = _jwt.NewVerifierHS(alg, k.Key.([]byte))
