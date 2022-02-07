@@ -19,7 +19,7 @@ func TestDeq(t *testing.T) {
 	store, err := storage.NewFSStore(dir)
 	assert.NoError(t, err)
 
-	r, err := run.NewRunner("../", "/tmp/microdensity/volumes")
+	r, err := run.NewRunner("../demo/services", "/tmp/microdensity/volumes")
 	assert.NoError(t, err)
 	que := NewQueue(store, r)
 

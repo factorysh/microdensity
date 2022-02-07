@@ -1,6 +1,7 @@
 package application
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
@@ -125,6 +126,47 @@ func TestApplication(t *testing.T) {
 	r, err = cli.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, 404, r.StatusCode)
+
+	// dummy task
+	mockupCommit := "50ccd600c79e35c2d488e4d36814d05f5d57baee"
+	mockupGroup := url.PathEscape("group/project")
+	req, err = mkRequest(key)
+	assert.NoError(t, err)
+	req.Method = http.MethodPost
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/%s/master/%s", srvApp.URL, mockupGroup, mockupCommit))
+	assert.NoError(t, err)
+	b := new(bytes.Buffer)
+	err = json.NewEncoder(b).Encode(map[string]interface{}{"HELLO": "Bob"})
+	// trick to make the buffer a ReaderCloser
+	req.Body = ioutil.NopCloser(b)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, r.StatusCode)
+
+	time.Sleep(1)
+
+	// get the status badge
+	req, err = mkRequest(key)
+	assert.NoError(t, err)
+	req.Method = http.MethodGet
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/%s/master/%s/status", srvApp.URL, mockupGroup, mockupCommit))
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, r.StatusCode)
+	assert.Equal(t, "image/svg+xml", r.Header["Content-Type"][0])
+
+	// get the status badge
+	req, err = mkRequest(key)
+	assert.NoError(t, err)
+	req.Method = http.MethodGet
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/%s/master/latest/status", srvApp.URL, mockupGroup))
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, r.StatusCode)
+	assert.Equal(t, "image/svg+xml", r.Header["Content-Type"][0])
+
 }
 
 func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {

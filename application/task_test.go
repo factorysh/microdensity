@@ -60,7 +60,7 @@ func TestCreateTask(t *testing.T) {
 			defer os.RemoveAll(dataPath)
 			cfg.DataPath = dataPath
 
-			svc, err := service.NewFolder("../demo")
+			svc, err := service.NewFolder("../demo/services/demo")
 			assert.NoError(t, err)
 
 			app, err := New(cfg)

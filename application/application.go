@@ -5,6 +5,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/factorysh/microdensity/badge"
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares/jwt"
 	jwtoroauth2 "github.com/factorysh/microdensity/middlewares/jwt_or_oauth2"
@@ -123,8 +124,10 @@ func New(cfg *conf.Conf) (*Application, error) {
 			r.Route("/{branch}", func(r chi.Router) {
 				r.Route("/{commit}", func(r chi.Router) {
 					r.Get("/", a.TaskHandler)
+					r.Get("/status", badge.StatusBadge(a.storage, false))
 				})
 				r.Get("/latest", nil)
+				r.Get("/latest/status", badge.StatusBadge(a.storage, true))
 			})
 		})
 	})

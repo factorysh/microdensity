@@ -100,6 +100,11 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		l.Warn("Task prepare/put", zap.Error(err))
 		panic(err)
 	}
+	err = a.storage.SetLatest(t)
+	if err != nil {
+		l.Warn("Task set latest", zap.Error(err))
+		panic(err)
+	}
 	render.JSON(w, r, map[string]string{
 		"id": id.String(),
 	})
