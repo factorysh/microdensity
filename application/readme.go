@@ -6,12 +6,14 @@ import (
 	"os"
 	"path"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/yuin/goldmark"
 	"go.uber.org/zap"
 )
 
 func (a *Application) ReadmeHandler(w http.ResponseWriter, r *http.Request) {
-	md := path.Join(a.serviceFolder, "README.md")
+	serviceId := chi.URLParam(r, "serviceID")
+	md := path.Join(a.serviceFolder, serviceId, "README.md")
 	l := a.logger.With(zap.String("path", md))
 	_, err := os.Stat(md)
 	if err != nil {

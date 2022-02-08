@@ -85,6 +85,7 @@ func TestApplication(t *testing.T) {
 	r, err = cli.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, 200, r.StatusCode)
+	assert.Equal(t, "text/html; charset=utf-8", r.Header.Get("content-type"))
 
 	req, err = mkRequest(key)
 	assert.NoError(t, err)

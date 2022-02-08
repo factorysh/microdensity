@@ -128,7 +128,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 	r.Route("/service/{serviceID}", func(r chi.Router) {
 		r.Use(authMiddleware.Middleware())
 		r.Use(a.ServiceMiddleware)
-		r.Get("/", a.ServiceHandler)
+		r.Get("/", a.ReadmeHandler)
 		r.Get("/-{taskID}", a.TaskHandler)
 	})
 	r.Route("/service/{serviceID}/{project}", func(r chi.Router) {
