@@ -129,6 +129,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 					r.Get("/", a.TaskHandler)
 					r.Get("/status", badge.StatusBadge(a.storage, false))
 					r.Get("/badge/{badge}", a.TaskMyBadgeHandler)
+					r.Get("/volumes/*", a.VolumesHandler(8))
 				})
 				r.Get("/latest", nil)
 				r.Get("/latest/status", badge.StatusBadge(a.storage, true))

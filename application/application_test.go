@@ -167,6 +167,18 @@ func TestApplication(t *testing.T) {
 	assert.Equal(t, 200, r.StatusCode)
 	assert.Equal(t, "image/svg+xml", r.Header["Content-Type"][0])
 
+	time.Sleep(2)
+
+	// get the volume
+	req, err = mkRequest(key)
+	assert.NoError(t, err)
+	req.Method = http.MethodGet
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/%s/master/%s/volumes/cache/proof", srvApp.URL, mockupGroup, mockupCommit))
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, r.StatusCode)
+
 }
 
 func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {

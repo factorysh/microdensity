@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	_badge "github.com/factorysh/microdensity/badge"
@@ -194,4 +196,60 @@ func (a *Application) TaskMyBadgeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	badge.Render(w, r)
+}
+
+// VolumesHandler expose volumes of a task
+func (a *Application) VolumesHandler(basePathLen int) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		l := a.logger.With(
+			zap.String("url", r.URL.String()),
+			zap.String("service", chi.URLParam(r, "serviceID")),
+			zap.String("project", chi.URLParam(r, "project")),
+			zap.String("branch", chi.URLParam(r, "branch")),
+			zap.String("commit", chi.URLParam(r, "commit")),
+			zap.String("branch", chi.URLParam(r, "branch")),
+		)
+		service := chi.URLParam(r, "serviceID")
+		project := chi.URLParam(r, "project")
+		branch := chi.URLParam(r, "branch")
+		commit := chi.URLParam(r, "commit")
+
+		t, err := a.storage.GetByCommit(service, project, branch, commit, false)
+		if err != nil {
+			l.Error("Get task", zap.Error(err))
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		filePath, err := extractPathFromURL(r.URL.Path, basePathLen)
+		if err != nil {
+			l.Error("Extrat path", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		fullPath := filepath.Join(a.storage.GetVolumePath(t), filePath)
+
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			l.Warn("Path not found", zap.Error(err))
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		http.ServeFile(w, r, fullPath)
+	}
+}
+
+func extractPathFromURL(p string, basePathLen int) (string, error) {
+	urlPath, file := path.Split(p)
+
+	parts := strings.Split(urlPath, "/")
+	if len(parts) < basePathLen {
+		return "", fmt.Errorf("can not split path `%s` in more than %d elements", p, basePathLen)
+	}
+
+	folderPath := parts[basePathLen:]
+	folderPath = append(folderPath, file)
+
+	return path.Join(folderPath...), nil
 }
