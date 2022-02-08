@@ -1,6 +1,7 @@
 package application
 
 import (
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -27,7 +28,7 @@ import (
 
 type Application struct {
 	Services map[string]service.Service
-	Router   chi.Router
+	Router   http.Handler
 	storage  storage.Storage
 	volumes  *volumes.Volumes
 	logger   *zap.Logger
@@ -98,10 +99,13 @@ func New(cfg *conf.Conf) (*Application, error) {
 	a := &Application{
 		Services: svcs,
 		storage:  s,
-		Router:   r,
-		volumes:  v,
-		logger:   logger,
-		queue:    &q,
+		Router: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			// FIXME magic happens here
+			r.ServeHTTP(w, req)
+		}),
+		volumes: v,
+		logger:  logger,
+		queue:   &q,
 	}
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
