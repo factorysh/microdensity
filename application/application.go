@@ -9,6 +9,7 @@ import (
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares/jwt"
 	jwtoroauth2 "github.com/factorysh/microdensity/middlewares/jwt_or_oauth2"
+	"github.com/factorysh/microdensity/oauth"
 	"github.com/factorysh/microdensity/queue"
 	"github.com/factorysh/microdensity/run"
 	"github.com/factorysh/microdensity/service"
@@ -115,6 +116,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 	}
 	r.Get("/", HomeHandler)
 	r.Get("/metrics", promhttp.Handler().ServeHTTP)
+	r.Get("/oauth/callback", oauth.CallbackHandler(&cfg.OAuth, &sessions))
 
 	r.Get("/services", a.ServicesHandler)
 	r.Route("/service/{serviceID}", func(r chi.Router) {
