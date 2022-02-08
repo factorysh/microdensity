@@ -82,10 +82,14 @@ func TestDeq(t *testing.T) {
 
 	snk.Cpt.Add(4)
 	// FIXME: asserts on state status
-	que.Put(tsk1, nil)
-	que.Put(tsk2, nil)
-	que.Put(tsk3, nil)
-	que.Put(tsk4, nil)
+	err = que.Put(tsk1, nil)
+	assert.NoError(t, err)
+	err = que.Put(tsk2, nil)
+	assert.NoError(t, err)
+	err = que.Put(tsk3, nil)
+	assert.NoError(t, err)
+	err = que.Put(tsk4, nil)
+	assert.NoError(t, err)
 
 	<-que.BatchEnded
 	//snk.Cpt.Wait()
