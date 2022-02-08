@@ -32,8 +32,8 @@ type Queue struct {
 	runner     *run.Runner
 	storage    storage.Storage
 	BatchEnded chan bool
-	working    bool
 	logger     *zap.Logger
+	working    bool
 }
 
 // NewQueue inits a new queue struct
@@ -78,7 +78,6 @@ func (q *Queue) Put(item *task.Task) error {
 	q.logger.Info("queue add", zap.Any("task", item))
 
 	if !q.working {
-		q.working = true
 		q.logger.Info("Start queue")
 		go q.DequeueWhile()
 	}
@@ -96,15 +95,9 @@ func (q *Queue) dequeue() interface{} {
 	return q.items.Dequeue()
 }
 
-const maxDequeue = 1
-
 // DequeueWhile start maxDequeue workers while the queue is not empty
 func (q *Queue) DequeueWhile() {
-	workers := make(chan int, maxDequeue)
-
 	for q.items.Head() != nil {
-		workers <- 1
-
 		item := q.dequeue()
 
 		t, ok := item.(*task.Task)
@@ -113,39 +106,33 @@ func (q *Queue) DequeueWhile() {
 			continue
 		}
 
-		go func(t *task.Task) {
-			defer func() {
-				<-workers
-			}()
+		ret := -1
 
-			ret := -1
+		t.State = task.Running
+		err := q.storage.Upsert(t)
+		// FIXME: handle err
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
-			t.State = task.Running
-			err := q.storage.Upsert(t)
-			// FIXME: handle err
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
+		ret, err = q.runner.Run(t)
+		if err != nil {
+			fmt.Println(err)
+		}
 
-			ret, err = q.runner.Run(t)
-			if err != nil {
-				fmt.Println(err)
-			}
+		if ret == 0 {
+			t.State = task.Done
+		} else {
+			t.State = task.Failed
+		}
 
-			if ret == 0 {
-				t.State = task.Done
-			} else {
-				t.State = task.Failed
-			}
-
-			err = q.storage.Upsert(t)
-			// FIXME: handle err
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-		}(t)
+		err = q.storage.Upsert(t)
+		// FIXME: handle err
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 	}
 
 	q.BatchEnded <- true
