@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 // FetchProject will try to fetch requested project by impersonating gitlab user using the access token
@@ -12,7 +13,7 @@ func FetchProject(token string, gitlabDomain string, requestedProject string) (*
 		return nil, fmt.Errorf("error requested project can't be blank")
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v4/projects/%s", gitlabDomain, requestedProject), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v4/projects/%s", gitlabDomain, url.QueryEscape(requestedProject)), nil)
 	if err != nil {
 		return nil, err
 	}
