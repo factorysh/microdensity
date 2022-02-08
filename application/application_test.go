@@ -19,37 +19,8 @@ import (
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/mockup"
 	"github.com/factorysh/microdensity/service"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
-
-type NaiveService struct {
-	name string
-}
-
-func (n *NaiveService) Name() string {
-	return n.name
-}
-
-func (n *NaiveService) Validate(map[string]interface{}) (service.Arguments, error) {
-	return service.Arguments{}, nil
-}
-
-func (n *NaiveService) Badge(project, branch, commit, badge string) (service.Badge, error) {
-	return service.Badge{
-		Subject: "CI",
-		Status:  "testing",
-		Color:   "lime",
-	}, nil
-}
-
-func (n *NaiveService) New(project string, args map[string]interface{}) (uuid.UUID, error) {
-	return uuid.Nil, nil
-}
-
-func (n *NaiveService) Run(id uuid.UUID) error {
-	return nil
-}
 
 const applicationPrivateRSA = `-----BEGIN RSA PRIVATE KEY-----
 MIICXQIBAAKBgQDPAPJtd+Jd7zaM/PiRXQ8HWRvh5NxF28n6DNvX3Oc8K9Z2nIQJ
@@ -84,11 +55,8 @@ func TestApplication(t *testing.T) {
 
 	app, err := New(cfg)
 	assert.NoError(t, err)
-	app.Services = map[string]service.Service{
-		"demo": &NaiveService{
-			name: "demo",
-		},
-	}
+	svc, err := service.NewFolder("../demo/services/demo")
+	app.Services = map[string]service.Service{"demo": svc}
 
 	srvApp := httptest.NewServer(app.Router)
 	defer srvApp.Close()
@@ -143,8 +111,6 @@ func TestApplication(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 200, r.StatusCode)
 
-	time.Sleep(1)
-
 	// get the status badge
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
@@ -167,7 +133,8 @@ func TestApplication(t *testing.T) {
 	assert.Equal(t, 200, r.StatusCode)
 	assert.Equal(t, "image/svg+xml", r.Header["Content-Type"][0])
 
-	time.Sleep(2)
+	// FIXME: PubSub on a task avoid pooling/waiting
+	time.Sleep(3 * time.Second)
 
 	// get the volume
 	req, err = mkRequest(key)
@@ -177,8 +144,11 @@ func TestApplication(t *testing.T) {
 	assert.NoError(t, err)
 	r, err = cli.Do(req)
 	assert.NoError(t, err)
+	defer r.Body.Close()
 	assert.Equal(t, 200, r.StatusCode)
-
+	data, err := ioutil.ReadAll(r.Body)
+	assert.NoError(t, err)
+	assert.Equal(t, "proof\n", string(data))
 }
 
 func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {
