@@ -123,11 +123,15 @@ func New(cfg *conf.Conf) (*Application, error) {
 		r.Use(authMiddleware.Middleware())
 		r.Use(a.ServiceMiddleware)
 		r.Get("/", a.ServiceHandler)
-		r.Post("/{project}/{branch}/{commit}", a.PostTaskHandler)
 		r.Get("/-{taskID}", a.TaskHandler)
-		r.Route("/{project}", func(r chi.Router) {
+	})
+	r.Route("/service/{serviceID}/{project}", func(r chi.Router) {
+		r.Use(authMiddleware.Middleware())
+		r.Use(a.ServiceMiddleware)
+		r.Route("/", func(r chi.Router) {
 			r.Route("/{branch}", func(r chi.Router) {
 				r.Route("/{commit}", func(r chi.Router) {
+					r.Post("/", a.PostTaskHandler)
 					r.Get("/", a.TaskHandler)
 					r.Get("/status", badge.StatusBadge(a.storage, false))
 					r.Get("/badge/{badge}", a.TaskMyBadgeHandler)
