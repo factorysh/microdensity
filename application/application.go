@@ -2,9 +2,11 @@ package application
 
 import (
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/factorysh/microdensity/badge"
 	"github.com/factorysh/microdensity/conf"
@@ -102,7 +104,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		serviceFolder: cfg.Services,
 		storage:       s,
 		Router: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			// FIXME magic happens here
+			req.URL.Path = pathMagic(req.URL.Path, 2)
 			r.ServeHTTP(w, req)
 		}),
 		volumes: v,
@@ -150,6 +152,23 @@ func New(cfg *conf.Conf) (*Application, error) {
 	})
 
 	return a, nil
+}
+
+// handles Gitlab like URL Paths and translate it to a Microdensity URL
+func pathMagic(p string, baseLen int) string {
+	parts := strings.Split(p, "/-/")
+	// if there is no magic delimiter
+	// return the same path
+	if len(parts) < 2 {
+		return p
+	}
+
+	baseWithProject := strings.Split(parts[0], "/")
+	if len(parts) < baseLen {
+		return p
+	}
+
+	return path.Join(path.Join(baseWithProject[:baseLen]...), url.PathEscape(path.Join(baseWithProject[baseLen:]...)), parts[1])
 }
 
 // loop into all services sub dirs and create a service using files found
