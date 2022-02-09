@@ -54,7 +54,7 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate the arguments
-	_, err = service.Validate(args)
+	parsedArgs, err := service.Validate(args)
 	if err != nil {
 		l.Warn("Validation error",
 			zap.Any("args", args),
@@ -95,7 +95,7 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		l.Warn("Volume creation", zap.Error(err))
 		panic(err)
 	}
-	err = a.queue.Put(t)
+	err = a.queue.Put(t, parsedArgs.Environments)
 	if err != nil {
 		l.Warn("Task prepare/put", zap.Error(err))
 		panic(err)

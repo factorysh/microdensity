@@ -62,11 +62,11 @@ func (q *Queue) Len() int {
 }
 
 // Put a new item into the queue and the storage
-func (q *Queue) Put(item *task.Task) error {
+func (q *Queue) Put(item *task.Task, env map[string]string) error {
 	q.Lock()
 	defer q.Unlock()
 
-	err := q.runner.Prepare(item)
+	err := q.runner.Prepare(item, env)
 	if err != nil {
 		return err
 	}

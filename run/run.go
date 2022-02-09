@@ -44,7 +44,7 @@ func NewRunner(servicesDir string, volumesRoot string) (*Runner, error) {
 }
 
 // Prepare the run
-func (r *Runner) Prepare(t *task.Task) error {
+func (r *Runner) Prepare(t *task.Task, env map[string]string) error {
 	if t.Id == uuid.Nil {
 		return fmt.Errorf("task requires an ID to be prepared")
 	}
@@ -58,7 +58,7 @@ func (r *Runner) Prepare(t *task.Task) error {
 		return err
 	}
 
-	err = runnable.Prepare(nil, r.volumes.Path(t.Service, t.Project, t.Branch, t.Id.String()), t.Id)
+	err = runnable.Prepare(env, r.volumes.Path(t.Service, t.Project, t.Branch, t.Id.String()), t.Id)
 	if err != nil {
 		return err
 	}

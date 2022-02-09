@@ -28,7 +28,7 @@ func TestDeq(t *testing.T) {
 		Service: "demo",
 		Project: "beuha",
 	}
-	err = r.Prepare(tsk1)
+	err = r.Prepare(tsk1, nil)
 	assert.NoError(t, err)
 
 	tsk2 := &task.Task{
@@ -36,7 +36,7 @@ func TestDeq(t *testing.T) {
 		Service: "demo",
 		Project: "alice",
 	}
-	err = r.Prepare(tsk2)
+	err = r.Prepare(tsk2, nil)
 	assert.NoError(t, err)
 
 	tsk3 := &task.Task{
@@ -44,7 +44,7 @@ func TestDeq(t *testing.T) {
 		Project: "another",
 		Service: "demo",
 	}
-	err = r.Prepare(tsk3)
+	err = r.Prepare(tsk3, nil)
 	assert.NoError(t, err)
 
 	tsk4 := &task.Task{
@@ -55,10 +55,10 @@ func TestDeq(t *testing.T) {
 	assert.NoError(t, err)
 
 	// FIXME: asserts on state status
-	que.Put(tsk1)
-	que.Put(tsk2)
-	que.Put(tsk3)
-	que.Put(tsk4)
+	que.Put(tsk1, nil)
+	que.Put(tsk2, nil)
+	que.Put(tsk3, nil)
+	que.Put(tsk4, nil)
 
 	<-que.BatchEnded
 
