@@ -50,7 +50,7 @@ func TestApplication(t *testing.T) {
 
 	dataPath, err := ioutil.TempDir(os.TempDir(), "-tasks-test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(dataPath)
+	// defer os.RemoveAll(dataPath)
 	cfg.DataPath = dataPath
 
 	app, err := New(cfg)
@@ -102,7 +102,9 @@ func TestApplication(t *testing.T) {
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodPost
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/%s/master/%s", srvApp.URL, mockupGroup, mockupCommit))
+	req.URL, err = url.Parse(srvApp.URL)
+	assert.NoError(t, err)
+	req.URL.Path = fmt.Sprintf("/service/demo/%s/master/%s", mockupGroup, mockupCommit)
 	assert.NoError(t, err)
 	b := new(bytes.Buffer)
 	err = json.NewEncoder(b).Encode(map[string]interface{}{"HELLO": "Bob"})
@@ -116,7 +118,9 @@ func TestApplication(t *testing.T) {
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/%s/master/%s/status", srvApp.URL, mockupGroup, mockupCommit))
+	req.URL, err = url.Parse(srvApp.URL)
+	assert.NoError(t, err)
+	req.URL.Path = fmt.Sprintf("/service/demo/%s/master/%s/status", mockupGroup, mockupCommit)
 	assert.NoError(t, err)
 	r, err = cli.Do(req)
 	assert.NoError(t, err)
@@ -127,7 +131,9 @@ func TestApplication(t *testing.T) {
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/%s/master/latest/status", srvApp.URL, mockupGroup))
+	req.URL, err = url.Parse(srvApp.URL)
+	assert.NoError(t, err)
+	req.URL.Path = fmt.Sprintf("/service/demo/%s/master/latest/status", mockupGroup)
 	assert.NoError(t, err)
 	r, err = cli.Do(req)
 	assert.NoError(t, err)
@@ -141,7 +147,9 @@ func TestApplication(t *testing.T) {
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/%s/master/%s/volumes/cache/proof", srvApp.URL, mockupGroup, mockupCommit))
+	req.URL, err = url.Parse(srvApp.URL)
+	assert.NoError(t, err)
+	req.URL.Path = fmt.Sprintf("/service/demo/%s/master/%s/volumes/cache/proof", mockupGroup, mockupCommit)
 	assert.NoError(t, err)
 	r, err = cli.Do(req)
 	assert.NoError(t, err)
@@ -150,6 +158,20 @@ func TestApplication(t *testing.T) {
 	data, err := ioutil.ReadAll(r.Body)
 	assert.NoError(t, err)
 	assert.Equal(t, "proof\n", string(data))
+
+	req, err = mkRequest(key)
+	assert.NoError(t, err)
+	req.Method = http.MethodGet
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group/project/-/master/%s/volumes/cache/proof", srvApp.URL, mockupCommit))
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	defer r.Body.Close()
+	assert.Equal(t, 200, r.StatusCode)
+	data, err = ioutil.ReadAll(r.Body)
+	assert.NoError(t, err)
+	assert.Equal(t, "proof\n", string(data))
+
 }
 
 func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {

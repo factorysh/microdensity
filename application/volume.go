@@ -61,7 +61,7 @@ func (a *Application) VolumesHandler(basePathLen int) http.HandlerFunc {
 }
 
 func extractPathFromURL(p string, basePathLen int) (string, error) {
-	urlPath, file := path.Split(p)
+	urlPath, file := path.Split(strings.TrimLeft(p, "/"))
 
 	parts := strings.Split(urlPath, "/")
 	if len(parts) < basePathLen {

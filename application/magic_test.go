@@ -25,6 +25,7 @@ func TestPathMagic(t *testing.T) {
 		{name: "magic url with project commit", path: "/service/demo/group/project/-/master/commit/status", want: "/service/demo/group%2Fproject/master/commit/status"},
 		{name: "no magic url with project latest", path: "/service/demo/group%2Fproject/master/latest", want: "/service/demo/group%2Fproject/master/latest"},
 		{name: "magic url with project latest", path: "/service/demo/group/project/-/master/latest", want: "/service/demo/group%2Fproject/master/latest"},
+		{name: "magic url with volumes", path: "/service/demo/factory/check-my-demo/-/master/bf3dfa8fde041eda86e873f5251a6d49158ba5b3/volumes/cache/proof", want: "/service/demo/factory%2Fcheck-my-demo/master/bf3dfa8fde041eda86e873f5251a6d49158ba5b3/volumes/cache/proof"},
 	}
 
 	for _, tc := range tests {
@@ -51,6 +52,11 @@ func TestMagicPathHandler(t *testing.T) {
 		path string
 		want string
 	}{
+		{
+			name: "full path with volumes",
+			path: "service/demo/factory/check-my-demo/-/master/bf3dfa8fde041eda86e873f5251a6d49158ba5b3/volumes/cache/proof",
+			want: "/service/demo/factory%2Fcheck-my-demo/master/bf3dfa8fde041eda86e873f5251a6d49158ba5b3/volumes/cache/proof",
+		},
 		{
 			name: "full path",
 			path: "service/demo/group/subgroup/project/-/master/latest",
