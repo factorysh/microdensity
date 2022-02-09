@@ -10,7 +10,7 @@ services:
     image: busybox
     command: >-
       sh -c "echo 'proof' > /cache/proof
-      && echo '${HELLO:-World}'"
+      && echo '${HELLO:-World}'
       && echo '{"color": "lime", "subject":"demo", "status":"${HELLO:-World}"}' > /data/demo.badge
     volumes:
       - "./cache:/cache"
