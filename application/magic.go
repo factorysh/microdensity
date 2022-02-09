@@ -1,14 +1,17 @@
 package application
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 )
 
 // handles Gitlab like URL Paths and translate it to a Microdensity URL
 func pathMagic(p string, baseLen int) string {
+	if !strings.HasPrefix(p, "/service/") { // early exit, magic happens only on /service/*
+		return p
+	}
 	parts := strings.Split(p, "/-/")
 	// if there is no magic delimiter
 	// return the same path
@@ -21,7 +24,11 @@ func pathMagic(p string, baseLen int) string {
 		return p
 	}
 
-	return path.Join(path.Join(baseWithProject[:baseLen]...), url.PathEscape(path.Join(baseWithProject[baseLen:]...)), parts[1])
+	return fmt.Sprintf("%s/%s/%s",
+		strings.Join(baseWithProject[:baseLen+1], "/"),
+		url.PathEscape(strings.Join(baseWithProject[baseLen+1:], "/")),
+		parts[1],
+	)
 }
 
 func MagicPathHandler(next http.Handler) http.Handler {
