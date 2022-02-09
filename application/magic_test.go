@@ -61,6 +61,11 @@ func TestMagicPathHandler(t *testing.T) {
 			path: "metrics",
 			want: "/metrics",
 		},
+		{
+			name: "with a volume",
+			path: "service/demo/factory/check-my-demo/-/master/bf3dfa8fde041eda86e873f5251a6d49158ba5b3/volumes/cache/cache/proof",
+			want: "/service/demo/factory%2Fcheck-my-demo/master/bf3dfa8fde041eda86e873f5251a6d49158ba5b3/volumes/cache/cache/proof",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
