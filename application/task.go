@@ -228,6 +228,12 @@ func (a *Application) VolumesHandler(basePathLen int) http.HandlerFunc {
 			return
 		}
 
+		if strings.Contains(filePath, "..") {
+			l.Warn("Dangerous path trying to access parent directory")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		fullPath := filepath.Join(a.storage.GetVolumePath(t), filePath)
 
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
