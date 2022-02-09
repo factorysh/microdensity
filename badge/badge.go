@@ -1,6 +1,7 @@
 package badge
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/factorysh/microdensity/storage"
@@ -78,7 +79,7 @@ func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http
 			return
 		}
 
-		writeBadge("status", t.State.String(), colors.Get(t.State), w)
+		writeBadge(fmt.Sprintf("status (%s)", service), t.State.String(), colors.Get(t.State), w)
 		if err != nil {
 			panic(err)
 		}
