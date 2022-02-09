@@ -202,3 +202,27 @@ func mkRequest(key *rsa.PrivateKey) (*http.Request, error) {
 		},
 	}, nil
 }
+
+func TestPathMagic(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		want string
+	}{
+		{name: "no magic url /", path: "/", want: "/"},
+		{name: "no magic url /metrics", path: "metrics", want: "metrics"},
+		{name: "no magic url /services", path: "services", want: "services"},
+		{name: "no magic url with service name", path: "service/demo", want: "service/demo"},
+		{name: "no magic url with service name", path: "service/demo", want: "service/demo"},
+		{name: "no magic url with project commit", path: "service/demo/group%2Fproject/master/commit/status", want: "service/demo/group%2Fproject/master/commit/status"},
+		{name: "magic url with project commit", path: "service/demo/group/project/-/master/commit/status", want: "service/demo/group%2Fproject/master/commit/status"},
+		{name: "no magic url with project latest", path: "service/demo/group%2Fproject/master/latest", want: "service/demo/group%2Fproject/master/latest"},
+		{name: "magic url with project latest", path: "service/demo/group/project/-/master/latest", want: "service/demo/group%2Fproject/master/latest"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, pathMagic(tc.path, 2))
+		})
+	}
+}
