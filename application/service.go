@@ -19,20 +19,6 @@ func (a *Application) ServicesHandler(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, ss)
 }
 
-// ServiceHandler show one service
-func (a *Application) ServiceHandler(w http.ResponseWriter, r *http.Request) {
-	if serviceId := chi.URLParam(r, "serviceID"); serviceId != "" {
-		service := a.Services[serviceId]
-		if service == nil {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		render.JSON(w, r, map[string]interface{}{
-			"name": serviceId,
-		})
-	}
-}
-
 // Http middleware
 func (a *Application) ServiceMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

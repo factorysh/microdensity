@@ -27,12 +27,13 @@ import (
 )
 
 type Application struct {
-	Services map[string]service.Service
-	Router   http.Handler
-	storage  storage.Storage
-	volumes  *volumes.Volumes
-	logger   *zap.Logger
-	queue    *queue.Queue
+	Services      map[string]service.Service
+	serviceFolder string
+	Router        http.Handler
+	storage       storage.Storage
+	volumes       *volumes.Volumes
+	logger        *zap.Logger
+	queue         *queue.Queue
 }
 
 func New(cfg *conf.Conf) (*Application, error) {
@@ -97,8 +98,9 @@ func New(cfg *conf.Conf) (*Application, error) {
 	r := chi.NewRouter()
 
 	a := &Application{
-		Services: svcs,
-		storage:  s,
+		Services:      svcs,
+		serviceFolder: cfg.Services,
+		storage:       s,
 		Router: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			// FIXME magic happens here
 			r.ServeHTTP(w, req)
@@ -126,7 +128,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 	r.Route("/service/{serviceID}", func(r chi.Router) {
 		r.Use(authMiddleware.Middleware())
 		r.Use(a.ServiceMiddleware)
-		r.Get("/", a.ServiceHandler)
+		r.Get("/", a.ReadmeHandler)
 		r.Get("/-{taskID}", a.TaskHandler)
 	})
 	r.Route("/service/{serviceID}/{project}", func(r chi.Router) {
