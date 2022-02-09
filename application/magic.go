@@ -25,8 +25,8 @@ func pathMagic(p string, baseLen int) string {
 }
 
 func MagicPathHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		req.URL.Path = pathMagic(req.URL.Path, 2)
-		next.ServeHTTP(w, req)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = pathMagic(r.URL.Path, 2)
+		next.ServeHTTP(w, r)
 	})
 }
