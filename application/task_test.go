@@ -121,9 +121,9 @@ func TestExtratPathFromURL(t *testing.T) {
 		want    string
 		err     error
 	}{
-		{name: "Smol Valid", input: "/services/demo/groupe%2Fproject/branch/commit/volumes/data/proof", want: "data/proof", err: nil, baseLen: 7},
-		{name: "Long valid", input: "/services/demo/groupe%2Fproject/branch/commit/volumes/data/some/very/extra/long/path/proof", want: "data/some/very/extra/long/path/proof", err: nil, baseLen: 7},
-		{name: "Invalid", input: "/volumes/data/proof", want: "", err: fmt.Errorf("can not split path `/volumes/data/proof` in more than 7 elements"), baseLen: 7},
+		{name: "Smol Valid", input: "/services/demo/groupe%2Fproject/branch/commit/volumes/data/proof", want: "data/proof", err: nil, baseLen: 6},
+		{name: "Long valid", input: "/services/demo/groupe%2Fproject/branch/commit/volumes/data/some/very/extra/long/path/proof", want: "data/some/very/extra/long/path/proof", err: nil, baseLen: 6},
+		{name: "Invalid", input: "/volumes/data/proof", want: "", err: fmt.Errorf("can not split path `/volumes/data/proof` in more than 6 elements"), baseLen: 6},
 	}
 
 	for _, tc := range tests {
