@@ -135,13 +135,16 @@ func New(cfg *conf.Conf) (*Application, error) {
 			r.Route("/{branch}", func(r chi.Router) {
 				r.Route("/{commit}", func(r chi.Router) {
 					r.Post("/", a.PostTaskHandler)
-					r.Get("/", a.TaskHandler)
+					r.Get("/", a.TaskHandler(false))
 					r.Get("/status", badge.StatusBadge(a.storage, false))
 					r.Get("/badge/{badge}", a.TaskMyBadgeHandler)
-					r.Get("/volumes/*", a.VolumesHandler(6))
+					r.Get("/volumes/*", a.VolumesHandler(6, false))
 				})
-				r.Get("/latest", nil)
-				r.Get("/latest/status", badge.StatusBadge(a.storage, true))
+				r.Route("/latest", func(r chi.Router) {
+					r.Get("/", a.TaskHandler(true))
+					r.Get("/status", badge.StatusBadge(a.storage, true))
+					r.Get("/volumes/*", a.VolumesHandler(6, true))
+				})
 			})
 		})
 	})

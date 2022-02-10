@@ -13,7 +13,7 @@ import (
 )
 
 // VolumesHandler expose volumes of a task
-func (a *Application) VolumesHandler(basePathLen int) http.HandlerFunc {
+func (a *Application) VolumesHandler(basePathLen int, latest bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		l := a.logger.With(
 			zap.String("url", r.URL.String()),
@@ -28,7 +28,7 @@ func (a *Application) VolumesHandler(basePathLen int) http.HandlerFunc {
 		branch := chi.URLParam(r, "branch")
 		commit := chi.URLParam(r, "commit")
 
-		t, err := a.storage.GetByCommit(service, project, branch, commit, false)
+		t, err := a.storage.GetByCommit(service, project, branch, commit, latest)
 		if err != nil {
 			l.Error("Get task", zap.Error(err))
 			w.WriteHeader(http.StatusNotFound)
