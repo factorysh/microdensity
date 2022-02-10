@@ -10,7 +10,8 @@ import (
 	"github.com/narqo/go-badge"
 )
 
-var colors = statusToColors{
+// Colors is used to harmonize status colors for all badges
+var Colors = statusToColors{
 	c: map[task.State]badge.Color{
 		// blue - lapis
 		task.Ready: "#2832C2",
@@ -20,8 +21,8 @@ var colors = statusToColors{
 		task.Running: "#DD571C",
 		// red - ruby
 		task.Failed: "#900603",
-		// green - emerald
-		task.Done: "#028A0F",
+		// green
+		task.Done: "#4ec820",
 	},
 	// blue
 	Default: "#527284",
@@ -67,7 +68,7 @@ func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http
 		t, err := s.GetByCommit(service, project, branch, commit, latest)
 
 		if t == nil || err != nil {
-			err = writeBadge("status", "?!", colors.Default, w)
+			err = WriteBadge("status", "?!", Colors.Default, w)
 			if err != nil {
 				panic(err)
 			}
@@ -79,15 +80,15 @@ func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http
 			return
 		}
 
-		writeBadge(fmt.Sprintf("status : %s", service), t.State.String(), colors.Get(t.State), w)
+		WriteBadge(fmt.Sprintf("status : %s", service), t.State.String(), Colors.Get(t.State), w)
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-// writeBadge is a wrapper use to write a badge into an http response
-func writeBadge(label string, content string, color badge.Color, w http.ResponseWriter) error {
+// WriteBadge is a wrapper use to write a badge into an http response
+func WriteBadge(label string, content string, color badge.Color, w http.ResponseWriter) error {
 	w.Header().Set("content-type", "image/svg+xml")
 	return badge.Render(label, content, color, w)
 }
