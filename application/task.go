@@ -111,21 +111,48 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // TaskHandler show a Task
-func (a *Application) TaskHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Application) TaskHandler(latest bool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		l := a.logger.With(
+			zap.String("url", r.URL.String()),
+			zap.String("service", chi.URLParam(r, "serviceID")),
+			zap.String("project", chi.URLParam(r, "project")),
+			zap.String("branch", chi.URLParam(r, "branch")),
+			zap.String("commit", chi.URLParam(r, "commit")),
+		)
+		t, err := a.storage.GetByCommit(
+			chi.URLParam(r, "serviceID"),
+			chi.URLParam(r, "project"),
+			chi.URLParam(r, "branch"),
+			chi.URLParam(r, "commit"),
+			latest,
+		)
+		if err != nil {
+			l.Warn("Task get error", zap.Error(err))
+			if os.IsNotExist(err) {
+				w.WriteHeader(http.StatusNotFound)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+			}
+			return
+		}
+		err = json.NewEncoder(w).Encode(t)
+		if err != nil {
+			l.Error("Json encoding error", zap.Error(err))
+			panic(err)
+		}
+	}
+}
+
+// TaskIDHandler get a task using it's ID
+func (a *Application) TaskIDHandler(w http.ResponseWriter, r *http.Request) {
 	l := a.logger.With(
 		zap.String("url", r.URL.String()),
-		zap.String("service", chi.URLParam(r, "serviceID")),
-		zap.String("project", chi.URLParam(r, "project")),
-		zap.String("branch", chi.URLParam(r, "branch")),
-		zap.String("commit", chi.URLParam(r, "commit")),
+		zap.String("task ID", chi.URLParam(r, "taskID")),
 	)
-	t, err := a.storage.GetByCommit(
-		chi.URLParam(r, "serviceID"),
-		chi.URLParam(r, "project"),
-		chi.URLParam(r, "branch"),
-		chi.URLParam(r, "commit"),
-		false,
-	)
+
+	t, err := a.storage.Get(chi.URLParam(r, "taskID"))
 	if err != nil {
 		l.Warn("Task get error", zap.Error(err))
 		if os.IsNotExist(err) {
@@ -135,9 +162,10 @@ func (a *Application) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	err = json.NewEncoder(w).Encode(t)
 	if err != nil {
 		l.Error("Json encoding error", zap.Error(err))
-		panic(err)
+		return
 	}
 }
