@@ -38,7 +38,10 @@ func TestCompose(t *testing.T) {
 	assert.NoError(t, err)
 	buff := &bytes.Buffer{}
 
-	err = cr.Prepare(map[string]string{}, microdensityVolumesRoot, uuid.New(), []string{})
+	err = cr.Prepare(map[string]string{},
+		microdensityVolumesRoot,
+		uuid.New(),
+		[]string{"google.dns:8.8.8.8"})
 	assert.NoError(t, err)
 	rcode, err := cr.Run(&MockupReaderCloser{buff}, os.Stderr)
 	assert.NoError(t, err)
@@ -64,5 +67,19 @@ func TestCompose(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Println(string(out))
 	assert.Equal(t, "Bob", strings.TrimSpace(string(out)))
+
+	buff.Reset()
+	err = cr.Prepare(map[string]string{
+		"HELLO": "Bob",
+	}, microdensityVolumesRoot, uuid.New(), []string{})
+	assert.NoError(t, err)
+	rcode, err = cr.runCommand(&MockupReaderCloser{buff}, os.Stderr,
+		[]string{"grep", "google.dns", "/etc/hosts"})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, rcode)
+	out, err = ioutil.ReadAll(buff)
+	assert.NoError(t, err)
+	fmt.Println(string(out))
+	assert.True(t, false)
 
 }

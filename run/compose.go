@@ -188,6 +188,11 @@ func (c *ComposeRun) PrepareVolumes(prependPath string) error {
 
 // Run a compose service, writing the STDOUT and STDERR outputs, returns the UNIX return code
 func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, error) {
+	return c.runCommand(stdout, stderr, []string{})
+}
+
+// Does this function need to be public?
+func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, commands []string) (int, error) {
 	l := c.logger.With(
 		zap.String("name", c.project.Name),
 		zap.String("service", c.run),
@@ -204,11 +209,11 @@ func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, err
 
 	l.Info("Run service")
 	n, err := c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
-		Name:    fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
-		Service: c.run,
-		Detach:  false,
-		// FIXME: true
-		AutoRemove: false,
+		Name:       fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
+		Service:    c.run,
+		Command:    commands,
+		Detach:     false,
+		AutoRemove: false, // FIXME: true
 		Privileged: false,
 		QuietPull:  true,
 		Tty:        false,
