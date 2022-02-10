@@ -38,7 +38,7 @@ func TestCompose(t *testing.T) {
 	assert.NoError(t, err)
 	buff := &bytes.Buffer{}
 
-	err = cr.Prepare(map[string]string{}, microdensityVolumesRoot, uuid.New())
+	err = cr.Prepare(map[string]string{}, microdensityVolumesRoot, uuid.New(), []string{})
 	assert.NoError(t, err)
 	rcode, err := cr.Run(&MockupReaderCloser{buff}, os.Stderr)
 	assert.NoError(t, err)
@@ -55,7 +55,7 @@ func TestCompose(t *testing.T) {
 	buff.Reset()
 	err = cr.Prepare(map[string]string{
 		"HELLO": "Bob",
-	}, microdensityVolumesRoot, uuid.New())
+	}, microdensityVolumesRoot, uuid.New(), []string{})
 	assert.NoError(t, err)
 	rcode, err = cr.Run(&MockupReaderCloser{buff}, os.Stderr)
 	assert.NoError(t, err)

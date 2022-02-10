@@ -14,11 +14,8 @@ import (
 
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
-	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
-	dtypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/google/uuid"
@@ -38,43 +35,6 @@ type ComposeRun struct {
 	runCtx  context.Context
 	project *types.Project
 	logger  *zap.Logger
-}
-
-func dockerConfig() (*configfile.ConfigFile, error) {
-	dockercfg := &configfile.ConfigFile{}
-	var home string
-	me, err := user.Current()
-	if err != nil {
-		// In docker container, you can -u an unknown user
-		home = os.TempDir()
-	} else {
-		home = me.HomeDir
-	}
-
-	pth := path.Join(home, "/.docker/config.json")
-	_, err = os.Stat(pth)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err := os.MkdirAll(path.Join(home, "/.docker"), 0700)
-			if err != nil {
-				return nil, err
-			}
-			dockercfg = configfile.New(pth)
-		} else {
-			return nil, err
-		}
-	} else {
-		f, err := os.Open(pth)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-		err = dockercfg.LoadFromReader(f)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return dockercfg, nil
 }
 
 func (c *ComposeRun) Id() uuid.UUID {
@@ -154,7 +114,7 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 }
 
 // Prepare set a quiet compose environment, waiting for its wake
-func (c *ComposeRun) Prepare(envs map[string]string, volumesRoot string, id uuid.UUID) error {
+func (c *ComposeRun) Prepare(envs map[string]string, volumesRoot string, id uuid.UUID, hosts []string) error {
 	var err error
 	c.id = id
 	c.runCtx = context.TODO()
@@ -184,12 +144,20 @@ func (c *ComposeRun) Prepare(envs map[string]string, volumesRoot string, id uuid
 		return err
 	}
 
+	err = c.PrepareServices(hosts)
 	/*
 		You can watch normalized YAML with
 		b := &bytes.Buffer{}
 		err = yaml.NewEncoder(b).Encode(project)
 		b.String()
 	*/
+	return nil
+}
+
+func (c *ComposeRun) PrepareServices(hosts []string) error {
+	for _, service := range c.project.Services {
+		service.ExtraHosts = append(service.ExtraHosts, hosts...)
+	}
 	return nil
 }
 
@@ -261,30 +229,6 @@ func (c *ComposeRun) Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, err
 		l.Error("Run error", zap.Error(err))
 	}
 	return n, err
-}
-
-// Lazy network creation
-func ensureNetwork(cli *client.Client, networkName string) error {
-	networks, err := cli.NetworkList(context.Background(), dtypes.NetworkListOptions{
-		Filters: filters.NewArgs(filters.KeyValuePair{
-			Key:   "name",
-			Value: networkName,
-		},
-		)})
-
-	if err != nil {
-		return err
-	}
-
-	if len(networks) == 0 {
-		_, err = cli.NetworkCreate(context.Background(), networkName, dtypes.NetworkCreate{})
-		if err != nil {
-			return err
-
-		}
-	}
-
-	return err
 }
 
 // LoadCompose loads a docker-compose.yml file
