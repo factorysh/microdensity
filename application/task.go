@@ -119,11 +119,12 @@ func (a *Application) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		zap.String("branch", chi.URLParam(r, "branch")),
 		zap.String("commit", chi.URLParam(r, "commit")),
 	)
-	t, err := a.volumes.Get(
+	t, err := a.storage.GetByCommit(
 		chi.URLParam(r, "serviceID"),
 		chi.URLParam(r, "project"),
 		chi.URLParam(r, "branch"),
 		chi.URLParam(r, "commit"),
+		false,
 	)
 	if err != nil {
 		l.Warn("Task get error", zap.Error(err))
