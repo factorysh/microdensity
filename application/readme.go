@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
 	"go.uber.org/zap"
 )
 
@@ -32,7 +33,13 @@ func (a *Application) ReadmeHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	err = goldmark.Convert(raw, w)
+	_md := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM, // Github favored markup
+			extension.Typographer,
+		),
+	)
+	err = _md.Convert(raw, w)
 	if err != nil {
 		l.Error("README.md markdown error", zap.Error(err))
 	}
