@@ -159,9 +159,12 @@ func (c *ComposeRun) Prepare(envs map[string]string, volumesRoot string, id uuid
 }
 
 func (c *ComposeRun) PrepareServices(hosts []string) error {
-	for _, service := range c.project.Services {
+	services := make(types.Services, len(c.project.Services))
+	for i, service := range c.project.Services {
 		service.ExtraHosts = append(service.ExtraHosts, hosts...)
+		services[i] = service
 	}
+	c.project.Services = services
 	return nil
 }
 
