@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/factorysh/microdensity/badge"
 	_badge "github.com/factorysh/microdensity/badge"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -30,6 +31,7 @@ func (a *Application) BadgeMyTaskHandler(latest bool) http.HandlerFunc {
 		commit := chi.URLParam(r, "commit")
 		bdg := chi.URLParam(r, "badge")
 
+		// get the task
 		t, err := a.storage.GetByCommit(service, project, branch, commit, latest)
 		if err != nil {
 			l.Warn("Task get error", zap.Error(err))
@@ -37,16 +39,19 @@ func (a *Application) BadgeMyTaskHandler(latest bool) http.HandlerFunc {
 			return
 		}
 
+		// try to get the output badge for this task in this service
 		p := filepath.Join(a.storage.GetVolumePath(t), "/data", fmt.Sprintf("%s.badge", bdg))
-
 		_, err = os.Stat(p)
+
+		// if not found
 		if err != nil {
-			l.Warn("Task get error", zap.Error(err))
+			// fallback to status badge
 			if os.IsNotExist(err) {
-				w.WriteHeader(http.StatusNotFound)
-			} else {
-				w.WriteHeader(http.StatusBadRequest)
+				// use the service name, task status and colors from badge pkg
+				badge.WriteBadge(service, t.State.String(), _badge.Colors.Get(t.State), w)
+				return
 			}
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		l = l.With(zap.String("path", p))
