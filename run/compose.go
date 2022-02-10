@@ -145,6 +145,10 @@ func (c *ComposeRun) Prepare(envs map[string]string, volumesRoot string, id uuid
 	}
 
 	err = c.PrepareServices(hosts)
+	if err != nil {
+		c.logger.Error("Adding hosts to all services", zap.Error(err))
+		return err
+	}
 	/*
 		You can watch normalized YAML with
 		b := &bytes.Buffer{}
