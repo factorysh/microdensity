@@ -68,7 +68,7 @@ func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http
 		t, err := s.GetByCommit(service, project, branch, commit, latest)
 
 		if t == nil || err != nil {
-			err = writeBadge("status", "?!", Colors.Default, w)
+			err = WriteBadge("status", "?!", Colors.Default, w)
 			if err != nil {
 				panic(err)
 			}
@@ -80,15 +80,15 @@ func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http
 			return
 		}
 
-		writeBadge(fmt.Sprintf("status : %s", service), t.State.String(), Colors.Get(t.State), w)
+		WriteBadge(fmt.Sprintf("status : %s", service), t.State.String(), Colors.Get(t.State), w)
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-// writeBadge is a wrapper use to write a badge into an http response
-func writeBadge(label string, content string, color badge.Color, w http.ResponseWriter) error {
+// WriteBadge is a wrapper use to write a badge into an http response
+func WriteBadge(label string, content string, color badge.Color, w http.ResponseWriter) error {
 	w.Header().Set("content-type", "image/svg+xml")
 	return badge.Render(label, content, color, w)
 }
