@@ -10,7 +10,8 @@ import (
 	"github.com/narqo/go-badge"
 )
 
-var colors = statusToColors{
+// Colors is used to harmonize status colors for all badges
+var Colors = statusToColors{
 	c: map[task.State]badge.Color{
 		// blue - lapis
 		task.Ready: "#2832C2",
@@ -67,7 +68,7 @@ func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http
 		t, err := s.GetByCommit(service, project, branch, commit, latest)
 
 		if t == nil || err != nil {
-			err = writeBadge("status", "?!", colors.Default, w)
+			err = writeBadge("status", "?!", Colors.Default, w)
 			if err != nil {
 				panic(err)
 			}
@@ -79,7 +80,7 @@ func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http
 			return
 		}
 
-		writeBadge(fmt.Sprintf("status : %s", service), t.State.String(), colors.Get(t.State), w)
+		writeBadge(fmt.Sprintf("status : %s", service), t.State.String(), Colors.Get(t.State), w)
 		if err != nil {
 			panic(err)
 		}
