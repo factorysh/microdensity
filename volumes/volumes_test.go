@@ -2,12 +2,8 @@ package volumes
 
 import (
 	"os"
-	"strings"
 	"testing"
-	"time"
 
-	"github.com/factorysh/microdensity/task"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,37 +37,4 @@ func TestNewVolumes(t *testing.T) {
 			cleanDir()
 		})
 	}
-}
-
-func TestListByProjectByBranch(t *testing.T) {
-	defer cleanDir()
-
-	v, err := New(testRootDir)
-	assert.NoError(t, err)
-	var first uuid.UUID
-	var last uuid.UUID
-	for i := 0; i < 10; i++ {
-		id, err := uuid.NewUUID()
-		assert.NoError(t, err)
-		c := time.Now()
-		if first == uuid.Nil {
-			first = id
-		}
-		last = id
-		err = v.Create(&task.Task{
-			Project:  "group%2Fproject",
-			Branch:   "master",
-			Id:       id,
-			Creation: c,
-			Commit:   "70ea687225ea4869311c500a954e8cc5e687e608",
-		})
-		assert.NoError(t, err)
-	}
-
-	dirs, err := v.ByProjectByBranch("group%2Fproject", "master")
-	assert.NoError(t, err)
-	assert.Len(t, dirs, 10, "one folder should be found")
-	assert.True(t, strings.HasSuffix(dirs[0], first.String()), dirs[0])
-	assert.True(t, strings.HasSuffix(dirs[9], last.String()))
-	cleanDir()
 }

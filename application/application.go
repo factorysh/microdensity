@@ -126,7 +126,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		r.Use(authMiddleware.Middleware())
 		r.Use(a.ServiceMiddleware)
 		r.Get("/", a.ReadmeHandler)
-		r.Get("/-{taskID}", a.TaskHandler)
+		r.Get("/-{taskID}", a.TaskIDHandler)
 	})
 	r.Route("/service/{serviceID}/{project}", func(r chi.Router) {
 		r.Use(authMiddleware.Middleware())
@@ -135,13 +135,17 @@ func New(cfg *conf.Conf) (*Application, error) {
 			r.Route("/{branch}", func(r chi.Router) {
 				r.Route("/{commit}", func(r chi.Router) {
 					r.Post("/", a.PostTaskHandler)
-					r.Get("/", a.TaskHandler)
+					r.Get("/", a.TaskHandler(false))
 					r.Get("/status", badge.StatusBadge(a.storage, false))
-					r.Get("/badge/{badge}", a.TaskMyBadgeHandler)
-					r.Get("/volumes/*", a.VolumesHandler(6))
+					r.Get("/badge/{badge}", a.BadgeMyTaskHandler(false))
+					r.Get("/volumes/*", a.VolumesHandler(6, false))
 				})
-				r.Get("/latest", nil)
-				r.Get("/latest/status", badge.StatusBadge(a.storage, true))
+				r.Route("/latest", func(r chi.Router) {
+					r.Get("/", a.TaskHandler(true))
+					r.Get("/status", badge.StatusBadge(a.storage, true))
+					r.Get("/badge/{badge}", a.BadgeMyTaskHandler(true))
+					r.Get("/volumes/*", a.VolumesHandler(6, true))
+				})
 			})
 		})
 	})
