@@ -117,17 +117,12 @@ func New(cfg *conf.Conf) (*Application, error) {
 		logger.Error("JWT or OAth2 middleware crash", zap.Error(err))
 		return nil, err
 	}
-	r.Get("/", HomeHandler)
+	r.Get("/", a.HomeHandler())
 	r.Get("/metrics", promhttp.Handler().ServeHTTP)
 	r.Get("/oauth/callback", oauth.CallbackHandler(&cfg.OAuth, &sessions))
 
 	r.Get("/services", a.ServicesHandler)
-	r.Route("/service/{serviceID}", func(r chi.Router) {
-		r.Use(authMiddleware.Middleware())
-		r.Use(a.ServiceMiddleware)
-		r.Get("/", a.ReadmeHandler)
-		r.Get("/-{taskID}", a.TaskIDHandler)
-	})
+	r.Get("/service/{serviceID}", a.ReadmeHandler)
 	r.Route("/service/{serviceID}/{project}", func(r chi.Router) {
 		r.Use(authMiddleware.Middleware())
 		r.Use(a.ServiceMiddleware)
