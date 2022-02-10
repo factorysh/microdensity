@@ -20,8 +20,8 @@ var colors = statusToColors{
 		task.Running: "#DD571C",
 		// red - ruby
 		task.Failed: "#900603",
-		// green - emerald
-		task.Done: "#028A0F",
+		// green
+		task.Done: "#4ec820",
 	},
 	// blue
 	Default: "#527284",
