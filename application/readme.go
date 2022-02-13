@@ -39,8 +39,10 @@ func (a *Application) ReadmeHandler(w http.ResponseWriter, r *http.Request) {
 			extension.Typographer,
 		),
 	)
+	writeHTMLHeader(w)
 	err = _md.Convert(raw, w)
 	if err != nil {
 		l.Error("README.md markdown error", zap.Error(err))
 	}
+	writeHTMLFooter(w)
 }

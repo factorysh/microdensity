@@ -70,12 +70,14 @@ func (a *Application) HomeHandler() http.HandlerFunc {
 
 		template.Execute(&buffer, a.Services)
 
+		writeHTMLHeader(w)
 		err = goldmark.Convert(buffer.Bytes(), w)
 		if err != nil {
 			l.Error("markdown convert", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		writeHTMLFooter(w)
 
 		w.Header().Set("content-type", "text/html")
 	}
