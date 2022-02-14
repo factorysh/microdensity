@@ -1,20 +1,23 @@
 package application
 
 import (
+	"bytes"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 
+	"github.com/factorysh/microdensity/html"
 	"github.com/go-chi/chi/v5"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
+	_html "github.com/yuin/goldmark/renderer/html"
 	"go.uber.org/zap"
 )
 
 func (a *Application) ReadmeHandler(w http.ResponseWriter, r *http.Request) {
-	serviceId := chi.URLParam(r, "serviceID")
-	md := path.Join(a.serviceFolder, serviceId, "README.md")
+	serviceID := chi.URLParam(r, "serviceID")
+	md := path.Join(a.serviceFolder, serviceID, "README.md")
 	l := a.logger.With(zap.String("path", md))
 	_, err := os.Stat(md)
 	if err != nil {
@@ -27,6 +30,7 @@ func (a *Application) ReadmeHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	raw, err := ioutil.ReadFile(md)
 	if err != nil {
 		l.Error("README.md read error", zap.Error(err))
@@ -34,15 +38,33 @@ func (a *Application) ReadmeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_md := goldmark.New(
+		goldmark.WithRendererOptions(
+			_html.WithXHTML(),
+			_html.WithWriter(_html.DefaultWriter),
+		),
 		goldmark.WithExtensions(
 			extension.GFM, // Github favored markup
 			extension.Typographer,
-		),
-	)
-	writeHTMLHeader(w)
-	err = _md.Convert(raw, w)
+		))
+
+	var buffer bytes.Buffer
+	err = _md.Convert(raw, &buffer)
 	if err != nil {
 		l.Error("README.md markdown error", zap.Error(err))
 	}
-	writeHTMLFooter(w)
+
+	p := html.Page{
+		Detail: serviceID,
+		Domain: a.Domain,
+		Partial: html.Partial{
+			Template: buffer.String(),
+		},
+	}
+	err = p.Render(w)
+	if err != nil {
+		l.Error("html render error", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 }

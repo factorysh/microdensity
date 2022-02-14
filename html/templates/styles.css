@@ -1,0 +1,35 @@
+html {
+  --font-color: #606c76;
+  --primary-color: #ab4dda;
+  --bg-light: #f4f5f6;
+}
+
+nav {
+  min-height: 4rem;
+  border-bottom: 0.2rem solid var(--font-color);
+  margin-bottom: 4rem;
+  background-color: var(--bg-light);
+}
+
+nav ul {
+  margin-bottom: 0;
+  list-style-type: none;
+  overflow: hidden;
+}
+
+nav li {
+  float: left;
+  margin-bottom: 0;
+}
+
+nav li a {
+  text-transform: uppercase;
+  display: block;
+  color: var(--primary-color);
+  padding: 1rem 0.5rem;
+  text-decoration: none;
+}
+
+nav li a:hover {
+  color: var(--font-color);
+}

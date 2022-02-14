@@ -1,0 +1,11 @@
+<h3>Overview</h3>
+
+<p><strong>Check My Web</strong> is a tool for triggering tests non-blocking using custom services directly from your CI<p>
+
+<h3>Available Services</h3>
+
+{{ range $key, $service := . }}
+<h3><a href="/service/{{ $key }}">{{ $key }}</a></h3>
+
+<p>{{ $service.Desc }}</p>
+{{ end }}

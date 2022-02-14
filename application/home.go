@@ -1,23 +1,21 @@
 package application
 
 import (
-	"bytes"
 	"embed"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strings"
 
+	"github.com/factorysh/microdensity/html"
 	"github.com/factorysh/microdensity/version"
-	"github.com/yuin/goldmark"
 	"go.uber.org/zap"
 )
 
 var (
 	// used to ensure embed import
 	_ embed.FS
-	//go:embed templates/HELP.md
-	helpTemplate string
+	//go:embed templates/home.html
+	homeTemplate string
 )
 
 func acceptsHTML(r *http.Request) bool {
@@ -58,27 +56,19 @@ func (a *Application) HomeHandler() http.HandlerFunc {
 			return
 		}
 
-		// text/html requests sends a documentation file
-		template, err := template.New("help").Parse(helpTemplate)
+		p := html.Page{
+			Detail: "Home",
+			Domain: a.Domain,
+			Partial: html.Partial{
+				Data:     a.Services,
+				Template: homeTemplate,
+			},
+		}
+		err := p.Render(w)
 		if err != nil {
-			l.Error("template", zap.Error(err))
+			l.Error("html render error", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		var buffer bytes.Buffer
-
-		template.Execute(&buffer, a.Services)
-
-		writeHTMLHeader(w)
-		err = goldmark.Convert(buffer.Bytes(), w)
-		if err != nil {
-			l.Error("markdown convert", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		writeHTMLFooter(w)
-
-		w.Header().Set("content-type", "text/html")
 	}
 }
