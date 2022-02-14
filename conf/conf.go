@@ -13,6 +13,7 @@ type Conf struct {
 	JWKProvider string    `yaml:"jwk_provider"`
 	Listen      string    `yaml:"listen"` // http listen address
 	DataPath    string    `yaml:"data_path"`
+	Hosts       []string  `yaml:"hosts"`
 }
 
 func (c *Conf) Defaults() {

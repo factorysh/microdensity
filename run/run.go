@@ -19,7 +19,7 @@ type Context struct {
 }
 
 type Runnable interface {
-	Prepare(map[string]string, string, uuid.UUID) error
+	Prepare(map[string]string, string, uuid.UUID, []string) error
 	Run(stdout io.WriteCloser, stderr io.WriteCloser) (int, error)
 	Cancel()
 }
@@ -28,9 +28,10 @@ type Runner struct {
 	tasks       map[uuid.UUID]*Context
 	servicesDir string
 	volumes     *volumes.Volumes
+	hosts       []string
 }
 
-func NewRunner(servicesDir string, volumesRoot string) (*Runner, error) {
+func NewRunner(servicesDir string, volumesRoot string, hosts []string) (*Runner, error) {
 	v, err := volumes.New(volumesRoot)
 	if err != nil {
 		return nil, err
@@ -40,6 +41,7 @@ func NewRunner(servicesDir string, volumesRoot string) (*Runner, error) {
 		tasks:       make(map[uuid.UUID]*Context),
 		servicesDir: servicesDir,
 		volumes:     v,
+		hosts:       hosts,
 	}, nil
 }
 
@@ -58,7 +60,10 @@ func (r *Runner) Prepare(t *task.Task, env map[string]string) error {
 		return err
 	}
 
-	err = runnable.Prepare(env, r.volumes.Path(t.Service, t.Project, t.Branch, t.Id.String()), t.Id)
+	err = runnable.Prepare(env,
+		r.volumes.Path(t.Service, t.Project, t.Branch, t.Id.String()),
+		t.Id,
+		r.hosts)
 	if err != nil {
 		return err
 	}

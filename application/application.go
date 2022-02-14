@@ -88,7 +88,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		zap.String("service path", cfg.Services),
 		zap.Any("services", svcs))
 
-	runner, err := run.NewRunner(cfg.Services, cfg.DataPath)
+	runner, err := run.NewRunner(cfg.Services, cfg.DataPath, cfg.Hosts)
 	if err != nil {
 		logger.Error("Runner crash", zap.Error(err))
 		return nil, err
