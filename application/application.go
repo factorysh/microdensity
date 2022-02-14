@@ -29,6 +29,7 @@ import (
 type Application struct {
 	Services      map[string]service.Service
 	serviceFolder string
+	Domain        string
 	Router        http.Handler
 	storage       storage.Storage
 	volumes       *volumes.Volumes
@@ -99,6 +100,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 
 	a := &Application{
 		Services:      svcs,
+		Domain:        cfg.OAuth.AppURL,
 		serviceFolder: cfg.Services,
 		storage:       s,
 		Router:        MagicPathHandler(r),
