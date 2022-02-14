@@ -14,7 +14,7 @@ func writeHTMLHeader(w io.Writer) {
 	    <title>µdensity</title>
 	  </head>
 	  <body>
-	    <section class="section">
+	    <section class="section" style="padding-top: 4em">
 	      <div class="container">
 	`))
 }
