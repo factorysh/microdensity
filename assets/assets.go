@@ -4,6 +4,7 @@ import "embed"
 
 var (
 	// used to ensure embed import
-	_ embed.FS
+	F embed.FS
 	//go:embed musaraigne.webp
+	//go:embed microdensity.png
 )

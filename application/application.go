@@ -121,6 +121,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 	}
 	r.Get("/", a.HomeHandler())
 	r.Get("/robots.txt", RobotsHandler)
+	r.Get("/favicon.png", FaviconHandler)
 	r.Get("/metrics", promhttp.Handler().ServeHTTP)
 	r.Get("/oauth/callback", oauth.CallbackHandler(&cfg.OAuth, &sessions))
 
