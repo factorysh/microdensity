@@ -4,12 +4,12 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"html/template"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/factorysh/microdensity/conf"
+	"github.com/factorysh/microdensity/html"
 	"github.com/factorysh/microdensity/httpcontext"
 	"github.com/factorysh/microdensity/oauth"
 	"github.com/factorysh/microdensity/server"
@@ -46,13 +46,6 @@ func OAuth2(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next
 				}
 			}
 
-			// fallback to oauth flow
-			template, err := template.New("login").Parse(loginTemplate)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
 			state, err := _sessions.GenID()
 			if err != nil {
 				fmt.Println(err)
@@ -75,14 +68,17 @@ func OAuth2(oauthConfig *conf.OAuthConf, sessions *_sessions.Sessions) func(next
 			values.Add("scope", "read_api")
 
 			// prepare data for template
-			data := struct {
-				AuthURL string
-			}{
-				AuthURL: fmt.Sprintf("%s/oauth/authorize?%s", oauthConfig.ProviderURL, values.Encode()),
-			}
+			authURL := fmt.Sprintf("%s/oauth/authorize?%s", oauthConfig.ProviderURL, values.Encode())
 
-			// write filled template to response body
-			err = template.Execute(w, data)
+			p := html.Page{
+				Detail: "OAuth Flow",
+				Domain: oauthConfig.AppURL,
+				Partial: html.Partial{
+					Data:     authURL,
+					Template: loginTemplate,
+				},
+			}
+			err = p.Render(w)
 			if err != nil {
 				fmt.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
