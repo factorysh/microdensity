@@ -1,6 +1,6 @@
 # Check My Web
 
-Check you website using various sercices directly inside your CI.
+Check your website using various sercices directly inside your CI.
 
 ## Available Services
 
