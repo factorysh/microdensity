@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
@@ -18,6 +19,7 @@ var _ Service = (*FolderService)(nil)
 
 type FolderService struct {
 	name      string
+	Desc      string
 	jsruntime *goja.Runtime
 	validate  func(map[string]interface{}) (Arguments, error)
 	badge     func(project, branch, commit, badge string) (Badge, error)
@@ -46,10 +48,17 @@ func NewFolder(_path string) (*FolderService, error) {
 		return nil, fmt.Errorf("%s is not a directory", _path)
 	}
 
+	description, err := os.ReadFile(filepath.Join(_path, "description"))
+	if err != nil {
+		l.Warn("No description found in folder service", zap.Error(err))
+		description = []byte("No description found")
+	}
+
 	_, name := path.Split(_path)
 	service := &FolderService{
 		name:   name,
 		logger: logger,
+		Desc:   string(description),
 	}
 	l = l.With(zap.String("name", name))
 
