@@ -168,3 +168,16 @@ func loadServices(path string) (map[string]service.Service, error) {
 
 	return svcs, nil
 }
+
+// ListServices returns a list of all services as string array
+func (a *Application) ListServices() []string {
+	list := make([]string, len(a.Services))
+
+	i := 0
+	for key := range a.Services {
+		list[i] = key
+		i++
+	}
+
+	return list
+}
