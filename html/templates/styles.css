@@ -4,10 +4,6 @@ html {
   --bg-light: #f4f5f6;
 }
 
-html {
-  color: var(--main-fg-color);
-}
-
 nav {
   min-height: 4rem;
   border-bottom: 0.2rem solid var(--font-color);
