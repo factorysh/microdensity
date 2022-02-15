@@ -49,7 +49,7 @@ func TestOAuthRedirect(t *testing.T) {
 	body, err := ioutil.ReadAll(res.Body)
 	assert.NoError(t, err)
 	assert.Equal(t, res.StatusCode, http.StatusUnauthorized, "expected a redirect status code")
-	assert.Contains(t, string(body), "Please login with <a href=")
+	assert.Contains(t, string(body), "Please login with")
 }
 
 func TestOAuthPass(t *testing.T) {
