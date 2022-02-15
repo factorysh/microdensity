@@ -65,7 +65,7 @@ func (a *Application) VolumesHandler(basePathLen int, latest bool) http.HandlerF
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 			l.Warn("Path not found", zap.Error(err))
 
-			data, err := NewResultFromTask(t, "No result for this task")
+			data, err := NewResultFromTask(t, "No result for this task", a.GitlabDomain)
 			if err != nil {
 				l.Error("when creating result from a task", zap.Error(err))
 				w.WriteHeader(http.StatusInternalServerError)
@@ -128,7 +128,7 @@ func (a *Application) renderResultPageForTask(t *task.Task, filePath string, w h
 		return err
 	}
 
-	data, err := NewResultFromTask(t, template.HTML(content))
+	data, err := NewResultFromTask(t, template.HTML(content), a.GitlabDomain)
 	// create the page
 	p := html.Page{
 		Domain: a.Domain,
