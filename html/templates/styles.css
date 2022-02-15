@@ -2,6 +2,8 @@ html {
   --font-color: #606c76;
   --primary-color: #ab4dda;
   --bg-light: #f4f5f6;
+  --bg-error: #f44336;
+  --bg-success: #29a445;
 }
 
 nav {
@@ -35,7 +37,35 @@ nav li a:hover {
   color: var(--font-color);
 }
 
+h6 {
+  text-decoration: underline;
+}
+
 .task-output {
   background-color: var(--bg-light);
+  padding: 2rem;
+}
+
+.label {
+  font-weight: bold;
+}
+
+.success-box {
+  width: auto;
+  background-color: var(--bg-success);
+  color: white;
+  padding: 2rem;
+}
+
+.alert-box {
+  background-color: var(--bg-error);
+  color: white;
+  padding: 2rem;
+  width: auto;
+}
+
+.issue-description {
+  margin-top: 2rem;
+  background-color: white;
   padding: 2rem;
 }
