@@ -34,3 +34,8 @@ nav li a {
 nav li a:hover {
   color: var(--font-color);
 }
+
+.task-output {
+  background-color: var(--bg-light);
+  padding: 2rem;
+}
