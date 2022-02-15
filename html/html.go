@@ -6,6 +6,8 @@ import (
 	"html/template"
 	_template "html/template"
 	"net/http"
+
+	"github.com/yosssi/gohtml"
 )
 
 var (
@@ -37,7 +39,20 @@ func (p *Page) Render(w http.ResponseWriter) error {
 		return err
 	}
 
-	return tmpl.ExecuteTemplate(w, "application.html", p)
+	var buffer bytes.Buffer
+
+	// FIXME what about using a writer, without explicit buffer
+	//ww := gohtml.NewWriter(w)
+	//err = tmpl.ExecuteTemplate(ww, "application.html", p)
+	err = tmpl.ExecuteTemplate(&buffer, "application.html", p)
+	if err != nil {
+		return err
+	}
+
+	content := gohtml.FormatBytes(buffer.Bytes())
+	_, err = w.Write(content)
+
+	return err
 }
 
 // Partial page to add to the application page

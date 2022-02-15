@@ -172,6 +172,19 @@ func TestApplication(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "proof\n", string(data))
 
+	req, err = mkRequest(key)
+	assert.NoError(t, err)
+	req.Method = http.MethodGet
+	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo/group/project/-/master/%s/volumes/data/result.html", srvApp.URL, mockupCommit))
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	defer r.Body.Close()
+	assert.Equal(t, 200, r.StatusCode)
+	data, err = ioutil.ReadAll(r.Body)
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), "Bob")
+
 }
 
 func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {

@@ -1,15 +1,26 @@
 package application
 
 import (
+	"embed"
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
+	"github.com/factorysh/microdensity/html"
+	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
+)
+
+var (
+	// used to ensure embed import
+	_ embed.FS
+	//go:embed templates/result.html
+	resultTemplate string
 )
 
 // VolumesHandler expose volumes of a task
@@ -50,9 +61,45 @@ func (a *Application) VolumesHandler(basePathLen int, latest bool) http.HandlerF
 
 		fullPath := filepath.Join(a.storage.GetVolumePath(t), filePath)
 
+		// if we just want a regular file/directory, expose it
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 			l.Warn("Path not found", zap.Error(err))
+
+			data, err := NewResultFromTask(t, "No result for this task", a.GitlabDomain)
+			if err != nil {
+				l.Error("when creating result from a task", zap.Error(err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			p := html.Page{
+				Domain: a.Domain,
+				Detail: fmt.Sprintf("%s / %s", t.Service, t.Commit),
+				Partial: html.Partial{
+					Template: resultTemplate,
+					Data:     data,
+				}}
+
 			w.WriteHeader(http.StatusNotFound)
+			err = p.Render(w)
+			if err != nil {
+				l.Error("when trying to render 404 result page", zap.Error(err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			return
+		}
+
+		// if we want the html result of a task
+		// return early in case of success
+		if strings.HasSuffix(fullPath, "result.html") {
+			err := a.renderResultPageForTask(t, fullPath, w)
+			if err != nil {
+				l.Warn("when trying to access a result page", zap.Error(err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 			return
 		}
 
@@ -72,4 +119,26 @@ func extractPathFromURL(p string, basePathLen int) (string, error) {
 	folderPath = append(folderPath, file)
 
 	return path.Join(folderPath...), nil
+}
+
+func (a *Application) renderResultPageForTask(t *task.Task, filePath string, w http.ResponseWriter) error {
+	// try to fetch the result page from fs
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	data, err := NewResultFromTask(t, template.HTML(content), a.GitlabDomain)
+	// create the page
+	p := html.Page{
+		Domain: a.Domain,
+		Detail: fmt.Sprintf("%s / %s", t.Service, t.Commit),
+		Partial: html.Partial{
+			Template: resultTemplate,
+			Data:     data,
+		},
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return p.Render(w)
 }
