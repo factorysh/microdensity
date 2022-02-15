@@ -40,6 +40,10 @@ func (p *Page) Render(w http.ResponseWriter) error {
 	}
 
 	var buffer bytes.Buffer
+
+	// FIXME what about using a writer, without explicit buffer
+	//ww := gohtml.NewWriter(w)
+	//err = tmpl.ExecuteTemplate(ww, "application.html", p)
 	err = tmpl.ExecuteTemplate(&buffer, "application.html", p)
 	if err != nil {
 		return err
