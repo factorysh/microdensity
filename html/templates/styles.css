@@ -24,9 +24,10 @@ nav li {
 
 nav li a {
   text-transform: uppercase;
+  font-weight: bold;
   display: block;
   color: var(--primary-color);
-  padding: 1rem 0.5rem;
+  padding: 1rem;
   text-decoration: none;
 }
 

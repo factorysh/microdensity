@@ -5,7 +5,7 @@
 <h3>Available Services</h3>
 
 {{ range $key, $service := . }}
-<h3><a href="/service/{{ $key }}">{{ $key }}</a></h3>
+<h4><a href="/service/{{ $key }}">{{ $key }}</a></h4>
 
 <p>{{ $service.Desc }}</p>
 {{ end }}
