@@ -30,7 +30,7 @@ type Application struct {
 	Services      map[string]service.Service
 	serviceFolder string
 	Domain        string
-	GitlabDomain  string
+	GitlabURL     string
 	Router        http.Handler
 	storage       storage.Storage
 	volumes       *volumes.Volumes
@@ -103,7 +103,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		Services: svcs,
 		Domain:   cfg.OAuth.AppURL,
 		// FIXME: use dedicated variable
-		GitlabDomain:  cfg.OAuth.ProviderURL,
+		GitlabURL:     cfg.OAuth.ProviderURL,
 		serviceFolder: cfg.Services,
 		storage:       s,
 		Router:        MagicPathHandler(r),
