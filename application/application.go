@@ -30,7 +30,7 @@ type Application struct {
 	Services      map[string]service.Service
 	serviceFolder string
 	Domain        string
-	GitlabDomain  string
+	GitlabURL     string
 	Router        http.Handler
 	storage       storage.Storage
 	volumes       *volumes.Volumes
@@ -103,7 +103,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		Services: svcs,
 		Domain:   cfg.OAuth.AppURL,
 		// FIXME: use dedicated variable
-		GitlabDomain:  cfg.OAuth.ProviderURL,
+		GitlabURL:     cfg.OAuth.ProviderURL,
 		serviceFolder: cfg.Services,
 		storage:       s,
 		Router:        MagicPathHandler(r),
@@ -131,22 +131,33 @@ func New(cfg *conf.Conf) (*Application, error) {
 	r.Get("/services", a.ServicesHandler)
 	r.Get("/service/{serviceID}", a.ReadmeHandler)
 	r.Route("/service/{serviceID}/{project}", func(r chi.Router) {
-		r.Use(authMiddleware.Middleware())
 		r.Use(a.ServiceMiddleware)
 		r.Route("/", func(r chi.Router) {
 			r.Route("/{branch}", func(r chi.Router) {
 				r.Route("/{commit}", func(r chi.Router) {
-					r.Post("/", a.PostTaskHandler)
-					r.Get("/", a.TaskHandler(false))
-					r.Get("/status", badge.StatusBadge(a.storage, false))
-					r.Get("/badge/{badge}", a.BadgeMyTaskHandler(false))
-					r.Get("/volumes/*", a.VolumesHandler(6, false))
+					r.Group(func(r chi.Router) {
+						r.Use(authMiddleware.Middleware())
+						r.Post("/", a.PostTaskHandler)
+						r.Get("/", a.TaskHandler(false))
+						r.Get("/volumes/*", a.VolumesHandler(6, false))
+					})
+					r.Group(func(r chi.Router) {
+						r.Use(a.RefererMiddleware)
+						r.Get("/status", badge.StatusBadge(a.storage, false))
+						r.Get("/badge/{badge}", a.BadgeMyTaskHandler(false))
+					})
 				})
 				r.Route("/latest", func(r chi.Router) {
-					r.Get("/", a.TaskHandler(true))
-					r.Get("/status", badge.StatusBadge(a.storage, true))
-					r.Get("/badge/{badge}", a.BadgeMyTaskHandler(true))
-					r.Get("/volumes/*", a.VolumesHandler(6, true))
+					r.Group(func(r chi.Router) {
+						r.Use(authMiddleware.Middleware())
+						r.Get("/", a.TaskHandler(true))
+						r.Get("/volumes/*", a.VolumesHandler(6, true))
+					})
+					r.Group(func(r chi.Router) {
+						r.Use(a.RefererMiddleware)
+						r.Get("/status", badge.StatusBadge(a.storage, true))
+						r.Get("/badge/{badge}", a.BadgeMyTaskHandler(true))
+					})
 				})
 			})
 		})
