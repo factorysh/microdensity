@@ -2,13 +2,19 @@ package gojatest
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/dop251/goja"
 )
 
-func ReadAll(file, test string) (*goja.Runtime, error) {
+type Test struct {
+	vm *goja.Runtime
+}
+
+func New(file, test string) (*Test, error) {
 	src := &bytes.Buffer{}
 
 	for _, i := range []string{file, test} {
@@ -29,10 +35,11 @@ let assert = {
 
     },
     that: (a) => {
-
+		if !a {
+			throw("False");
+		}
     }
 };
-	
 `))
 
 	vm := goja.New()
@@ -40,5 +47,33 @@ let assert = {
 	if err != nil {
 		return nil, err
 	}
-	return vm, nil
+	return &Test{
+		vm: vm,
+	}, nil
+}
+
+func (t *Test) Tests() []string {
+	tt := make([]string, 0)
+	for _, k := range t.vm.GlobalObject().Keys() {
+		if strings.HasPrefix(k, "test") {
+			tt = append(tt, k)
+		}
+	}
+	return tt
+}
+
+func (t *Test) Run(test string) error {
+	fun, ok := goja.AssertFunction(t.vm.Get(test))
+	if !ok {
+		return fmt.Errorf("test not found : %s", test)
+	}
+	_, err := fun(goja.Null())
+	return err
+}
+
+func (t *Test) RunAll() {
+	for _, tt := range t.Tests() {
+		err := t.Run(tt)
+		fmt.Println(err)
+	}
 }
