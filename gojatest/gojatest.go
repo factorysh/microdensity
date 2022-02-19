@@ -1,69 +1,89 @@
 package gojatest
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/dop251/goja"
+	"github.com/dop251/goja/parser"
 )
 
 type Test struct {
-	vm *goja.Runtime
+	program *goja.Program
 }
 
 func New(file, test string) (*Test, error) {
-	src := &bytes.Buffer{}
-
-	for _, i := range []string{file, test} {
-		f, err := os.Open(i)
-		if err != nil {
-			return nil, err
-		}
-		_, err = io.Copy(src, f)
-		if err != nil {
-			return nil, err
-		}
-		f.Close()
-		src.Write([]byte("\n\n"))
+	ffile, err := os.Open(file)
+	if err != nil {
+		return nil, err
 	}
-	src.Write([]byte(`
-let assert = {
+	defer ffile.Close()
+	ftest, err := os.Open(test)
+	if err != nil {
+		return nil, err
+	}
+	defer ftest.Close()
+	ast, err := parser.ParseFile(nil, "testing.js",
+		io.MultiReader(ffile, ftest, strings.NewReader(`
+const assert = {
     throw: (cb) => {
-
+		let catched = false;
+		let ee = null;
+		try {
+			cb()
+		} catch (e) {
+			catched = true;
+			ee = e;
+		}
+		if (!catched) {
+			throw("This test should throw error");
+		}
+		return ee;
     },
-    that: (a) => {
-		if !a {
-			throw("False");
+    that: (a, txt) => {
+		if (!a) {
+			throw("Failed : " + txt);
 		}
     }
 };
-`))
-
-	vm := goja.New()
-	_, err := vm.RunString(src.String())
+`)), 0)
+	if err != nil {
+		return nil, err
+	}
+	prg, err := goja.CompileAST(ast, true)
 	if err != nil {
 		return nil, err
 	}
 	return &Test{
-		vm: vm,
+		program: prg,
 	}, nil
 }
 
-func (t *Test) Tests() []string {
+func (t *Test) Tests() ([]string, error) {
+	vm := goja.New()
+	_, err := vm.RunProgram(t.program)
+	if err != nil {
+		return nil, err
+	}
 	tt := make([]string, 0)
-	for _, k := range t.vm.GlobalObject().Keys() {
+	for _, k := range vm.GlobalObject().Keys() {
 		if strings.HasPrefix(k, "test") {
 			tt = append(tt, k)
 		}
 	}
-	return tt
+	if r := recover(); r != nil {
+		fmt.Println("Recovering from panic:", r)
+	}
+	sort.Strings(tt)
+
+	return tt, nil
 }
 
-func (t *Test) Run(test string) error {
-	fun, ok := goja.AssertFunction(t.vm.Get(test))
+func (t *Test) Run(vm *goja.Runtime, test string) error {
+	fun, ok := goja.AssertFunction(vm.Get(test))
 	if !ok {
 		return fmt.Errorf("test not found : %s", test)
 	}
@@ -71,9 +91,21 @@ func (t *Test) Run(test string) error {
 	return err
 }
 
-func (t *Test) RunAll() {
-	for _, tt := range t.Tests() {
-		err := t.Run(tt)
-		fmt.Println(err)
+func (t *Test) RunAll() error {
+	vm := goja.New()
+	_, err := vm.RunProgram(t.program)
+	if err != nil {
+		return err
 	}
+	tests, err := t.Tests()
+	if err != nil {
+		return err
+	}
+	for _, tt := range tests {
+		err := t.Run(vm, tt)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
