@@ -30,3 +30,8 @@ Big Picture
                                                    <-------------------------| Badges |
                                                                              +--------+
 ```
+
+Bring your own services
+-----------------------
+
+[Services documentation](SERVICES.md)

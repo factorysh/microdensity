@@ -2,6 +2,12 @@
 
 µdensity exposes services.
 
+## Self documenting
+
+A service exposes a README.md, explaining what it does, how to use it.
+
+A minimalistic CSS is provided, your documentation will be not so ugly.
+
 ## REST trigger
 
 A service exposes a REST endpoint, authenticated with Gitlab's JWT token, throught the CI.
