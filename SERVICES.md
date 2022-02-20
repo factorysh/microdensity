@@ -2,6 +2,16 @@
 
 µdensity exposes services.
 
+A service is a folder:
+
+```
+services/demo
+           |
+           +- docker-compose.yml
+           +- README.md
+           +- meta.js
+```
+
 ## Self documenting
 
 A service exposes a README.md, explaining what it does, how to use it.
