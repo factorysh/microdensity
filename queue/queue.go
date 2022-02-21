@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/docker/go-events"
+	"github.com/factorysh/microdensity/event"
 	"github.com/factorysh/microdensity/run"
+	"github.com/factorysh/microdensity/sink"
 	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/task"
 	"github.com/oleiade/lane"
@@ -34,6 +37,7 @@ type Queue struct {
 	BatchEnded chan bool
 	logger     *zap.Logger
 	working    bool
+	Sink       events.Sink
 }
 
 // NewQueue inits a new queue struct
@@ -50,6 +54,7 @@ func NewQueue(s storage.Storage, runner *run.Runner) Queue {
 		runner:     runner,
 		storage:    s,
 		logger:     logger,
+		Sink:       &sink.VoidSink{},
 	}
 }
 
@@ -76,6 +81,10 @@ func (q *Queue) Put(item *task.Task, env map[string]string) error {
 	queueAdded.Inc()
 	queueSize.Inc()
 	q.logger.Info("queue add", zap.Any("task", item))
+	q.Sink.Write(event.Event{
+		Id:    item.Id,
+		State: item.State,
+	})
 
 	if !q.working {
 		q.logger.Info("Start queue")
@@ -126,6 +135,11 @@ func (q *Queue) DequeueWhile() {
 		} else {
 			t.State = task.Failed
 		}
+		q.Sink.Write(event.Event{
+			Id:    t.Id,
+			State: t.State,
+			Error: err,
+		})
 
 		err = q.storage.Upsert(t)
 		// FIXME: handle err

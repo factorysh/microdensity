@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/docker/go-events"
 	"github.com/factorysh/microdensity/badge"
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/middlewares/jwt"
@@ -15,6 +16,7 @@ import (
 	"github.com/factorysh/microdensity/run"
 	"github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/sessions"
+	"github.com/factorysh/microdensity/sink"
 	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/getsentry/sentry-go"
@@ -36,6 +38,7 @@ type Application struct {
 	volumes       *volumes.Volumes
 	logger        *zap.Logger
 	queue         *queue.Queue
+	Sink          events.Sink
 }
 
 func New(cfg *conf.Conf) (*Application, error) {
@@ -110,6 +113,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		volumes:       v,
 		logger:        logger,
 		queue:         &q,
+		Sink:          &sink.VoidSink{},
 	}
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
