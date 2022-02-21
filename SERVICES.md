@@ -1,5 +1,7 @@
 # Service
 
+µdensity provides badges for your projects. Analysis are triggered by your CI (asynchronously), and linked to a branch and a git commit.
+
 µdensity exposes services.
 
 A service is a folder:
@@ -30,7 +32,7 @@ The validation is synchronous, and return an id, or an error.
 
 The service itself is asynchronous, using a queue, and the run has constant and dedicated resources.
 
-The service is described by a `docker-compose.yml` file, using the *Compose 2* version.
+The service is described by a `docker-compose.yml` file, using the *Compose 2* format. With *Compose 1*, format was versionned (2.x or 3.x), now, the format is specified.
 
 µdensity exposes private services, like [browserless](https://www.browserless.io/), usable from your services.
 
