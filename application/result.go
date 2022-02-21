@@ -15,6 +15,7 @@ type Result struct {
 	Commit       string
 	Service      string
 	ID           string
+	CreatedAt    string
 	Inner        template.HTML
 }
 
@@ -31,6 +32,7 @@ func NewResultFromTask(t *task.Task, inner template.HTML, gitlabDomain string) (
 		Commit:       t.Commit,
 		Service:      t.Service,
 		ID:           t.Id.String(),
+		CreatedAt:    t.Creation.Format("2006-01-02 15:04:05"),
 		Inner:        inner,
 	}, nil
 }

@@ -3,6 +3,7 @@
 <ul>
     <li>Project : <a href="{{ .GitlabDomain }}/{{ .Project }}" target="_blank">{{ .Project }}</a></li>
     <li>Commit : <a href="{{ .GitlabDomain }}/{{ .Project }}/-/commit/{{ .Commit }}" target="_blank">{{ .Commit }}</a></li>
+    <li>Created At : {{ .CreatedAt }}</li>
     <li>Service : <a href="{{ .Domain }}/service/{{ .Service }}" target="_blank">{{ .Service }}</a></li>
     <li>ID : {{ .ID }}</li>
 </ul>
