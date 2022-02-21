@@ -54,31 +54,18 @@ func TestDeq(t *testing.T) {
 		Service: "demo",
 		Project: "beuha",
 	}
-	err = r.Prepare(tsk1, nil)
-	assert.NoError(t, err)
 
 	tsk2 := &task.Task{
 		Id:      uuid.New(),
 		Service: "demo",
 		Project: "alice",
 	}
-	err = r.Prepare(tsk2, nil)
-	assert.NoError(t, err)
 
 	tsk3 := &task.Task{
 		Id:      uuid.New(),
 		Project: "another",
 		Service: "demo",
 	}
-	err = r.Prepare(tsk3, nil)
-	assert.NoError(t, err)
-
-	tsk4 := &task.Task{
-		Id:      uuid.New(),
-		Project: "notprepared",
-		Service: "demo",
-	}
-	assert.NoError(t, err)
 
 	snk.Cpt.Add(4)
 	// FIXME: asserts on state status
@@ -87,8 +74,6 @@ func TestDeq(t *testing.T) {
 	err = que.Put(tsk2, nil)
 	assert.NoError(t, err)
 	err = que.Put(tsk3, nil)
-	assert.NoError(t, err)
-	err = que.Put(tsk4, nil)
 	assert.NoError(t, err)
 
 	<-que.BatchEnded
