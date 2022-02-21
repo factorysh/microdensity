@@ -46,6 +46,8 @@ func NewRunner(servicesDir string, volumesRoot string, hosts []string) (*Runner,
 }
 
 // Prepare the run
+// Prepare is synchronous, in order to raise an error in the REST endpoint.
+// Prepare checks volumes stuff.
 func (r *Runner) Prepare(t *task.Task, env map[string]string) error {
 	if t.Id == uuid.Nil {
 		return fmt.Errorf("task requires an ID to be prepared")
