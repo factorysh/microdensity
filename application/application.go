@@ -235,7 +235,6 @@ func (a *Application) Run(listen string) error {
 			// non blocking error
 			if err != nil {
 				t.State = task.Failed
-
 				err := a.storage.Upsert(t)
 				if err != nil {
 					a.logger.Fatal("unable to save task", zap.Error(err))
@@ -244,8 +243,8 @@ func (a *Application) Run(listen string) error {
 				a.logger.Error("error when validating task args", zap.String("task", t.Id.String()))
 				continue
 			}
-			err = a.addTask(t, parsedArgs.Environments)
 
+			err = a.addTask(t, parsedArgs.Environments)
 			// non blocking error
 			if err != nil {
 				a.logger.Error("error when addind task", zap.Error(err))
