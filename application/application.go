@@ -1,10 +1,14 @@
 package application
 
 import (
+	"context"
 	"net/http"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
+	"syscall"
+	"time"
 
 	"github.com/docker/go-events"
 	"github.com/factorysh/microdensity/badge"
@@ -18,6 +22,7 @@ import (
 	"github.com/factorysh/microdensity/sessions"
 	"github.com/factorysh/microdensity/sink"
 	"github.com/factorysh/microdensity/storage"
+	"github.com/factorysh/microdensity/task"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
@@ -39,6 +44,8 @@ type Application struct {
 	logger        *zap.Logger
 	queue         *queue.Queue
 	Sink          events.Sink
+	Server        *http.Server
+	Stopper       chan (os.Signal)
 }
 
 func New(cfg *conf.Conf) (*Application, error) {
@@ -114,6 +121,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		logger:        logger,
 		queue:         &q,
 		Sink:          &sink.VoidSink{},
+		Stopper:       make(chan os.Signal, 1),
 	}
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
@@ -201,4 +209,59 @@ func (a *Application) ListServices() []string {
 	}
 
 	return list
+}
+
+// Run make the app listen and serve requests
+func (a *Application) Run(listen string) {
+	// listen for stop/restart signals and sends them to the stopper channel
+	signal.Notify(a.Stopper, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// setup the router
+	a.Server = &http.Server{
+		Addr:    listen,
+		Handler: a.Router,
+	}
+
+	// start and serve
+	go func() {
+		if err := a.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			a.logger.Fatal("fatal error when running server", zap.Error(err))
+		}
+	}()
+}
+
+// Shutdown the server and put running tasks into interrupted state
+func (a *Application) Shutdown() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// handle the last pending requests
+	// we don't want this error stop the shutdown flow
+	// just log it
+	err := a.Server.Shutdown(ctx)
+	if err != nil {
+		a.logger.Error("error on server shutdown", zap.Error(err))
+	}
+
+	tasks, err := a.storage.All()
+	if err != nil {
+		return err
+	}
+
+	for _, t := range tasks {
+		// running tasks becomes interrupted tasks
+		if t.State == task.Running {
+			// TODO: send a cancel request to docker ?
+			t.State = task.Interrupted
+			err := a.storage.Upsert(t)
+			// same here, non blocking error
+			if err != nil {
+				a.logger.Error("error when updating task status", zap.Error(err), zap.String("task id", t.Id.String()))
+			}
+		}
+	}
+
+	a.logger.Info("server shutdown")
+
+	return nil
 }
