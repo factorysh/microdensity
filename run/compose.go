@@ -210,6 +210,10 @@ func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, co
 	}
 	l.With(zap.String("uid", u.Uid))
 
+	c.service.Remove(context.TODO(), c.project, api.RemoveOptions{
+		Force: true,
+	})
+
 	l.Info("Run service")
 	n, err := c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
 		Name:       fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
