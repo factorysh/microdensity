@@ -55,6 +55,7 @@ func main() {
 	err = a.Run(cfg.Listen)
 	if err != nil {
 		l.Error("Run", zap.Error(err))
+		os.Exit(1)
 	}
 
 	<-a.Stopper
