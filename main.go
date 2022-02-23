@@ -62,5 +62,8 @@ func main() {
 
 	logger.Info("shutdown signal received")
 
-	a.Shutdown()
+	err = a.Shutdown()
+	if err != nil {
+		l.Error("error on shutdown", zap.Error(err))
+	}
 }
