@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/factorysh/microdensity/application"
@@ -52,6 +51,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	l.Info("starting")
-	http.ListenAndServe(cfg.Listen, a.Router)
+	logger.Info("starting")
+	err = a.Run(cfg.Listen)
+	if err != nil {
+		l.Error("Run", zap.Error(err))
+		os.Exit(1)
+	}
+
+	<-a.Stopper
+
+	logger.Info("shutdown signal received")
+
+	err = a.Shutdown()
+	if err != nil {
+		l.Error("error on shutdown", zap.Error(err))
+	}
 }

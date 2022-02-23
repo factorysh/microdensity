@@ -9,6 +9,7 @@ require (
 	github.com/docker/cli v20.10.12+incompatible
 	github.com/docker/compose/v2 v2.2.3
 	github.com/docker/docker v20.10.12+incompatible
+	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c
 	github.com/dop251/goja v0.0.0-20220214123719-b09a6bfa842f
 	github.com/getsentry/sentry-go v0.12.0
 	github.com/go-chi/chi/v5 v5.0.7
@@ -40,6 +41,7 @@ require (
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/containerd v1.5.9 // indirect
 	github.com/containerd/continuity v0.1.0 // indirect
+	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/typeurl v1.0.2 // indirect
 	github.com/distribution/distribution/v3 v3.0.0-20210316161203-a01c71e2477e // indirect
 	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
@@ -48,7 +50,6 @@ require (
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go v1.5.1-1.0.20160303222718-d30aec9fd63c // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect

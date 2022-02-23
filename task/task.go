@@ -22,10 +22,11 @@ const (
 	Canceled
 	Failed
 	Done
+	Interrupted
 )
 
 func (s State) String() string {
-	return []string{"Ready", "Running", "Canceled", "Failed", "Done"}[s]
+	return []string{"Ready", "Running", "Canceled", "Failed", "Done", "Interrupted"}[s]
 }
 
 type Task struct {

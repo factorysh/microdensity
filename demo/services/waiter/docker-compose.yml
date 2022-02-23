@@ -1,0 +1,15 @@
+---
+
+services:
+  background:
+    image: busybox
+    command: sleep 50000
+  hello:
+    depends_on:
+      - background
+    image: busybox
+    command: >-
+      && sleep ${WAIT}
+      && echo '{\"color\": \"lime\", \"subject\":\"wait\", \"status\":\"${WAIT}\"}' > /data/demo.badge"
+    volumes:
+      - "./data:/data"

@@ -10,6 +10,7 @@ import (
 
 	"github.com/factorysh/microdensity/badge"
 	_badge "github.com/factorysh/microdensity/badge"
+	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -35,6 +36,7 @@ func (a *Application) BadgeMyTaskHandler(latest bool) http.HandlerFunc {
 		t, err := a.storage.GetByCommit(service, project, branch, commit, latest)
 		if err != nil {
 			l.Warn("Task get error", zap.Error(err))
+			badge.WriteBadge(service, "not found", _badge.Colors.Default, w)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -42,6 +44,12 @@ func (a *Application) BadgeMyTaskHandler(latest bool) http.HandlerFunc {
 		// try to get the output badge for this task in this service
 		p := filepath.Join(a.storage.GetVolumePath(t), "/data", fmt.Sprintf("%s.badge", bdg))
 		_, err = os.Stat(p)
+
+		// if running return early
+		if t.State == task.Running {
+			badge.WriteBadge(service, t.State.String(), _badge.Colors.Get(t.State), w)
+			return
+		}
 
 		// if not found
 		if err != nil {
@@ -51,7 +59,7 @@ func (a *Application) BadgeMyTaskHandler(latest bool) http.HandlerFunc {
 				badge.WriteBadge(service, t.State.String(), _badge.Colors.Get(t.State), w)
 				return
 			}
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		l = l.With(zap.String("path", p))

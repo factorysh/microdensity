@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 	"time"
@@ -19,6 +20,8 @@ import (
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/mockup"
 	"github.com/factorysh/microdensity/service"
+	"github.com/factorysh/microdensity/storage"
+	"github.com/factorysh/microdensity/task"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -185,6 +188,70 @@ func TestApplication(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, string(data), "Bob")
 
+}
+
+func TestApplicationStart(t *testing.T) {
+	// state 5 is interrupted
+	rawJSON := `{"id":"f79b5c4c-94b4-11ec-a442-00163e007d68","service":"waiter","project":"group%2Fproject","branch":"master","commit":"7e15b158cfc3e8f6bbe3e441a0cdb64bba135ef3","creation":"2022-02-23T15:29:11.082288364+01:00","Args":{"WAIT":10},"State":5}`
+
+	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
+	defer gitlab.Close()
+
+	cfg, cb, err := SpawnConfig(gitlab.URL)
+	defer cb()
+	assert.NoError(t, err)
+
+	a, err := New(cfg)
+	assert.NoError(t, err)
+
+	taskPath := path.Join(cfg.DataPath, "data", "wait", "group%2Fproject", "master", "f79b5c4c-94b4-11ec-a442-00163e007d68")
+	err = os.MkdirAll(taskPath, storage.DirMode)
+	assert.NoError(t, err)
+
+	err = os.WriteFile(path.Join(taskPath, "task.json"), []byte(rawJSON), 0644)
+	assert.NoError(t, err)
+
+	err = a.Run(":9090")
+	assert.NoError(t, err)
+
+	tasks, err := a.storage.All()
+	assert.NoError(t, err)
+	assert.Equal(t, task.Running, tasks[0].State)
+
+	err = a.Shutdown()
+	assert.NoError(t, err)
+}
+
+func TestApplicationStop(t *testing.T) {
+	// state 5 is interrupted
+	rawJSON := `{"id":"f79b5c4c-94b4-11ec-a442-00163e007d68","service":"waiter","project":"group%2Fproject","branch":"master","commit":"7e15b158cfc3e8f6bbe3e441a0cdb64bba135ef3","creation":"2022-02-23T15:29:11.082288364+01:00","Args":{"WAIT":10},"State":1}`
+
+	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
+	defer gitlab.Close()
+
+	cfg, cb, err := SpawnConfig(gitlab.URL)
+	defer cb()
+	assert.NoError(t, err)
+
+	a, err := New(cfg)
+	assert.NoError(t, err)
+
+	taskPath := path.Join(cfg.DataPath, "data", "wait", "group%2Fproject", "master", "f79b5c4c-94b4-11ec-a442-00163e007d68")
+	err = os.MkdirAll(taskPath, storage.DirMode)
+	assert.NoError(t, err)
+
+	err = os.WriteFile(path.Join(taskPath, "task.json"), []byte(rawJSON), 0644)
+	assert.NoError(t, err)
+
+	err = a.Run(":9090")
+	assert.NoError(t, err)
+
+	err = a.Shutdown()
+	assert.NoError(t, err)
+
+	tasks, err := a.storage.All()
+	assert.NoError(t, err)
+	assert.Equal(t, task.Interrupted, tasks[0].State)
 }
 
 func SpawnConfig(gitlabURL string) (*conf.Conf, func(), error) {

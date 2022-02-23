@@ -85,29 +85,40 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		Args:     args,
 		State:    task.Ready,
 	}
-	err = a.storage.Upsert(t)
+
+	err = a.addTask(t, parsedArgs.Environments)
 	if err != nil {
-		l.Warn("Queue error", zap.Error(err))
-		panic(err)
-	}
-	err = a.storage.EnsureVolumesDir(t)
-	if err != nil {
-		l.Warn("Volume creation", zap.Error(err))
-		panic(err)
-	}
-	err = a.queue.Put(t, parsedArgs.Environments)
-	if err != nil {
-		l.Warn("Task prepare/put", zap.Error(err))
-		panic(err)
-	}
-	err = a.storage.SetLatest(t)
-	if err != nil {
-		l.Warn("Task set latest", zap.Error(err))
-		panic(err)
+		l.Error("error when adding task", zap.String("task", t.Id.String()), zap.Error(err))
+		return
 	}
 	render.JSON(w, r, map[string]string{
 		"id": id.String(),
 	})
+}
+
+// addTask adds a task to a queue
+func (a *Application) addTask(t *task.Task, args map[string]string) error {
+	err := a.storage.EnsureVolumesDir(t)
+	if err != nil {
+		return err
+	}
+
+	err = a.storage.Upsert(t)
+	if err != nil {
+		return err
+	}
+
+	err = a.queue.Put(t, args)
+	if err != nil {
+		return err
+	}
+
+	err = a.storage.SetLatest(t)
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 // TaskHandler show a Task
