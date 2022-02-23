@@ -212,7 +212,7 @@ func (a *Application) ListServices() []string {
 }
 
 // Run make the app listen and serve requests
-func (a *Application) Run(listen string) {
+func (a *Application) Run(listen string) error {
 	// listen for stop/restart signals and sends them to the stopper channel
 	signal.Notify(a.Stopper, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
@@ -222,12 +222,45 @@ func (a *Application) Run(listen string) {
 		Handler: a.Router,
 	}
 
+	// interrupted tasks becomes ready task and are added to queue
+	tasks, err := a.storage.All()
+	if err != nil {
+		return err
+	}
+
+	for _, t := range tasks {
+		if t.State == task.Ready || t.State == task.Interrupted {
+			t.State = task.Ready
+			parsedArgs, err := a.Services[t.Service].Validate(t.Args)
+			// non blocking error
+			if err != nil {
+				t.State = task.Failed
+
+				err := a.storage.Upsert(t)
+				if err != nil {
+					a.logger.Fatal("unable to save task", zap.Error(err))
+				}
+
+				a.logger.Error("error when validating task args", zap.String("task", t.Id.String()))
+				continue
+			}
+			err = a.addTask(t, parsedArgs.Environments)
+
+			// non blocking error
+			if err != nil {
+				a.logger.Error("error when addind task", zap.Error(err))
+			}
+		}
+	}
+
 	// start and serve
 	go func() {
 		if err := a.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			a.logger.Fatal("fatal error when running server", zap.Error(err))
 		}
 	}()
+
+	return nil
 }
 
 // Shutdown the server and put running tasks into interrupted state

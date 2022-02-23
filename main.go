@@ -52,7 +52,10 @@ func main() {
 	}
 
 	logger.Info("starting")
-	a.Run(cfg.Listen)
+	err = a.Run(cfg.Listen)
+	if err != nil {
+		l.Error("Run", zap.Error(err))
+	}
 
 	<-a.Stopper
 
