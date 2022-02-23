@@ -21,6 +21,7 @@ import (
 	"github.com/factorysh/microdensity/mockup"
 	"github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/storage"
+	"github.com/factorysh/microdensity/task"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -203,7 +204,7 @@ func TestApplicationStart(t *testing.T) {
 	a, err := New(cfg)
 	assert.NoError(t, err)
 
-	taskPath := path.Join(cfg.DataPath, "data", "wait", "group%2Fproject", "master", "uuid")
+	taskPath := path.Join(cfg.DataPath, "data", "wait", "group%2Fproject", "master", "f79b5c4c-94b4-11ec-a442-00163e007d68")
 	err = os.MkdirAll(taskPath, storage.DirMode)
 	assert.NoError(t, err)
 
@@ -213,14 +214,14 @@ func TestApplicationStart(t *testing.T) {
 	err = a.Run(":9090")
 	assert.NoError(t, err)
 
-	// get the status badge
-	cli := http.Client{}
-	req, err := mkRequest(key)
+	tasks, err := a.storage.All()
 	assert.NoError(t, err)
-	req.Method = http.MethodGet
-	req.URL, err = url.Parse("http://localhost:9090")
+	assert.Equal(t, task.Running, tasks[0].State)
+
+	err = a.Shutdown()
 	assert.NoError(t, err)
-	req.URL.Path = "/service/waiter/group%2Fproject/master/7e15b158cfc3e8f6bbe3e441a0cdb64bba135ef3/status"
+}
+
 	assert.NoError(t, err)
 	r, err := cli.Do(req)
 	assert.NoError(t, err)
