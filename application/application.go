@@ -247,7 +247,7 @@ func (a *Application) Run(listen string) error {
 			err = a.addTask(t, parsedArgs.Environments)
 			// non blocking error
 			if err != nil {
-				a.logger.Error("error when addind task", zap.Error(err))
+				a.logger.Error("error when adding task", zap.Error(err))
 			}
 		}
 	}
