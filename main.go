@@ -51,12 +51,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	l.Info("starting")
+	logger.Info("starting")
 	a.Run(cfg.Listen)
 
 	<-a.Stopper
 
-	l.Info("shutdown signal received")
+	logger.Info("shutdown signal received")
 
 	a.Shutdown()
 }
