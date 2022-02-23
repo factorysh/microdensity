@@ -26,7 +26,7 @@ const (
 )
 
 func (s State) String() string {
-	return []string{"Ready", "Running", "Canceled", "Failed", "Done"}[s]
+	return []string{"Ready", "Running", "Canceled", "Failed", "Done", "Interrupted"}[s]
 }
 
 type Task struct {
