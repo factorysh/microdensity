@@ -22,6 +22,7 @@ const (
 	Canceled
 	Failed
 	Done
+	Interrupted
 )
 
 func (s State) String() string {
