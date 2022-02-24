@@ -248,7 +248,7 @@ func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, co
 }
 
 // Logs steam logs of the current run
-func (c *ComposeRun) Logs(ctx context.Context) (io.ReadCloser, error) {
+func (c *ComposeRun) Logs(ctx context.Context, follow bool) (io.ReadCloser, error) {
 	mainName := fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id)
 	docker, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
@@ -259,8 +259,7 @@ func (c *ComposeRun) Logs(ctx context.Context) (io.ReadCloser, error) {
 		ShowStdout: true,
 		ShowStderr: true,
 		Timestamps: true,
-		// FIXME: later from a param
-		Follow: false,
+		Follow:     follow,
 	})
 }
 

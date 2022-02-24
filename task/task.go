@@ -30,7 +30,9 @@ func (s State) String() string {
 }
 
 type Task struct {
-	Id       uuid.UUID              `json:"id"`
+	Id uuid.UUID `json:"id"`
+	// Run is used to save the name of the main/master container for this service
+	Run      string                 `json:"run"`
 	Service  string                 `json:"service"`
 	Project  string                 `json:"project"`
 	Branch   string                 `json:"branch"`

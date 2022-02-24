@@ -87,9 +87,16 @@ func TestCompose(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, strings.HasPrefix(string(out), "8.8.8.8"))
 
-	rc, err := cr.Logs(context.TODO())
+	rc, err := cr.Logs(context.TODO(), false)
 	assert.NoError(t, err)
 	logs, err := ioutil.ReadAll(rc)
 	assert.NoError(t, err)
 	assert.Contains(t, string(logs), "8.8.8.8\tgoogle.dns")
+
+	rc, err = cr.Logs(context.TODO(), true)
+	assert.NoError(t, err)
+	logs, err = ioutil.ReadAll(rc)
+	assert.NoError(t, err)
+	assert.Contains(t, string(logs), "8.8.8.8\tgoogle.dns")
+
 }
