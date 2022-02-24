@@ -87,8 +87,9 @@ func TestCompose(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, strings.HasPrefix(string(out), "8.8.8.8"))
 
-	var buffer bytes.Buffer
-	err = cr.StreamLogs(context.TODO(), &buffer)
+	rc, err := cr.Logs(context.TODO())
 	assert.NoError(t, err)
-	assert.Contains(t, buffer.String(), "8.8.8.8 google.dns")
+	logs, err := ioutil.ReadAll(rc)
+	assert.NoError(t, err)
+	assert.Contains(t, string(logs), "8.8.8.8\tgoogle.dns")
 }

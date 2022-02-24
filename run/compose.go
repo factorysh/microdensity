@@ -14,9 +14,9 @@ import (
 
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
-	"github.com/docker/compose/v2/cmd/formatter"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
+	dckrTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/google/uuid"
@@ -215,7 +215,6 @@ func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, co
 		Force: true,
 	})
 
-	l.Info("Run service")
 	n, err := c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
 		Name:       fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
 		Service:    c.run,
@@ -248,12 +247,19 @@ func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, co
 	return n, err
 }
 
-// StreamLogs steam logs of the current run
-func (c *ComposeRun) StreamLogs(ctx context.Context, w io.Writer) error {
-	consumer := formatter.NewLogConsumer(ctx, w, false, true)
-	return c.service.Logs(ctx, c.project.Name, consumer, api.LogOptions{
-		Services: c.services(),
-		// TODO: experiment with follow set to true
+// Logs steam logs of the current run
+func (c *ComposeRun) Logs(ctx context.Context) (io.ReadCloser, error) {
+	mainName := fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id)
+	docker, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return nil, err
+	}
+
+	return docker.ContainerLogs(ctx, mainName, dckrTypes.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Timestamps: true,
+		// FIXME: later from a param
 		Follow: false,
 	})
 }
