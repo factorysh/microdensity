@@ -103,12 +103,12 @@ func (a *Application) addTask(t *task.Task, args map[string]string) error {
 		return err
 	}
 
-	err = a.storage.Upsert(t)
+	err = a.queue.Put(t, args)
 	if err != nil {
 		return err
 	}
 
-	err = a.queue.Put(t, args)
+	err = a.storage.Upsert(t)
 	if err != nil {
 		return err
 	}
