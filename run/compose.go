@@ -14,6 +14,7 @@ import (
 
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
+	"github.com/docker/compose/v2/cmd/formatter"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
 	"github.com/docker/docker/client"
@@ -245,6 +246,26 @@ func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, co
 		l.Error("Run error", zap.Error(err))
 	}
 	return n, err
+}
+
+// StreamLogs steam logs of the current run
+func (c *ComposeRun) StreamLogs(ctx context.Context, w io.Writer) error {
+	consumer := formatter.NewLogConsumer(ctx, w, false, true)
+	return c.service.Logs(ctx, c.project.Name, consumer, api.LogOptions{
+		Services: c.services(),
+		// TODO: experiment with follow set to true
+		Follow: false,
+	})
+}
+
+func (c *ComposeRun) services() []string {
+	services := make([]string, len(c.project.Services))
+
+	for i := 0; i < len(c.project.Services); i++ {
+		services[i] = c.project.Services[i].Name
+	}
+
+	return services
 }
 
 // LoadCompose loads a docker-compose.yml file

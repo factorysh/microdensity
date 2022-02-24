@@ -12,6 +12,7 @@ import (
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 type MockupReaderCloser struct {
@@ -86,4 +87,8 @@ func TestCompose(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, strings.HasPrefix(string(out), "8.8.8.8"))
 
+	var buffer bytes.Buffer
+	err = cr.StreamLogs(context.TODO(), &buffer)
+	assert.NoError(t, err)
+	assert.Contains(t, buffer.String(), "8.8.8.8 google.dns")
 }
