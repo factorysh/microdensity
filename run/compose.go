@@ -16,7 +16,6 @@ import (
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
-	dckrTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/google/uuid"
@@ -245,32 +244,6 @@ func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, co
 		l.Error("Run error", zap.Error(err))
 	}
 	return n, err
-}
-
-// Logs steam logs of the current run
-func (c *ComposeRun) Logs(ctx context.Context, follow bool) (io.ReadCloser, error) {
-	mainName := fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id)
-	docker, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return nil, err
-	}
-
-	return docker.ContainerLogs(ctx, mainName, dckrTypes.ContainerLogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-		Timestamps: true,
-		Follow:     follow,
-	})
-}
-
-func (c *ComposeRun) services() []string {
-	services := make([]string, len(c.project.Services))
-
-	for i := 0; i < len(c.project.Services); i++ {
-		services[i] = c.project.Services[i].Name
-	}
-
-	return services
 }
 
 // LoadCompose loads a docker-compose.yml file
