@@ -152,6 +152,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 						r.Post("/", a.PostTaskHandler)
 						r.Get("/", a.TaskHandler(false))
 						r.Get("/volumes/*", a.VolumesHandler(6, false))
+						r.Get("/logs", a.TaskLogsHandler(false))
 					})
 					r.Group(func(r chi.Router) {
 						r.Use(a.RefererMiddleware)
@@ -164,6 +165,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 						r.Use(authMiddleware.Middleware())
 						r.Get("/", a.TaskHandler(true))
 						r.Get("/volumes/*", a.VolumesHandler(6, true))
+						r.Get("/logs", a.TaskLogsHandler(true))
 					})
 					r.Group(func(r chi.Router) {
 						r.Use(a.RefererMiddleware)

@@ -1,11 +1,15 @@
 package task
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io"
 	"regexp"
 	"time"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/google/uuid"
 )
 
@@ -56,4 +60,20 @@ func (t *Task) Validate() error {
 		return fmt.Errorf("bad commit format : %s", t.Commit)
 	}
 	return nil
+}
+
+// Logs steam logs of the current run
+func (t *Task) Logs(ctx context.Context, follow bool) (io.ReadCloser, error) {
+	mainName := fmt.Sprintf("%s_%s_%v", t.Service, t.Run, t.Id)
+	docker, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return nil, err
+	}
+
+	return docker.ContainerLogs(ctx, mainName, types.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Timestamps: true,
+		Follow:     follow,
+	})
 }

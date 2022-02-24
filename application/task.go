@@ -2,6 +2,7 @@ package application
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -179,4 +180,50 @@ func (a *Application) TaskIDHandler(w http.ResponseWriter, r *http.Request) {
 		l.Error("Json encoding error", zap.Error(err))
 		return
 	}
+}
+
+// TaskLogsHandler get a logs for a task
+func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *http.Request) {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		l := a.logger.With(
+			zap.String("url", r.URL.String()),
+			zap.String("service", chi.URLParam(r, "serviceID")),
+			zap.String("project", chi.URLParam(r, "project")),
+			zap.String("branch", chi.URLParam(r, "branch")),
+			zap.String("commit", chi.URLParam(r, "commit")),
+		)
+
+		t, err := a.storage.GetByCommit(
+			chi.URLParam(r, "serviceID"),
+			chi.URLParam(r, "project"),
+			chi.URLParam(r, "branch"),
+			chi.URLParam(r, "commit"),
+			latest,
+		)
+
+		if err != nil {
+			l.Warn("Task get error", zap.Error(err))
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(http.StatusText(http.StatusNotFound)))
+			return
+		}
+
+		reader, err := t.Logs(r.Context(), false)
+		if err != nil {
+			l.Warn("Task log error", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+			return
+		}
+
+		_, err = io.Copy(w, reader)
+		if err != nil {
+			l.Error("Task log write to body error", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		}
+
+	}
+
 }
