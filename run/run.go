@@ -48,18 +48,18 @@ func NewRunner(servicesDir string, volumesRoot string, hosts []string) (*Runner,
 // Prepare the run
 // Prepare is synchronous, in order to raise an error in the REST endpoint.
 // Prepare checks volumes stuff.
-func (r *Runner) Prepare(t *task.Task, env map[string]string) error {
+func (r *Runner) Prepare(t *task.Task, env map[string]string) (string, error) {
 	if t.Id == uuid.Nil {
-		return fmt.Errorf("task requires an ID to be prepared")
+		return "", fmt.Errorf("task requires an ID to be prepared")
 	}
 
 	if _, found := r.tasks[t.Id]; found {
-		return fmt.Errorf("task with id `%s` already prepared", t.Id)
+		return "", fmt.Errorf("task with id `%s` already prepared", t.Id)
 	}
 
 	runnable, err := NewComposeRun(fmt.Sprintf("%s/%s", r.servicesDir, t.Service))
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = runnable.Prepare(env,
@@ -67,7 +67,7 @@ func (r *Runner) Prepare(t *task.Task, env map[string]string) error {
 		t.Id,
 		r.hosts)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	r.tasks[t.Id] = &Context{
@@ -77,7 +77,7 @@ func (r *Runner) Prepare(t *task.Task, env map[string]string) error {
 		run:    runnable,
 	}
 
-	return nil
+	return runnable.run, nil
 }
 
 func (r *Runner) Run(t *task.Task) (int, error) {
