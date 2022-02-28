@@ -69,3 +69,22 @@ h6 {
   background-color: white;
   padding: 2rem;
 }
+
+.terminal {
+  min-height: 30%;
+  padding: 2rem;
+  background-color: black;
+  color: white;
+  border-radius: 1rem;
+  font-family: monospace;
+  text-align: left;
+}
+
+.terminal pre {
+  background-color: black;
+  border-left: none;
+  margin: 1rem;
+  padding: 1rem;
+  overflow-x: scroll;
+  overflow-y: hidden;
+}

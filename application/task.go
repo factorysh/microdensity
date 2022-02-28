@@ -231,3 +231,39 @@ func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *ht
 	}
 
 }
+
+// TaskLogzHandler get a logs for a task
+func (a *Application) TaskLogzHandler(latest bool) func(http.ResponseWriter, *http.Request) {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		l := a.logger.With(
+			zap.String("url", r.URL.String()),
+			zap.String("service", chi.URLParam(r, "serviceID")),
+			zap.String("project", chi.URLParam(r, "project")),
+			zap.String("branch", chi.URLParam(r, "branch")),
+			zap.String("commit", chi.URLParam(r, "commit")),
+		)
+
+		t, err := a.storage.GetByCommit(
+			chi.URLParam(r, "serviceID"),
+			chi.URLParam(r, "project"),
+			chi.URLParam(r, "branch"),
+			chi.URLParam(r, "commit"),
+			latest,
+		)
+		if err != nil {
+			l.Warn("Task get error", zap.Error(err))
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(http.StatusText(http.StatusNotFound)))
+			return
+		}
+
+		err = a.renderLogsPageForTask(r.Context(), t, w)
+		if err != nil {
+			l.Warn("when rendering a logs page", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+			return
+		}
+	}
+}
