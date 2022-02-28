@@ -71,10 +71,12 @@ func (q *Queue) Put(item *task.Task, env map[string]string) error {
 	q.Lock()
 	defer q.Unlock()
 
-	err := q.runner.Prepare(item, env)
+	runnable, err := q.runner.Prepare(item, env)
 	if err != nil {
 		return err
 	}
+
+	item.Run = runnable
 
 	q.items.Enqueue(item)
 

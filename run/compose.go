@@ -214,7 +214,6 @@ func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, co
 		Force: true,
 	})
 
-	l.Info("Run service")
 	n, err := c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
 		Name:       fmt.Sprintf("%s_%s_%v", c.project.Name, c.run, c.id),
 		Service:    c.run,

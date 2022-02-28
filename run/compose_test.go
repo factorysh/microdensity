@@ -85,5 +85,4 @@ func TestCompose(t *testing.T) {
 	out, err = ioutil.ReadAll(buff)
 	assert.NoError(t, err)
 	assert.True(t, strings.HasPrefix(string(out), "8.8.8.8"))
-
 }

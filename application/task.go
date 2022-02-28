@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/docker/docker/pkg/stdcopy"
 	_claims "github.com/factorysh/microdensity/claims"
 	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
@@ -103,12 +104,12 @@ func (a *Application) addTask(t *task.Task, args map[string]string) error {
 		return err
 	}
 
-	err = a.storage.Upsert(t)
+	err = a.queue.Put(t, args)
 	if err != nil {
 		return err
 	}
 
-	err = a.queue.Put(t, args)
+	err = a.storage.Upsert(t)
 	if err != nil {
 		return err
 	}
@@ -179,4 +180,53 @@ func (a *Application) TaskIDHandler(w http.ResponseWriter, r *http.Request) {
 		l.Error("Json encoding error", zap.Error(err))
 		return
 	}
+}
+
+// TaskLogsHandler get a logs for a task
+func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *http.Request) {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		l := a.logger.With(
+			zap.String("url", r.URL.String()),
+			zap.String("service", chi.URLParam(r, "serviceID")),
+			zap.String("project", chi.URLParam(r, "project")),
+			zap.String("branch", chi.URLParam(r, "branch")),
+			zap.String("commit", chi.URLParam(r, "commit")),
+		)
+
+		t, err := a.storage.GetByCommit(
+			chi.URLParam(r, "serviceID"),
+			chi.URLParam(r, "project"),
+			chi.URLParam(r, "branch"),
+			chi.URLParam(r, "commit"),
+			latest,
+		)
+
+		if err != nil {
+			l.Warn("Task get error", zap.Error(err))
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(http.StatusText(http.StatusNotFound)))
+			return
+		}
+
+		reader, err := t.Logs(r.Context(), false)
+		if err != nil {
+			l.Warn("Task log error", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+			return
+		}
+
+		// just stdout for now
+		// kudos @ndeloof, @rumpl, @glours
+		_, err = stdcopy.StdCopy(w, nil, reader)
+		if err != nil {
+			l.Error("Task log stdcopy write error", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		}
+
+		w.Header().Set("Content-Type", "text/plain")
+	}
+
 }
