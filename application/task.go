@@ -2,12 +2,12 @@ package application
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
 
+	"github.com/docker/docker/pkg/stdcopy"
 	_claims "github.com/factorysh/microdensity/claims"
 	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
@@ -217,13 +217,16 @@ func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *ht
 			return
 		}
 
-		_, err = io.Copy(w, reader)
+		// just stdout for now
+		// kudos @ndeloof, @rumpl, @glours
+		_, err = stdcopy.StdCopy(w, nil, reader)
 		if err != nil {
-			l.Error("Task log write to body error", zap.Error(err))
+			l.Error("Task log stdcopy write error", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
 		}
 
+		w.Header().Set("Content-Type", "text/plain")
 	}
 
 }
