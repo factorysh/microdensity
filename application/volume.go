@@ -19,8 +19,8 @@ import (
 var (
 	// used to ensure embed import
 	_ embed.FS
-	//go:embed templates/result.html
-	resultTemplate string
+	//go:embed templates/task.html
+	taskTemplate string
 )
 
 // VolumesHandler expose volumes of a task
@@ -65,7 +65,7 @@ func (a *Application) VolumesHandler(basePathLen int, latest bool) http.HandlerF
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 			l.Warn("Path not found", zap.Error(err))
 
-			data, err := NewResultFromTask(t, "No result for this task", a.GitlabURL)
+			data, err := NewTaskPage(t, "No result for this task", a.GitlabURL, "Task Result", "container task-output")
 			if err != nil {
 				l.Error("when creating result from a task", zap.Error(err))
 				w.WriteHeader(http.StatusInternalServerError)
@@ -76,7 +76,7 @@ func (a *Application) VolumesHandler(basePathLen int, latest bool) http.HandlerF
 				Domain: a.Domain,
 				Detail: fmt.Sprintf("%s / %s", t.Service, t.Commit),
 				Partial: html.Partial{
-					Template: resultTemplate,
+					Template: taskTemplate,
 					Data:     data,
 				}}
 
@@ -128,13 +128,13 @@ func (a *Application) renderResultPageForTask(t *task.Task, filePath string, w h
 		return err
 	}
 
-	data, err := NewResultFromTask(t, template.HTML(content), a.GitlabURL)
+	data, err := NewTaskPage(t, template.HTML(content), a.GitlabURL, "Task Result", "container task-output")
 	// create the page
 	p := html.Page{
 		Domain: a.Domain,
 		Detail: fmt.Sprintf("%s / %s", t.Service, t.Commit),
 		Partial: html.Partial{
-			Template: resultTemplate,
+			Template: taskTemplate,
 			Data:     data,
 		},
 	}
