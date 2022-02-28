@@ -224,6 +224,7 @@ func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *ht
 			l.Error("Task log stdcopy write error", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+			return
 		}
 
 		w.Header().Set("Content-Type", "text/plain")
