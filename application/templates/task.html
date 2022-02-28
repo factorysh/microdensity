@@ -8,8 +8,8 @@
     <li>ID : {{ .ID }}</li>
 </ul>
 
-<h3>Task Result</h3>
+<h3>{{ .InnerTitle }}</h3>
 
-<div class="container task-output">
+<div class="{{ .InnerDivClasses }}">
     {{ .Inner }}
 </div>
