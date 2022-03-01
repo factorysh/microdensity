@@ -39,12 +39,14 @@ type Application struct {
 	Domain        string
 	GitlabURL     string
 	Router        http.Handler
+	AdminRouter   http.Handler
 	storage       storage.Storage
 	volumes       *volumes.Volumes
 	logger        *zap.Logger
 	queue         *queue.Queue
 	Sink          events.Sink
 	Server        *http.Server
+	AdminServer   *http.Server
 	Stopper       chan (os.Signal)
 }
 
@@ -76,6 +78,14 @@ func New(cfg *conf.Conf) (*Application, error) {
 		}
 		logger.Info("There is no Sentry set")
 	}
+
+	ar := chi.NewRouter()
+	ar.Use(middleware.Logger)
+	ar.Use(middleware.Recoverer)
+	ar.Get("/", AdminHomeHandler)
+	ar.Get("/metrics", promhttp.Handler().ServeHTTP)
+	ar.Get("/robots.txt", RobotsHandler)
+	ar.Get("/favicon.png", FaviconHandler)
 
 	sessions := sessions.New()
 	err = sessions.Start(15)
@@ -117,6 +127,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		serviceFolder: cfg.Services,
 		storage:       s,
 		Router:        MagicPathHandler(r),
+		AdminRouter:   ar,
 		volumes:       v,
 		logger:        logger,
 		queue:         &q,
@@ -137,7 +148,6 @@ func New(cfg *conf.Conf) (*Application, error) {
 	r.Get("/", a.HomeHandler())
 	r.Get("/robots.txt", RobotsHandler)
 	r.Get("/favicon.png", FaviconHandler)
-	r.Get("/metrics", promhttp.Handler().ServeHTTP)
 	r.Get("/oauth/callback", oauth.CallbackHandler(&cfg.OAuth, &sessions))
 
 	r.Get("/services", a.ServicesHandler)
@@ -263,6 +273,21 @@ func (a *Application) Run(listen string) error {
 		}
 	}()
 
+	return nil
+}
+
+func (a *Application) AdminRun(listen string) error {
+	a.AdminServer = &http.Server{
+		Addr:    listen,
+		Handler: a.AdminRouter,
+	}
+
+	// start and serve
+	go func() {
+		if err := a.AdminServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			a.logger.Fatal("fatal error when running server", zap.Error(err))
+		}
+	}()
 	return nil
 }
 
