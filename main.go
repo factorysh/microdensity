@@ -57,12 +57,13 @@ func main() {
 		l.Error("Run", zap.Error(err))
 		os.Exit(1)
 	}
-	if cfg.AdminListen != "" {
-		err = a.AdminRun(cfg.AdminListen)
-		if err != nil {
-			l.Error("AdminRun", zap.Error(err))
-			os.Exit(1)
-		}
+	if cfg.AdminListen == "" {
+		cfg.AdminListen = "127.0.0.1:3615"
+	}
+	err = a.AdminRun(cfg.AdminListen)
+	if err != nil {
+		l.Error("AdminRun", zap.Error(err))
+		os.Exit(1)
 	}
 
 	<-a.Stopper
