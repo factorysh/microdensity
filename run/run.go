@@ -8,6 +8,15 @@ import (
 	"github.com/factorysh/microdensity/task"
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+)
+
+var (
+	serviceRun = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "run_total",
+		Help: "Total tasks run",
+	}, []string{"service", "project"})
 )
 
 // Context is a run context, with a STDOUT and a STDERR
@@ -86,6 +95,8 @@ func (r *Runner) Run(t *task.Task) (int, error) {
 	if !found {
 		return 0, fmt.Errorf("task with id `%s` not found in runner", t.Id)
 	}
-
+	defer serviceRun.With(prometheus.Labels{
+		"service": t.Service,
+		"project": t.Project}).Inc()
 	return ctx.run.Run(ctx.Stdout, ctx.Stderr)
 }
