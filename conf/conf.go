@@ -12,8 +12,9 @@ type Conf struct {
 	Services    string    `yaml:"services"` // Service folder
 	JWKProvider string    `yaml:"jwk_provider"`
 	Listen      string    `yaml:"listen"` // http listen address
+	AdminListen string    `yaml:"admin_listen"`
 	DataPath    string    `yaml:"data_path"`
-	Hosts       []string  `yaml:"hosts"`
+	Hosts       []string  `yaml:"hosts"` // private hostnames for exposing private services, like browserless
 }
 
 func (c *Conf) Defaults() {

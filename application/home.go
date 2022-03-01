@@ -33,6 +33,15 @@ func acceptsHTML(r *http.Request) bool {
 	return false
 }
 
+const logo = `
+      _               _                                     _
+  ___| |__   ___  ___| | __  _ __ ___  _   _  __      _____| |__
+/  __| '_ \ / _ \/ __| |/ / | '_ ' _ \| | | | \ \ /\ / / _ \ '_ \
+| (__| | | |  __/ (__|   <  | | | | | | |_| |  \ V  V /  __/ |_) |
+\ ___|_| |_|\___|\___|_|\_\ |_| |_| |_|\__, |   \_/\_/ \___|_.__/
+                                       |___/
+	`
+
 // HomeHandler display the home page
 func (a *Application) HomeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -44,14 +53,7 @@ func (a *Application) HomeHandler() http.HandlerFunc {
 		// nice geeky ascii art
 		if !acceptsHTML(r) {
 			w.Header().Set("content-type", "text/plain")
-			w.Write([]byte(`
-      _               _                                     _
-  ___| |__   ___  ___| | __  _ __ ___  _   _  __      _____| |__
-/  __| '_ \ / _ \/ __| |/ / | '_ ' _ \| | | | \ \ /\ / / _ \ '_ \
-| (__| | | |  __/ (__|   <  | | | | | | |_| |  \ V  V /  __/ |_) |
-\ ___|_| |_|\___|\___|_|\_\ |_| |_| |_|\__, |   \_/\_/ \___|_.__/
-                                       |___/
-	`))
+			w.Write([]byte(logo))
 			fmt.Fprintf(w, "Version: %s", version.Version())
 			return
 		}
@@ -71,4 +73,13 @@ func (a *Application) HomeHandler() http.HandlerFunc {
 			return
 		}
 	}
+}
+
+func AdminHomeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "text/plain")
+	w.Write([]byte(logo))
+	fmt.Fprintf(w, "Version: %s", version.Version())
+	w.Write([]byte(`
+/metrics Prometheus export
+`))
 }

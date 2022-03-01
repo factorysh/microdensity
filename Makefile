@@ -5,6 +5,10 @@ build:
 		-ldflags "-X github.com/factorysh/microdensity/version.version=$(GIT_VERSION)" \
 	.
 
+build-linux:
+	make build GOOS=linux
+	upx microdensity
+
 TESTS= github.com/factorysh/microdensity/task \
 		github.com/factorysh/microdensity/middlewares/jwt \
 		github.com/factorysh/microdensity/middlewares/project\
