@@ -14,36 +14,46 @@ import (
 	"github.com/robert-nix/ansihtml"
 )
 
-type DoubleLogger struct {
+type doubleLogger struct {
 	Stdout io.Writer
 	Stderr io.Writer
 }
 
 type simpleLogger struct {
 	ouptut io.Writer
-	color  string
+	class  string
 }
 
+var space = []byte(" ")
+var cr = []byte("\n")
+
 func (s *simpleLogger) Write(p []byte) (int, error) {
-	lines := bytes.Split(p, []byte{10})
+	lines := bytes.Split(p, cr)
 	n := 0
+
 	for _, line := range lines {
-		// FIXME use s.color here
-		i, _ := s.ouptut.Write(line)
-		n += i
+		if len(line) == 0 {
+			continue
+		}
+		parts := bytes.SplitN(line, space, 2)
+		parts[0] = []byte(fmt.Sprintf("<span class=\"%s\">%s</span>", s.class, parts[0]))
+		i, _ := s.ouptut.Write(bytes.Join(parts, space))
+		j, _ := s.ouptut.Write(cr)
+		n += i + j
 	}
+
 	return n, nil
 }
 
-func NewDoubleLogger(output io.Writer) *DoubleLogger {
-	return &DoubleLogger{
+func newDoubleLogger(output io.Writer) *doubleLogger {
+	return &doubleLogger{
 		Stdout: &simpleLogger{
 			ouptut: output,
-			color:  "blue",
+			class:  "stdout-prefix",
 		},
 		Stderr: &simpleLogger{
 			ouptut: output,
-			color:  "red",
+			class:  "stderr-prefix",
 		},
 	}
 }
@@ -56,7 +66,8 @@ func (a *Application) renderLogsPageForTask(ctx context.Context, t *task.Task, w
 	}
 
 	var buffer bytes.Buffer
-	_, err = stdcopy.StdCopy(&buffer, &buffer, reader)
+	logger := newDoubleLogger(&buffer)
+	_, err = stdcopy.StdCopy(logger.Stdout, logger.Stderr, reader)
 	if err != nil {
 		return err
 	}

@@ -88,3 +88,11 @@ h6 {
   overflow-x: scroll;
   overflow-y: hidden;
 }
+
+.stdout-prefix {
+  color: #900603;
+}
+
+.stderr-prefix {
+  color: #028a0f;
+}
