@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/factorysh/microdensity/html"
 	"github.com/factorysh/microdensity/task"
+	"github.com/robert-nix/ansihtml"
 )
 
 func (a *Application) renderLogsPageForTask(ctx context.Context, t *task.Task, w http.ResponseWriter) error {
@@ -25,7 +26,7 @@ func (a *Application) renderLogsPageForTask(ctx context.Context, t *task.Task, w
 		return err
 	}
 
-	data, err := NewTaskPage(t, template.HTML(fmt.Sprintf("<pre>%s</pre>", buffer.String())), a.GitlabURL, "Task Logs", "terminal")
+	data, err := NewTaskPage(t, template.HTML(fmt.Sprintf("<pre>%s</pre>", ansihtml.ConvertToHTML(buffer.Bytes()))), a.GitlabURL, "Task Logs", "terminal")
 	if err != nil {
 		return err
 	}
