@@ -182,8 +182,8 @@ func (a *Application) TaskIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TaskLogsHandler get a logs for a task
-func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *http.Request) {
+// TaskLogzHandler get a logs for a task
+func (a *Application) TaskLogzHandler(latest bool) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		l := a.logger.With(
@@ -232,8 +232,8 @@ func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *ht
 
 }
 
-// TaskLogzHandler get a logs for a task
-func (a *Application) TaskLogzHandler(latest bool) func(http.ResponseWriter, *http.Request) {
+// TaskLogsHandler get a logs for a task, used to get row logs from curl, not used for now
+func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		l := a.logger.With(
