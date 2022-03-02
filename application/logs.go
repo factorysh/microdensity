@@ -37,8 +37,14 @@ func (s *simpleLogger) Write(p []byte) (int, error) {
 		}
 		parts := bytes.SplitN(line, space, 2)
 		parts[0] = []byte(fmt.Sprintf("<span class=\"%s\">%s</span>", s.class, parts[0]))
-		i, _ := s.ouptut.Write(bytes.Join(parts, space))
-		j, _ := s.ouptut.Write(cr)
+		i, err := s.ouptut.Write(bytes.Join(parts, space))
+		if err != nil {
+			return 0, err
+		}
+		j, err := s.ouptut.Write(cr)
+		if err != nil {
+			return 0, err
+		}
 		n += i + j
 	}
 
