@@ -219,7 +219,7 @@ func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *ht
 
 		// just stdout for now
 		// kudos @ndeloof, @rumpl, @glours
-		_, err = stdcopy.StdCopy(w, nil, reader)
+		_, err = stdcopy.StdCopy(w, w, reader)
 		if err != nil {
 			l.Error("Task log stdcopy write error", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)

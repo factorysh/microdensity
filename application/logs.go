@@ -20,8 +20,7 @@ func (a *Application) renderLogsPageForTask(ctx context.Context, t *task.Task, w
 	}
 
 	var buffer bytes.Buffer
-	var dropped bytes.Buffer
-	_, err = stdcopy.StdCopy(&buffer, &dropped, reader)
+	_, err = stdcopy.StdCopy(&buffer, &buffer, reader)
 	if err != nil {
 		return err
 	}
