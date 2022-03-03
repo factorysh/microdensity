@@ -6,6 +6,7 @@ import (
 	"html/template"
 	_template "html/template"
 	"net/http"
+	"strings"
 
 	"github.com/yosssi/gohtml"
 )
@@ -75,4 +76,20 @@ func (c *Partial) Render() (_template.HTML, error) {
 	}
 
 	return template.HTML(buffer.Bytes()), err
+}
+
+// Accepts checks is a request accept content of a specified kind
+func Accepts(r *http.Request, kind string) bool {
+	accepts, found := r.Header["Accept"]
+	if !found {
+		return false
+	}
+
+	for _, h := range accepts {
+		if strings.Contains(h, kind) {
+			return true
+		}
+	}
+
+	return false
 }
