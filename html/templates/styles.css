@@ -46,6 +46,10 @@ h6 {
   padding: 2rem;
 }
 
+.task-description a {
+  font-weight: bold;
+}
+
 .label {
   font-weight: bold;
 }
