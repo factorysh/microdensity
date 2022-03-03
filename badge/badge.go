@@ -68,7 +68,7 @@ func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http
 		t, err := s.GetByCommit(service, project, branch, commit, latest)
 
 		if t == nil || err != nil {
-			err = WriteBadge("status", "?!", Colors.Default, w)
+			err = WriteBadge(fmt.Sprintf("status : %s", service), "?!", Colors.Default, w)
 			if err != nil {
 				panic(err)
 			}
