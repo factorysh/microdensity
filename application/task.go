@@ -1,7 +1,11 @@
 package application
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"os"
@@ -9,10 +13,12 @@ import (
 
 	"github.com/docker/docker/pkg/stdcopy"
 	_claims "github.com/factorysh/microdensity/claims"
+	"github.com/factorysh/microdensity/html"
 	"github.com/factorysh/microdensity/task"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"github.com/robert-nix/ansihtml"
 	"go.uber.org/zap"
 )
 
@@ -182,8 +188,8 @@ func (a *Application) TaskIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TaskLogsHandler get a logs for a task
-func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *http.Request) {
+// TaskLogzHandler get a logs for a task
+func (a *Application) TaskLogzHandler(latest bool) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		l := a.logger.With(
@@ -219,7 +225,7 @@ func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *ht
 
 		// just stdout for now
 		// kudos @ndeloof, @rumpl, @glours
-		_, err = stdcopy.StdCopy(w, nil, reader)
+		_, err = stdcopy.StdCopy(w, w, reader)
 		if err != nil {
 			l.Error("Task log stdcopy write error", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
@@ -232,8 +238,8 @@ func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *ht
 
 }
 
-// TaskLogzHandler get a logs for a task
-func (a *Application) TaskLogzHandler(latest bool) func(http.ResponseWriter, *http.Request) {
+// TaskLogsHandler get a logs for a task, used to get row logs from curl, not used for now
+func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		l := a.logger.With(
@@ -266,4 +272,35 @@ func (a *Application) TaskLogzHandler(latest bool) func(http.ResponseWriter, *ht
 			return
 		}
 	}
+}
+
+func (a *Application) renderLogsPageForTask(ctx context.Context, t *task.Task, w http.ResponseWriter) error {
+
+	reader, err := t.Logs(ctx, false)
+	if err != nil {
+		return err
+	}
+
+	var buffer bytes.Buffer
+	_, err = stdcopy.StdCopy(&buffer, &buffer, reader)
+	if err != nil {
+		return err
+	}
+
+	data, err := NewTaskPage(t, template.HTML(fmt.Sprintf("<pre>%s</pre>", ansihtml.ConvertToHTML(buffer.Bytes()))), a.GitlabURL, "Task Logs", "terminal")
+	if err != nil {
+		return err
+	}
+
+	p := html.Page{
+		Domain: a.Domain,
+		Detail: fmt.Sprintf("%s / %s - logs", t.Service, t.Commit),
+		Partial: html.Partial{
+			Template: taskTemplate,
+			Data:     data,
+		},
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return p.Render(w)
 }

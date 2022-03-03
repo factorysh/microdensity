@@ -14,6 +14,7 @@ type TaskPage struct {
 	Project         string
 	Commit          string
 	Service         string
+	Branch          string
 	ID              string
 	CreatedAt       string
 	InnerDivClasses string
@@ -32,6 +33,7 @@ func NewTaskPage(t *task.Task, inner template.HTML, gitlabDomain, InnerTitle, In
 		Project:         prettyPath,
 		GitlabDomain:    gitlabDomain,
 		Commit:          t.Commit,
+		Branch:          t.Branch,
 		Service:         t.Service,
 		ID:              t.Id.String(),
 		CreatedAt:       t.Creation.Format("2006-01-02 15:04:05"),
