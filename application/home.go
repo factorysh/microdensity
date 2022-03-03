@@ -4,7 +4,6 @@ import (
 	"embed"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/factorysh/microdensity/html"
 	"github.com/factorysh/microdensity/version"
@@ -17,21 +16,6 @@ var (
 	//go:embed templates/home.html
 	homeTemplate string
 )
-
-func acceptsHTML(r *http.Request) bool {
-	accepts, found := r.Header["Accept"]
-	if !found {
-		return false
-	}
-
-	for _, h := range accepts {
-		if strings.Contains(h, "text/html") {
-			return true
-		}
-	}
-
-	return false
-}
 
 const logo = `
       _               _                                     _
@@ -51,7 +35,7 @@ func (a *Application) HomeHandler() http.HandlerFunc {
 
 		// if you ask for something that is not html
 		// nice geeky ascii art
-		if !acceptsHTML(r) {
+		if !html.Accepts(r, "text/html") {
 			w.Header().Set("content-type", "text/plain")
 			w.Write([]byte(logo))
 			fmt.Fprintf(w, "Version: %s", version.Version())

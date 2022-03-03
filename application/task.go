@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/pkg/stdcopy"
@@ -98,8 +99,22 @@ func (a *Application) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		l.Error("error when adding task", zap.String("task", t.Id.String()), zap.Error(err))
 		return
 	}
+
+	url := strings.Join([]string{a.Domain, "service", t.Service, t.Project, t.Branch, t.Commit, "volumes", "data", "result.html"}, "/")
+
+	if html.Accepts(r, "text/plain") {
+		w.Header().Add("content-type", "text/plain")
+		_, err := w.Write([]byte(fmt.Sprintf("Result URL:\n\n\t\t%s\n\n", url)))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		}
+		return
+	}
+
 	render.JSON(w, r, map[string]string{
-		"id": id.String(),
+		"id":  id.String(),
+		"url": url,
 	})
 }
 
