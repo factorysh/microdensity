@@ -13,17 +13,18 @@ import (
 	"github.com/factorysh/microdensity/task"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 var _ Service = (*FolderService)(nil)
 
 type FolderService struct {
 	name      string
-	Desc      string
 	jsruntime *goja.Runtime
 	validate  func(map[string]interface{}) (Arguments, error)
 	badge     func(project, branch, commit, badge string) (Badge, error)
 	logger    *zap.Logger
+	meta      Meta
 }
 
 type Arguments struct {
@@ -48,17 +49,32 @@ func NewFolder(_path string) (*FolderService, error) {
 		return nil, fmt.Errorf("%s is not a directory", _path)
 	}
 
-	description, err := os.ReadFile(filepath.Join(_path, "description"))
+	var content []byte
+
+	// loop over possible meta.yml files
+	for _, name := range []string{"meta.yml", "meta.yaml"} {
+		content, err = os.ReadFile(filepath.Join(_path, name))
+		if err == nil {
+			break
+		}
+	}
+
 	if err != nil {
-		l.Warn("No description found in folder service", zap.Error(err))
-		description = []byte("No description found")
+		return nil, fmt.Errorf("error with path %s: %v", _path, err)
+	}
+
+	var m Meta
+
+	err = yaml.Unmarshal(content, &m)
+	if err != nil {
+		return nil, fmt.Errorf("error with path %s: %v", _path, err)
 	}
 
 	_, name := path.Split(_path)
 	service := &FolderService{
 		name:   name,
 		logger: logger,
-		Desc:   string(description),
+		meta:   m,
 	}
 	l = l.With(zap.String("name", name))
 
@@ -129,4 +145,9 @@ func (f *FolderService) Badge(project, branch, commit, badge string) (Badge, err
 func (f *FolderService) Run(id uuid.UUID) error {
 	// FIXME
 	return nil
+}
+
+// Meta data about this service
+func (f *FolderService) Meta() Meta {
+	return f.meta
 }
