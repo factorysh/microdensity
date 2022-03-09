@@ -18,4 +18,11 @@ type Service interface {
 	//Watch(id uuid.UUID) error
 	// What's service name?
 	Name() string
+	Meta() Meta
+}
+
+// Meta contains metadata about the linked service
+type Meta struct {
+	Description       string `yaml:"description"`
+	UserDockerCompose bool   `yaml:"bool"`
 }
