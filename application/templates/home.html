@@ -7,5 +7,5 @@
 {{ range $key, $service := . }}
 <h4><a href="/service/{{ $key }}">{{ $key }}</a></h4>
 
-<p>{{ $service.Desc }}</p>
+<p>{{ $service.Meta.Description }}</p>
 {{ end }}
