@@ -12,6 +12,7 @@ services/demo
            +- docker-compose.yml
            +- README.md
            +- meta.js
+           +- meta.yml
 ```
 
 ## Self documenting

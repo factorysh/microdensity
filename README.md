@@ -1,7 +1,7 @@
 µdensity
 ========
 
-Gitlab CI triggers asynchone analysis and display badges and files.
+Gitlab CI triggers asynchone REST analysis and display [badges](https://github.com/narqo/go-badge) and files.
 
 Paths
 -----
