@@ -1,5 +1,10 @@
 package application
 
+/*
+application.Application is the hub of µdensity.
+All routes are declared here.
+*/
+
 import (
 	"context"
 	"net/http"

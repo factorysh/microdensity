@@ -1,5 +1,9 @@
 package volumes
 
+/*
+Services can write stuff to volumes
+*/
+
 import (
 	"io/fs"
 	"os"

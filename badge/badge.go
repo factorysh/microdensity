@@ -1,5 +1,9 @@
 package badge
 
+/*
+badge use SVG to display [subject|status] and a color for the last half.
+*/
+
 import (
 	"fmt"
 	"net/http"

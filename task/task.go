@@ -1,5 +1,9 @@
 package task
 
+/*
+Users push task.Task to a queue.Queue
+*/
+
 import (
 	"context"
 	"errors"

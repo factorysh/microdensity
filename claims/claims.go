@@ -1,5 +1,9 @@
 package claims
 
+/*
+claims is the content of a JWT token.
+*/
+
 import (
 	"context"
 	"errors"

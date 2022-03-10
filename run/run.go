@@ -1,5 +1,9 @@
 package run
 
+/*
+User defines a task.Task, after validation, it goes to a queue.Queue
+and a run.Runner pick it and run.Runner#Prepare then run.Runner#Run it.
+*/
 import (
 	"bytes"
 	"fmt"

@@ -1,5 +1,9 @@
 package storage
 
+/*
+µdensity can be rebooted without loosing task.Task
+*/
+
 import (
 	"encoding/json"
 	"fmt"

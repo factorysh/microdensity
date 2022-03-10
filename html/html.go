@@ -1,5 +1,9 @@
 package html
 
+/*
+HTML templates and partials.
+*/
+
 import (
 	"bytes"
 	"embed"
