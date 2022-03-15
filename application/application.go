@@ -131,7 +131,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		GitlabURL:     cfg.OAuth.ProviderURL,
 		serviceFolder: cfg.Services,
 		storage:       s,
-		Router:        MagicPathHandler(r),
+		Router:        MagicPathHandler(r), // Convert service/demo/path/to/project- to service/demo/path%2fto%2fproject/
 		AdminRouter:   ar,
 		volumes:       v,
 		logger:        logger,
