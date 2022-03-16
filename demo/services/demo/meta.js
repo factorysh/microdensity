@@ -7,6 +7,7 @@ function validate(params) {
     if ( ! onlyLetters.test(params.HELLO)) {
         throw(`HELLO is only letters : [${params.HELLO}]`);
     }
+    console.log(params);
     return {
         environments: {
             HELLO: params.HELLO

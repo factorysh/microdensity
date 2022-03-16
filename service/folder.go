@@ -32,6 +32,13 @@ type Arguments struct {
 	Files        map[string]string `json:"files"`
 }
 
+type Console struct {
+}
+
+func (c *Console) Log(args ...interface{}) {
+	spew.Dump(args...)
+}
+
 func NewFolder(_path string) (*FolderService, error) {
 	_path = path.Clean(_path)
 	logger, err := zap.NewProduction()
@@ -90,9 +97,7 @@ func NewFolder(_path string) (*FolderService, error) {
 		chrono := time.Now()
 		vm := goja.New()
 		vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
-		vm.Set("debug", func(a interface{}) {
-			spew.Dump(a)
-		})
+		vm.Set("console", &Console{})
 		src, err := ioutil.ReadFile(jsPath)
 		if err != nil {
 			return nil, err
