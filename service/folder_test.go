@@ -8,7 +8,7 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-	service, err := NewFolder("../demo")
+	service, err := NewFolder("../demo/services/demo")
 	assert.NoError(t, err)
 	v, err := service.validate(map[string]interface{}{
 		"HELLO": "Alice",
