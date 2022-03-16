@@ -28,7 +28,7 @@ func ValidateServicesDefinitions(servicesDir string) error {
 }
 
 func validateServiceDefinition(path string) error {
-	p, _, err := run.LoadCompose(path)
+	p, _, err := run.LoadCompose(path, map[string]string{})
 	if err != nil {
 		return err
 	}
