@@ -4,10 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -67,7 +69,25 @@ func (a *Application) PostImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Connection", "Keep-Alive")
+	w.Header().Set("Transfer-Encoding", "chunked")
+	w.Header().Set("X-Content-Type-Options", "nosnif")
+
+	ended := make(chan bool)
+	go func() {
+		ticker := time.NewTicker(500 * time.Millisecond)
+		for {
+			select {
+			case <-ticker.C:
+				io.WriteString(w, "#")
+			case <-ended:
+				return
+			}
+		}
+	}()
+
 	out, err := cli.ImagePull(r.Context(), imageParams.Name, types.ImagePullOptions{RegistryAuth: auth})
+	ended <- true
 	if err != nil {
 		l.Warn("error when downloading image", zap.Error(err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -75,16 +95,16 @@ func (a *Application) PostImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer out.Close()
 
-	text, err := ioutil.ReadAll(out)
+	_, err = ioutil.ReadAll(out)
 	if err != nil {
 		l.Warn("error when downloading image", zap.Error(err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Length", "0")
+	io.WriteString(w, " Download ended")
 	w.WriteHeader(http.StatusOK)
-	w.Header().Add("content-type", "text/plain")
-	w.Write(text)
 }
 
 func verifyImageName(name string, project string, commit string) error {
