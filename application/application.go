@@ -139,6 +139,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		Sink:          &sink.VoidSink{},
 		Stopper:       make(chan os.Signal, 1),
 	}
+	ar.Get("/status", a.StatusHandler)
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -164,15 +165,15 @@ func New(cfg *conf.Conf) (*Application, error) {
 				r.Route("/{commit}", func(r chi.Router) {
 					r.Group(func(r chi.Router) {
 						r.Use(authMiddleware.Middleware())
-						r.Post("/", a.PostTaskHandler) // create a new Task
-						r.Get("/", a.TaskHandler(false)) // what is the state of this Task
+						r.Post("/", a.PostTaskHandler)                  // create a new Task
+						r.Get("/", a.TaskHandler(false))                // what is the state of this Task
 						r.Get("/volumes/*", a.VolumesHandler(6, false)) // data wrote by docker run
-						r.Get("/logs", a.TaskLogsHandler(false)) // stdout/stderr of the docker run
+						r.Get("/logs", a.TaskLogsHandler(false))        // stdout/stderr of the docker run
 					})
 					r.Group(func(r chi.Router) {
 						r.Use(a.RefererMiddleware)
 						r.Get("/status", badge.StatusBadge(a.storage, false)) // status of this task
-						r.Get("/badge/{badge}", a.BadgeMyTaskHandler(false)) // badge wrote by docker run
+						r.Get("/badge/{badge}", a.BadgeMyTaskHandler(false))  // badge wrote by docker run
 					})
 				})
 				r.Route("/latest", func(r chi.Router) { // alias to latest run
