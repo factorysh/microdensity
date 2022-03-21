@@ -35,3 +35,16 @@ Bring your own services
 -----------------------
 
 [Services documentation](SERVICES.md)
+
+Manage your service
+-------------------
+
+### Prometheus endpoint
+
+For the Prometheus endpoint, use `admin_listen` setting.
+
+### Sentry
+
+Sentry is used with zap logging.
+
+Use `SENTRY_DSN` env for setting Sentry errors report.
