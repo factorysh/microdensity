@@ -39,9 +39,13 @@ Bring your own services
 Manage your service
 -------------------
 
-### Prometheus endpoint
+### Admin endpoint
 
-For the Prometheus endpoint, use `admin_listen` setting.
+For the Admin http server, use `admin_listen` setting.
+
+* `/` Home page
+* `/metrics` Prometheus endpoint
+* `/status` Microdensity ping Docker and Gitlab
 
 ### Sentry
 
