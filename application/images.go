@@ -109,8 +109,7 @@ func (a *Application) PostImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Length", "0")
-	io.WriteString(w, " Download ended")
+	w.Write([]byte("|> Image pulled successfully\n"))
 	w.WriteHeader(http.StatusOK)
 }
 
