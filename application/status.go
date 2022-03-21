@@ -8,6 +8,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/factorysh/microdensity/version"
 	"go.uber.org/zap"
 )
 
@@ -17,8 +18,9 @@ type gitlabStatus struct {
 }
 
 type Status struct {
-	Ping   types.Ping `json:"docker"`
-	Gitlab *gitlabStatus
+	Ping    types.Ping    `json:"docker"`
+	Gitlab  *gitlabStatus `json:"gitlab"`
+	Version string        `json:"version"`
 }
 
 func (a *Application) StatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +39,8 @@ func (a *Application) StatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	status := &Status{
-		Ping: ping,
+		Ping:    ping,
+		Version: version.Version(),
 	}
 
 	resp, err := http.Get(a.GitlabURL)
