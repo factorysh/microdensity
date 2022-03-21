@@ -91,7 +91,6 @@ func (a *Application) PostImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	out, err := cli.ImagePull(r.Context(), imageParams.Name, types.ImagePullOptions{RegistryAuth: auth})
-	ended <- true
 	if err != nil {
 		l.Warn("error when downloading image", zap.Error(err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -99,7 +98,11 @@ func (a *Application) PostImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer out.Close()
 
+	// ⚠ consume the reader or nothing happens
 	_, err = ioutil.ReadAll(out)
+	if flushable {
+		ended <- true
+	}
 	if err != nil {
 		l.Warn("error when downloading image", zap.Error(err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
