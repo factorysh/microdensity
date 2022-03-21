@@ -17,7 +17,7 @@ type gitlabStatus struct {
 }
 
 type Status struct {
-	Ping   types.Ping `json:"ping"`
+	Ping   types.Ping `json:"docker"`
 	Gitlab *gitlabStatus
 }
 
