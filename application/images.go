@@ -69,22 +69,26 @@ func (a *Application) PostImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Connection", "Keep-Alive")
-	w.Header().Set("Transfer-Encoding", "chunked")
-	w.Header().Set("X-Content-Type-Options", "nosnif")
-
 	ended := make(chan bool)
-	go func() {
-		ticker := time.NewTicker(500 * time.Millisecond)
-		for {
-			select {
-			case <-ticker.C:
-				io.WriteString(w, "#")
-			case <-ended:
-				return
+	f, flushable := w.(http.Flusher)
+	if flushable {
+		go func() {
+			ticker := time.NewTicker(1 * time.Second)
+			for {
+				select {
+				case <-ticker.C:
+					io.WriteString(w, "#")
+					if flushable {
+						f.Flush()
+					}
+				case <-ended:
+					return
+				case <-r.Context().Done():
+					return
+				}
 			}
-		}
-	}()
+		}()
+	}
 
 	out, err := cli.ImagePull(r.Context(), imageParams.Name, types.ImagePullOptions{RegistryAuth: auth})
 	ended <- true
