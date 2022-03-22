@@ -9,6 +9,7 @@ import (
 
 	"github.com/docker/go-events"
 	"github.com/factorysh/microdensity/run"
+	"github.com/factorysh/microdensity/sink"
 	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/task"
 	"github.com/google/uuid"
@@ -40,7 +41,7 @@ func TestDeq(t *testing.T) {
 
 	r, err := run.NewRunner("../demo/services", "/tmp/microdensity/volumes", []string{})
 	assert.NoError(t, err)
-	que := NewQueue(store, r)
+	que := NewQueue(store, r, &sink.VoidSink{})
 	snk := &DummyEventLogger{
 		Cpt: &sync.WaitGroup{},
 	}

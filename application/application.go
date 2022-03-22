@@ -120,7 +120,8 @@ func New(cfg *conf.Conf) (*Application, error) {
 		return nil, err
 	}
 
-	q := queue.NewQueue(s, runner)
+	_sink := &sink.VoidSink{}
+	q := queue.NewQueue(s, runner, _sink)
 
 	r := chi.NewRouter()
 
@@ -136,7 +137,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		volumes:       v,
 		logger:        logger,
 		queue:         &q,
-		Sink:          &sink.VoidSink{},
+		Sink:          _sink,
 		Stopper:       make(chan os.Signal, 1),
 	}
 	ar.Get("/status", a.StatusHandler)

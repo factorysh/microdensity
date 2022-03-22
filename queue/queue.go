@@ -7,7 +7,6 @@ import (
 	"github.com/docker/go-events"
 	"github.com/factorysh/microdensity/event"
 	"github.com/factorysh/microdensity/run"
-	"github.com/factorysh/microdensity/sink"
 	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/task"
 	"github.com/oleiade/lane"
@@ -41,7 +40,7 @@ type Queue struct {
 }
 
 // NewQueue inits a new queue struct
-func NewQueue(s storage.Storage, runner *run.Runner) Queue {
+func NewQueue(sto storage.Storage, runner *run.Runner, sink events.Sink) Queue {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		panic(err)
@@ -52,9 +51,9 @@ func NewQueue(s storage.Storage, runner *run.Runner) Queue {
 		items:      lane.NewQueue(),
 		BatchEnded: make(chan bool, 1),
 		runner:     runner,
-		storage:    s,
+		storage:    sto,
 		logger:     logger,
-		Sink:       &sink.VoidSink{},
+		Sink:       sink,
 	}
 }
 
