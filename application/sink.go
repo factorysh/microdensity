@@ -3,6 +3,7 @@ package application
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/docker/go-events"
 )
@@ -44,4 +45,5 @@ func (a *Application) SinkAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	a.Sink.Add(h)
 	defer a.Sink.Remove(h)
+	time.Sleep(5 * time.Minute)
 }
