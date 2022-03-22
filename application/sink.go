@@ -19,10 +19,6 @@ func (h *HttpSink) Write(event events.Event) error {
 	if err != nil {
 		return err
 	}
-	_, err = h.w.Write([]byte("\n"))
-	if err != nil {
-		return err
-	}
 	h.flusher.Flush()
 	return nil
 }
