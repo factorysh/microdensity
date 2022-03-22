@@ -170,6 +170,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 						r.Get("/", a.TaskHandler(false))                // what is the state of this Task
 						r.Get("/volumes/*", a.VolumesHandler(6, false)) // data wrote by docker run
 						r.Get("/logs", a.TaskLogsHandler(false))        // stdout/stderr of the docker run
+						r.Get("/sink", a.SinkHandler)                   // follow the task status
 					})
 					r.Group(func(r chi.Router) {
 						r.Use(a.RefererMiddleware)
