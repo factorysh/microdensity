@@ -25,7 +25,6 @@ import (
 	"github.com/factorysh/microdensity/run"
 	"github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/sessions"
-	"github.com/factorysh/microdensity/sink"
 	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/task"
 	"github.com/factorysh/microdensity/volumes"
@@ -49,7 +48,7 @@ type Application struct {
 	volumes       *volumes.Volumes
 	logger        *zap.Logger
 	queue         *queue.Queue
-	Sink          events.Sink
+	Sink          *events.Broadcaster
 	Server        *http.Server
 	AdminServer   *http.Server
 	Stopper       chan (os.Signal)
@@ -120,7 +119,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		return nil, err
 	}
 
-	_sink := &sink.VoidSink{}
+	_sink := events.NewBroadcaster()
 	q := queue.NewQueue(s, runner, _sink)
 
 	r := chi.NewRouter()
@@ -141,6 +140,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 		Stopper:       make(chan os.Signal, 1),
 	}
 	ar.Get("/status", a.StatusHandler)
+	ar.Get("/sink", a.SinkAllHandler)
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
