@@ -36,6 +36,12 @@ func (a *Application) PostImageHandler(w http.ResponseWriter, r *http.Request) {
 		zap.String("commit", commit),
 	)
 
+	if !a.Services[serviceID].Meta().UserDockerCompose {
+		l.Warn("service does not accept custom image")
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
 	d := json.NewDecoder(r.Body)
 	err := d.Decode(&imageParams)
 	if err != nil {
