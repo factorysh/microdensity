@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	_claims "github.com/factorysh/microdensity/claims"
 	"github.com/factorysh/microdensity/html"
@@ -231,6 +232,13 @@ func (a *Application) TaskLogzHandler(latest bool) func(http.ResponseWriter, *ht
 		}
 
 		reader, err := t.Logs(r.Context(), false)
+		if docker.IsErrNotFound(err) {
+			l.Warn("container not found", zap.Error(err))
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(http.StatusText(http.StatusNotFound)))
+			return
+		}
+
 		if err != nil {
 			l.Warn("Task log error", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
@@ -280,6 +288,13 @@ func (a *Application) TaskLogsHandler(latest bool) func(http.ResponseWriter, *ht
 		}
 
 		err = a.renderLogsPageForTask(r.Context(), t, w)
+		if docker.IsErrNotFound(err) {
+			l.Warn("container not found", zap.Error(err))
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(http.StatusText(http.StatusNotFound)))
+			return
+		}
+
 		if err != nil {
 			l.Warn("when rendering a logs page", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
