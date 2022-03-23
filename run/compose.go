@@ -46,7 +46,7 @@ func (c *ComposeRun) Cancel() {
 	cancelFunc()
 }
 
-func NewComposeRun(home string) (*ComposeRun, error) {
+func NewComposeRun(home string, env map[string]string) (*ComposeRun, error) {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func NewComposeRun(home string) (*ComposeRun, error) {
 		return nil, err
 	}
 
-	project, details, err := LoadCompose(home)
+	project, details, err := LoadCompose(home, env)
 	if err != nil {
 		l.Error("Load compose error", zap.Error(err))
 		return nil, err
@@ -247,7 +247,7 @@ func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, co
 }
 
 // LoadCompose loads a docker-compose.yml file
-func LoadCompose(home string) (*types.Project, *types.ConfigDetails, error) {
+func LoadCompose(home string, env map[string]string) (*types.Project, *types.ConfigDetails, error) {
 	path := filepath.Join(home, "docker-compose.yml")
 	cfg, err := os.Open(path)
 	if err != nil {
@@ -268,7 +268,7 @@ func LoadCompose(home string) (*types.Project, *types.ConfigDetails, error) {
 				Content:  raw,
 			},
 		},
-		Environment: map[string]string{},
+		Environment: env,
 	}
 
 	p, err := loader.Load(details)

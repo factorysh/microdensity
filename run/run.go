@@ -70,7 +70,7 @@ func (r *Runner) Prepare(t *task.Task, env map[string]string) (string, error) {
 		return "", fmt.Errorf("task with id `%s` already prepared", t.Id)
 	}
 
-	runnable, err := NewComposeRun(fmt.Sprintf("%s/%s", r.servicesDir, t.Service))
+	runnable, err := NewComposeRun(fmt.Sprintf("%s/%s", r.servicesDir, t.Service), env)
 	if err != nil {
 		return "", err
 	}
