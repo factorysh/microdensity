@@ -29,6 +29,7 @@ type HttpSink struct {
 func NewHttpSink(r *http.Request, w http.ResponseWriter, waitForEnd bool) (*HttpSink, error) {
 	isEventSource := false
 	for _, accept := range strings.Split(r.Header.Get("accept"), ", ") {
+		// https://developer.mozilla.org/fr/docs/Web/API/EventSource
 		if strings.Split(accept, ";")[0] == "text/event-stream" {
 			isEventSource = true
 			w.Header().Set("Content-Type", "text/event-stream")
