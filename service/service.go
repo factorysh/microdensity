@@ -24,5 +24,5 @@ type Service interface {
 // Meta contains metadata about the linked service
 type Meta struct {
 	Description       string `yaml:"description"`
-	UserDockerCompose bool   `yaml:"bool"`
+	UserDockerCompose bool   `yaml:"user_docker_compose"`
 }
