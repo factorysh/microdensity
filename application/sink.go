@@ -54,24 +54,28 @@ func NewHttpSink(r *http.Request, w http.ResponseWriter, waitForEnd bool) (*Http
 	if waitForEnd {
 		h.wg = &sync.WaitGroup{}
 		h.wg.Add(1)
-		var ctx context.Context
-		ctx, h.cancel = context.WithCancel(context.TODO())
-
-		go func(ctx context.Context) {
-			tick := time.NewTicker(5 * time.Second)
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-tick.C:
-					h.lock.Lock()
-					h.w.Write([]byte("event: ping\n\n"))
-					h.flusher.Flush()
-					h.lock.Unlock()
-				}
-			}
-		}(ctx)
 	}
+	var ctx context.Context
+	ctx, h.cancel = context.WithCancel(context.TODO())
+
+	go func(ctx context.Context) {
+		tick := time.NewTicker(5 * time.Second)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+				h.lock.Lock()
+				if isEventSource {
+					h.w.Write([]byte("event: ping\n\n"))
+				} else {
+					h.w.Write([]byte("\n"))
+				}
+				h.flusher.Flush()
+				h.lock.Unlock()
+			}
+		}
+	}(ctx)
 	return h, nil
 }
 
