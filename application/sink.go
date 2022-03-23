@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -30,7 +29,6 @@ type HttpSink struct {
 func NewHttpSink(r *http.Request, w http.ResponseWriter, waitForEnd bool) (*HttpSink, error) {
 	isEventSource := false
 	for _, accept := range strings.Split(r.Header.Get("accept"), ", ") {
-		fmt.Println("accept :", accept)
 		if strings.Split(accept, ";")[0] == "text/event-stream" {
 			isEventSource = true
 			w.Header().Set("Content-Type", "text/event-stream")
