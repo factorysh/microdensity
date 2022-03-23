@@ -25,7 +25,6 @@ import (
 	"github.com/factorysh/microdensity/run"
 	"github.com/factorysh/microdensity/service"
 	"github.com/factorysh/microdensity/sessions"
-	"github.com/factorysh/microdensity/sink"
 	"github.com/factorysh/microdensity/storage"
 	"github.com/factorysh/microdensity/task"
 	"github.com/factorysh/microdensity/volumes"
@@ -49,7 +48,7 @@ type Application struct {
 	volumes       *volumes.Volumes
 	logger        *zap.Logger
 	queue         *queue.Queue
-	Sink          events.Sink
+	Sink          *events.Broadcaster
 	Server        *http.Server
 	AdminServer   *http.Server
 	Stopper       chan (os.Signal)
@@ -120,7 +119,8 @@ func New(cfg *conf.Conf) (*Application, error) {
 		return nil, err
 	}
 
-	q := queue.NewQueue(s, runner)
+	_sink := events.NewBroadcaster()
+	q := queue.NewQueue(s, runner, _sink)
 
 	r := chi.NewRouter()
 
@@ -136,10 +136,11 @@ func New(cfg *conf.Conf) (*Application, error) {
 		volumes:       v,
 		logger:        logger,
 		queue:         &q,
-		Sink:          &sink.VoidSink{},
+		Sink:          _sink,
 		Stopper:       make(chan os.Signal, 1),
 	}
 	ar.Get("/status", a.StatusHandler)
+	ar.Get("/sink", a.SinkAllHandler)
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -169,6 +170,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 						r.Get("/", a.TaskHandler(false))                // what is the state of this Task
 						r.Get("/volumes/*", a.VolumesHandler(6, false)) // data wrote by docker run
 						r.Get("/logs", a.TaskLogsHandler(false))        // stdout/stderr of the docker run
+						r.Get("/sink", a.SinkHandler)                   // follow the task status
 					})
 					r.Group(func(r chi.Router) {
 						r.Use(a.RefererMiddleware)
