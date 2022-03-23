@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,8 @@ type HttpSink struct {
 	json          *json.Encoder
 	wg            *sync.WaitGroup
 	isEventSource bool
+	lock          *sync.Mutex
+	cancel        context.CancelFunc
 }
 
 func NewHttpSink(r *http.Request, w http.ResponseWriter, waitForEnd bool) (*HttpSink, error) {
@@ -31,6 +34,7 @@ func NewHttpSink(r *http.Request, w http.ResponseWriter, waitForEnd bool) (*Http
 		if strings.Split(accept, ";")[0] == "text/event-stream" {
 			isEventSource = true
 			w.Header().Set("Content-Type", "text/event-stream")
+			break
 		}
 	}
 
@@ -44,17 +48,38 @@ func NewHttpSink(r *http.Request, w http.ResponseWriter, waitForEnd bool) (*Http
 		flusher:       flusher,
 		json:          json.NewEncoder(w),
 		isEventSource: isEventSource,
+		lock:          &sync.Mutex{},
+		cancel:        func() {},
 	}
 	if waitForEnd {
 		h.wg = &sync.WaitGroup{}
 		h.wg.Add(1)
+		var ctx context.Context
+		ctx, h.cancel = context.WithCancel(context.TODO())
+
+		go func(ctx context.Context) {
+			tick := time.NewTicker(5 * time.Second)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-tick.C:
+					h.lock.Lock()
+					h.w.Write([]byte("event: ping\n\n"))
+					h.flusher.Flush()
+					h.lock.Unlock()
+				}
+			}
+		}(ctx)
 	}
 	return h, nil
 }
 
 func (h *HttpSink) Write(event events.Event) error {
+	h.lock.Lock()
+	defer h.lock.Unlock()
 	if h.isEventSource {
-		h.w.Write([]byte("data: "))
+		h.w.Write([]byte("event: task\ndata: "))
 	}
 	err := h.json.Encode(event)
 	if err != nil {
@@ -88,6 +113,7 @@ func (a *Application) SinkAllHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	defer h.cancel()
 	a.Sink.Add(h)
 	defer a.Sink.Remove(h)
 	time.Sleep(5 * time.Minute)
