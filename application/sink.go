@@ -100,6 +100,7 @@ func (h *HttpSink) Write(event events.Event) error {
 }
 
 func (h *HttpSink) Close() error {
+	h.cancel()
 	return nil
 }
 
@@ -116,7 +117,7 @@ func (a *Application) SinkAllHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	defer h.cancel()
+	defer h.Close()
 	a.Sink.Add(h)
 	defer a.Sink.Remove(h)
 	time.Sleep(5 * time.Minute)
@@ -159,6 +160,7 @@ func (a *Application) SinkHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		l.With(zap.Error(err)).Error("SinkHandler error")
 	}
+	defer s.Close()
 	f := events.NewFilter(s, &TaskMatcher{task: t})
 	a.Sink.Add(f)
 	defer a.Sink.Remove(f)
