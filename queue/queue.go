@@ -82,10 +82,13 @@ func (q *Queue) Put(item *task.Task, env map[string]string) error {
 	queueAdded.Inc()
 	queueSize.Inc()
 	q.logger.Info("queue add", zap.Any("task", item))
-	q.Sink.Write(event.Event{
+	err = q.Sink.Write(event.Event{
 		Id:    item.Id,
 		State: item.State,
 	})
+	if err != nil {
+		return err
+	}
 
 	if !q.working {
 		q.logger.Info("Start queue")
@@ -136,11 +139,16 @@ func (q *Queue) DequeueWhile() {
 		} else {
 			t.State = task.Failed
 		}
-		q.Sink.Write(event.Event{
+		err = q.Sink.Write(event.Event{
 			Id:    t.Id,
 			State: t.State,
 			Error: err,
 		})
+		// FIXME: handle err
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		err = q.storage.Upsert(t)
 		// FIXME: handle err
