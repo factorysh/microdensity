@@ -101,7 +101,11 @@ func NewComposeRun(home string, env map[string]string) (*ComposeRun, error) {
 
 	// use default compose network name
 	networkName := fmt.Sprintf("%s_default", name)
-	ensureNetwork(docker, networkName)
+	err = ensureNetwork(docker, networkName)
+	if err != nil {
+		l.Error("Ensure network", zap.Error(err))
+		return nil, err
+	}
 	l.Info("Ensure Network", zap.String("name", networkName))
 
 	return &ComposeRun{
@@ -212,9 +216,13 @@ func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, co
 	}
 	l.With(zap.String("uid", u.Uid))
 
-	c.service.Remove(context.TODO(), c.project, api.RemoveOptions{
+	err = c.service.Remove(context.TODO(), c.project, api.RemoveOptions{
 		Force: true,
 	})
+	if err != nil {
+		l.Error("Remove service", zap.Error(err))
+		return -1, err
+	}
 
 	defer c.Cancel()
 	n, err := c.service.RunOneOffContainer(c.runCtx, c.project, api.RunOptions{
@@ -261,9 +269,12 @@ func LoadCompose(home string, env map[string]string) (*types.Project, *types.Con
 	}
 
 	raw, err := ioutil.ReadAll(cfg)
-	cfg.Close()
+	err2 := cfg.Close()
 	if err != nil {
 		return nil, nil, err
+	}
+	if err2 != nil {
+		return nil, nil, err2
 	}
 
 	details := types.ConfigDetails{

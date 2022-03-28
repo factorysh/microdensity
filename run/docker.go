@@ -46,9 +46,12 @@ func dockerConfig() (*configfile.ConfigFile, error) {
 			return nil, err
 		}
 		err = dockercfg.LoadFromReader(f)
-		f.Close()
+		err2 := f.Close()
 		if err != nil {
 			return nil, err
+		}
+		if err2 != nil {
+			return nil, err2
 		}
 	}
 	return dockercfg, nil
