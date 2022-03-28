@@ -105,7 +105,10 @@ func NewFolder(_path string) (*FolderService, error) {
 		chrono := time.Now()
 		vm := goja.New()
 		vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
-		vm.Set("console", &Console{})
+		err = vm.Set("console", &Console{})
+		if err != nil {
+			return nil, err
+		}
 		src, err := ioutil.ReadFile(jsPath)
 		if err != nil {
 			return nil, err
