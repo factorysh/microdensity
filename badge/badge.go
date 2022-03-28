@@ -84,7 +84,7 @@ func StatusBadge(s storage.Storage, latest bool) func(http.ResponseWriter, *http
 			return
 		}
 
-		WriteBadge(fmt.Sprintf("status : %s", service), t.State.String(), Colors.Get(t.State), w)
+		err = WriteBadge(fmt.Sprintf("status : %s", service), t.State.String(), Colors.Get(t.State), w)
 		if err != nil {
 			panic(err)
 		}
