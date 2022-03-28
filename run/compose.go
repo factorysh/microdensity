@@ -1,6 +1,7 @@
 package run
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -65,7 +66,8 @@ func NewComposeRun(home string, env map[string]string) (*ComposeRun, error) {
 		return nil, err
 	}
 
-	_, err = docker.Ping(context.TODO())
+	ctx := context.TODO()
+	_, err = docker.Ping(ctx)
 	if err != nil {
 		l.Error("Docker doesn't ping", zap.Error(err))
 		return nil, err
@@ -82,7 +84,7 @@ func NewComposeRun(home string, env map[string]string) (*ComposeRun, error) {
 	grph := compose.NewGraph(project.Services, compose.ServiceStopped)
 	roots := grph.Roots()
 	if len(roots) == 0 {
-		panic("There is no roots")
+		return nil, errors.New("There is no roots")
 	}
 	if len(roots) > 1 {
 		rr := make([]string, len(roots))
