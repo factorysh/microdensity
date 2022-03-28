@@ -2,6 +2,7 @@ package conf
 
 import (
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
@@ -30,12 +31,19 @@ func (c *Conf) Defaults() {
 }
 
 func Open(path string) (*Conf, error) {
-	f, err := os.Open(path)
+	path = filepath.Clean(path)
+	f, err := os.Open(path) //#nosec
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
 	var cfg Conf
 	err = yaml.NewDecoder(f).Decode(&cfg)
-	return &cfg, err
+	err2 := f.Close()
+	if err != nil {
+		return nil, err
+	}
+	if err2 != nil {
+		return nil, err2
+	}
+	return &cfg, nil
 }
