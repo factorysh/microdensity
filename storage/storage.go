@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/factorysh/microdensity/task"
 	"github.com/factorysh/microdensity/volumes"
@@ -76,22 +77,25 @@ func (s *FSStore) taskLatestPath(t *task.Task) string {
 }
 
 func taskFromJSON(path string) (*task.Task, error) {
-
+	path = filepath.Clean(path)
 	// read json file
-	jsonFile, err := os.Open(path)
+	jsonFile, err := os.Open(path) //#nosec I don't know what a correct is
 	if err != nil {
 		return nil, err
 	}
-	defer jsonFile.Close()
 
 	// decode json
 	var t task.Task
-	json.NewDecoder(jsonFile).Decode(&t)
+	err = json.NewDecoder(jsonFile).Decode(&t)
+	err2 := jsonFile.Close()
 	if err != nil {
 		return nil, err
 	}
+	if err2 != nil {
+		return nil, err2
+	}
 
-	return &t, err
+	return &t, nil
 }
 
 // Upsert takes a task and write it to the underlying fs
@@ -102,13 +106,17 @@ func (s *FSStore) Upsert(t *task.Task) error {
 		return err
 	}
 
-	f, err := os.OpenFile(s.taskFilePath(t), os.O_CREATE+os.O_WRONLY, 0644)
+	f, err := os.OpenFile(s.taskFilePath(t), os.O_CREATE+os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
-	return json.NewEncoder(f).Encode(t)
+	err = json.NewEncoder(f).Encode(t)
+	err2 := f.Close()
+	if err != nil {
+		return err
+	}
+	return err2
 }
 
 // Get takes an id and return a task
@@ -234,12 +242,16 @@ func (s *FSStore) Delete(id string) error {
 
 // SetLatest is used save task as latest for this branch
 func (s *FSStore) SetLatest(t *task.Task) error {
-	return os.WriteFile(s.taskLatestPath(t), []byte(t.Id.String()), 0664)
+	return os.WriteFile(s.taskLatestPath(t), []byte(t.Id.String()), 0600)
 }
 
 // GetLatest is used to get latest task for a service, project, branch
 func (s *FSStore) GetLatest(service, project, branch string) (*task.Task, error) {
-	content, err := os.ReadFile(filepath.Join(s.root, service, project, branch, latestFile))
+	pth := filepath.Clean(filepath.Join(s.root, service, project, branch, latestFile))
+	if !strings.HasPrefix(pth, filepath.Join(s.root, service, project, branch)) {
+		panic("path escape: " + pth)
+	}
+	content, err := os.ReadFile(pth)
 	if err != nil {
 		return nil, err
 	}
