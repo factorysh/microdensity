@@ -52,10 +52,16 @@ func TestMockup() *httptest.Server {
 
 			switch r.URL.Path {
 			case "/api/v4/projects/group/project":
-				w.Write([]byte(pInfo))
+				_, err := w.Write([]byte(pInfo))
+				if err != nil {
+					panic(err)
+				}
 				w.WriteHeader(http.StatusOK)
 			case "/oauth/token":
-				w.Write([]byte(OAuthResp))
+				_, err := w.Write([]byte(OAuthResp))
+				if err != nil {
+					panic(err)
+				}
 				w.WriteHeader(http.StatusOK)
 			default:
 				w.WriteHeader(http.StatusNotFound)
