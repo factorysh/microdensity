@@ -259,9 +259,9 @@ func LoadCompose(home string, env map[string]string) (*types.Project, *types.Con
 	if err != nil {
 		return nil, nil, err
 	}
-	defer cfg.Close()
 
 	raw, err := ioutil.ReadAll(cfg)
+	cfg.Close()
 	if err != nil {
 		return nil, nil, err
 	}
