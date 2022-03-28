@@ -12,6 +12,7 @@ import (
 	"github.com/factorysh/microdensity/volumes"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/goleak"
 )
 
 type MockupReaderCloser struct {
@@ -24,6 +25,9 @@ func (m *MockupReaderCloser) Close() error {
 
 const microdensityVolumesRoot = "/tmp/microdensity/volumes/uuid"
 
+func TestMain(m *testing.M) {
+	goleak.VerifyTestMain(m)
+}
 func TestCompose(t *testing.T) {
 	os.MkdirAll(microdensityVolumesRoot, volumes.DirMode)
 	defer func() {

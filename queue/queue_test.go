@@ -14,6 +14,7 @@ import (
 	"github.com/factorysh/microdensity/task"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/goleak"
 )
 
 var _ events.Sink = (*DummyEventLogger)(nil)
@@ -30,6 +31,10 @@ func (d *DummyEventLogger) Write(evt events.Event) error {
 
 func (d *DummyEventLogger) Close() error {
 	return nil
+}
+
+func TestMain(m *testing.M) {
+	goleak.VerifyTestMain(m)
 }
 
 func TestDeq(t *testing.T) {

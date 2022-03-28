@@ -23,7 +23,6 @@ const defaultTestDir = "/tmp/microdensity/data"
 func cleanUp() {
 	os.RemoveAll(defaultTestDir)
 }
-
 func TestNew(t *testing.T) {
 	_, err := NewFSStore(defaultTestDir)
 	defer cleanUp()
