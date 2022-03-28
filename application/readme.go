@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/factorysh/microdensity/html"
 	"github.com/go-chi/chi/v5"
@@ -19,6 +20,11 @@ func (a *Application) ReadmeHandler(w http.ResponseWriter, r *http.Request) {
 	serviceID := chi.URLParam(r, "serviceID")
 	md := path.Join(a.serviceFolder, serviceID, "README.md")
 	l := a.logger.With(zap.String("path", md))
+	if strings.Contains(md, "..") {
+		l.Error("Path with ..", zap.String("path", md))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	_, err := os.Stat(md)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -31,7 +37,7 @@ func (a *Application) ReadmeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	raw, err := ioutil.ReadFile(md)
+	raw, err := ioutil.ReadFile(md) //#nosec path assertion at the begining of the function
 	if err != nil {
 		l.Error("README.md read error", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)

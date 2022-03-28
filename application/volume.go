@@ -122,8 +122,11 @@ func extractPathFromURL(p string, basePathLen int) (string, error) {
 }
 
 func (a *Application) renderResultPageForTask(t *task.Task, filePath string, w http.ResponseWriter) error {
+	if strings.Contains(filePath, "..") {
+		return fmt.Errorf("Do not path with .. : %s", filePath)
+	}
 	// try to fetch the result page from fs
-	content, err := os.ReadFile(filePath)
+	content, err := os.ReadFile(filePath) //#nosec assertion is done few lines up
 	if err != nil {
 		return err
 	}
