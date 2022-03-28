@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
@@ -60,7 +61,11 @@ func NewFolder(_path string) (*FolderService, error) {
 
 	// loop over possible meta.yml files
 	for _, name := range []string{"meta.yml", "meta.yaml"} {
-		content, err = os.ReadFile(filepath.Join(_path, name))
+		pth := filepath.Clean(filepath.Join(_path, name))
+		if !strings.HasPrefix(pth, _path) {
+			panic("Path escape " + pth)
+		}
+		content, err = os.ReadFile(pth)
 		if err == nil {
 			break
 		}
@@ -85,7 +90,10 @@ func NewFolder(_path string) (*FolderService, error) {
 	}
 	l = l.With(zap.String("name", name))
 
-	jsPath := path.Join(_path, "meta.js")
+	jsPath := filepath.Clean(path.Join(_path, "meta.js"))
+	if !strings.HasPrefix(jsPath, _path) {
+		panic("Path escape : " + jsPath)
+	}
 	_, err = os.Stat(jsPath)
 	if err != nil {
 		if os.IsNotExist(err) {
