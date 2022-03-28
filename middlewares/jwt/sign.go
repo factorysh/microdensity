@@ -2,7 +2,7 @@ package jwt
 
 import (
 	"crypto/rsa"
-	"crypto/sha1"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
@@ -16,7 +16,8 @@ func BuildJWT(private *rsa.PrivateKey, claims interface{}) (*_jwt.Token, error) 
 	if err != nil {
 		return nil, err
 	}
-	h := sha1.New()
+	h := sha256.New()
+	// What is kid : https://www.rfc-editor.org/rfc/rfc7515#section-4.1.4
 	kid := base64.RawURLEncoding.EncodeToString(h.Sum(private.PublicKey.N.Bytes()))[:16]
 	fmt.Println("kid", kid)
 	j, err := _jwt.NewBuilder(signer,
