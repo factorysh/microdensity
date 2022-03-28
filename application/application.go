@@ -55,6 +55,11 @@ type Application struct {
 }
 
 func New(cfg *conf.Conf) (*Application, error) {
+	err := service.ValidateServicesDefinitions(cfg.Services)
+	if err != nil {
+		return nil, err
+	}
+
 	jwtAuth, err := jwt.NewJWTAuthenticator(cfg.JWKProvider)
 	if err != nil {
 		return nil, err
