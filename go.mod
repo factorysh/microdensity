@@ -10,7 +10,7 @@ require (
 	github.com/docker/compose/v2 v2.2.3
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c
-	github.com/dop251/goja v0.0.0-20220214123719-b09a6bfa842f
+	github.com/dop251/goja v0.0.0-20220324112439-a18ffb9c5866
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/render v1.0.1
@@ -24,7 +24,7 @@ require (
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	github.com/yuin/goldmark v1.4.11
 	go.uber.org/zap v1.21.0
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	golang.org/x/net v0.0.0-20220325170049-de3da57026de
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
