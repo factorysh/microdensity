@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/factorysh/microdensity/badge"
 	_badge "github.com/factorysh/microdensity/badge"
@@ -42,7 +43,12 @@ func (a *Application) BadgeMyTaskHandler(latest bool) http.HandlerFunc {
 		}
 
 		// try to get the output badge for this task in this service
-		p := filepath.Join(a.storage.GetVolumePath(t), "/data", fmt.Sprintf("%s.badge", bdg))
+		p := filepath.Clean(filepath.Join(a.storage.GetVolumePath(t), "/data", fmt.Sprintf("%s.badge", bdg)))
+		if !strings.HasPrefix(p, a.storage.GetVolumePath(t)) {
+			l.Error("path attack", zap.String("path", p))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		_, err = os.Stat(p)
 
 		// if running return early
