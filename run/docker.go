@@ -4,6 +4,8 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/docker/cli/cli/config/configfile"
 	dtypes "github.com/docker/docker/api/types"
@@ -23,7 +25,10 @@ func dockerConfig() (*configfile.ConfigFile, error) {
 		home = me.HomeDir
 	}
 
-	pth := path.Join(home, "/.docker/config.json")
+	pth := filepath.Clean(path.Join(home, "/.docker/config.json"))
+	if !strings.HasPrefix(pth, home) {
+		panic("no path escape: " + pth)
+	}
 	_, err = os.Stat(pth)
 	if err != nil {
 		if os.IsNotExist(err) {

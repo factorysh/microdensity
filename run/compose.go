@@ -251,7 +251,10 @@ func (c *ComposeRun) runCommand(stdout io.WriteCloser, stderr io.WriteCloser, co
 
 // LoadCompose loads a docker-compose.yml file
 func LoadCompose(home string, env map[string]string) (*types.Project, *types.ConfigDetails, error) {
-	path := filepath.Join(home, "docker-compose.yml")
+	path := filepath.Clean(filepath.Join(home, "docker-compose.yml"))
+	if !strings.HasPrefix(path, home) {
+		panic("no path escape: " + path)
+	}
 	cfg, err := os.Open(path)
 	if err != nil {
 		return nil, nil, err
