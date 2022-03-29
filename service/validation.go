@@ -52,7 +52,7 @@ func validateServiceDefinition(path string) error {
 }
 
 func validateImages(path string) error {
-	file, err := os.Open(path)
+	file, err := os.Open(filepath.Clean(filepath.Join(path, "docker-compose.yml")))
 	if err != nil {
 		return err
 	}

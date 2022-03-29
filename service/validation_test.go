@@ -33,7 +33,7 @@ func TestValidateServiceDefiniton(t *testing.T) {
 }
 
 func TestValidateImages(t *testing.T) {
-	err := validateImages("../demo/services/demo/docker-compose.yml")
+	err := validateImages("../demo/services/demo")
 	assert.NoError(t, err)
 }
 
