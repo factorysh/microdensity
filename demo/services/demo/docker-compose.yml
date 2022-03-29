@@ -2,7 +2,7 @@
 
 services:
   background:
-    image: busybox
+    image: ${IMAGE:-busybox}
     command: sleep 50000
   hello:
     depends_on:

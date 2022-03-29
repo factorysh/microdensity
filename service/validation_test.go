@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,4 +30,30 @@ func TestValidateServiceDefiniton(t *testing.T) {
 		}
 	})
 
+}
+
+func TestValidateImages(t *testing.T) {
+	err := validateImages("../demo/services/demo/docker-compose.yml")
+	assert.NoError(t, err)
+}
+
+func TestValidateImage(t *testing.T) {
+	tests := []struct {
+		name  string
+		image string
+		err   error
+	}{
+		{name: "No variable", image: "busybox", err: nil},
+		{name: "Valid variable", image: "${IMAGE:-busybox}", err: nil},
+		{name: "Valid double variable", image: "${IMAGE:-busybox}-${VERSION:-1}", err: nil},
+		{name: "Invalid variable", image: "${IMAGE}", err: fmt.Errorf("missing a default variable in image name definition ${IMAGE}")},
+		{name: "Invalid double variable", image: "${IMAGE:-busybox}-${VERSION}", err: fmt.Errorf("missing a default variable in image name definition ${IMAGE:-busybox}-${VERSION}")},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateImage(tc.image)
+			assert.Equal(t, tc.err, err)
+		})
+	}
 }
