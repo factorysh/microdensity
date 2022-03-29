@@ -20,7 +20,7 @@ func ValidateServicesDefinitions(servicesDir string) error {
 	for _, dir := range dirs {
 		err := validateServiceDefinition(filepath.Join(servicesDir, dir.Name()))
 		if err != nil {
-			return fmt.Errorf("error in when reading service is subdir %s: %v", dir, err)
+			return fmt.Errorf("error when reading service subdir %s: %v", dir.Name(), err)
 		}
 	}
 
