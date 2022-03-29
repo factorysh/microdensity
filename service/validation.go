@@ -2,12 +2,15 @@ package service
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/compose-spec/compose-go/types"
 	"github.com/factorysh/microdensity/run"
+	"gopkg.in/yaml.v3"
 )
 
 // ValidateServicesDefinitions takes a root dir of services and inspect all services compose files
@@ -28,6 +31,11 @@ func ValidateServicesDefinitions(servicesDir string) error {
 }
 
 func validateServiceDefinition(path string) error {
+	err := validateImages(path)
+	if err != nil {
+		return err
+	}
+
 	p, _, err := run.LoadCompose(path, map[string]string{})
 	if err != nil {
 		return err
@@ -39,6 +47,68 @@ func validateServiceDefinition(path string) error {
 			return fmt.Errorf("error when validating docker-compose.yml file in directory %s: %v", path, err)
 		}
 
+	}
+
+	return nil
+}
+
+func validateImages(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+
+	raw, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
+	}
+
+	data := map[string]interface{}{}
+	err = yaml.Unmarshal(raw, data)
+	if err != nil {
+		return err
+	}
+
+	services, ok := data["services"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("unable to get services from docker-compose file %s", path)
+	}
+
+	for service, rawConfig := range services {
+		config, ok := rawConfig.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unable to get config for service %s from docker-compose file %s", service, path)
+		}
+
+		image, ok := config["image"].(string)
+		if !ok {
+			return fmt.Errorf("unable to get image for service %s from docker-compose file %s", service, path)
+		}
+
+		err = validateImage(image)
+		if err != nil {
+			return fmt.Errorf("error when valdiating image name for service %s from docker-compose file %s: %v", service, path, err)
+		}
+
+	}
+
+	return nil
+}
+
+var variableRegex = regexp.MustCompile(`\${([a-zA-Z0-9_\-:]+)}`)
+var variableDefaultRegex = regexp.MustCompile(`[a-zA-Z0-9_\-]+:-[a-zA-Z0-9_\-]+`)
+
+func validateImage(name string) error {
+
+	variables := variableRegex.FindAllSubmatch([]byte(name), -1)
+	if variables == nil {
+		return nil
+	}
+
+	for _, match := range variables {
+		if !variableDefaultRegex.Match(match[1]) {
+			return fmt.Errorf("missing a default variable in image name definition %s", name)
+		}
 	}
 
 	return nil
