@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -58,13 +57,9 @@ func validateImages(path string) error {
 		return err
 	}
 
-	raw, err := ioutil.ReadAll(file)
-	if err != nil {
-		return err
-	}
-
 	data := map[string]interface{}{}
-	err = yaml.Unmarshal(raw, data)
+	decoder := yaml.NewDecoder(file)
+	err = decoder.Decode(data)
 	if err != nil {
 		return err
 	}
