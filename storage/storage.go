@@ -306,9 +306,11 @@ func (s *FSStore) Prune(duration time.Duration, dry bool) (int64, error) {
 	close(jobs)
 
 	size := int64(0)
-	for s := range results {
-		size += s
+	for i := 0; i < len(toPrune); i++ {
+		size += <-results
 	}
+
+	close(results)
 
 	return size, nil
 }
