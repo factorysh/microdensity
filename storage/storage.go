@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/factorysh/microdensity/task"
 	"github.com/factorysh/microdensity/volumes"
@@ -278,4 +279,73 @@ func (s *FSStore) GetVolumePath(t *task.Task) string {
 // EnsureVolumesDir is used to create required volume dirs
 func (s *FSStore) EnsureVolumesDir(t *task.Task) error {
 	return s.volumes.Create(t)
+}
+
+// Prune will delete run directory older than provided date
+func (s *FSStore) Prune(duration time.Duration, dry bool) (int64, error) {
+	limit := time.Now().Add(-duration)
+	if time.Now().Before(limit) {
+		return 0, fmt.Errorf("computed limit time can't be in the future")
+	}
+
+	toPrune, err := s.Filter(func(t *task.Task) bool {
+		return t.Creation.Before(limit)
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	workers := 5
+	jobs := make(chan string, workers)
+	results := make(chan int64, len(toPrune))
+
+	for _, t := range toPrune {
+		jobs <- s.taskRootPath(t)
+	}
+
+	close(jobs)
+
+	size := int64(0)
+	for s := range results {
+		size += s
+	}
+
+	return size, nil
+}
+
+func pruneWorker(jobs <-chan string, results chan<- int64, workers int, dry bool) {
+	for i := 0; i < workers; i++ {
+		go func() {
+			for p := range jobs {
+				// count the size in bytes
+				var size int64
+				err := filepath.Walk(p, func(_ string, info os.FileInfo, err error) error {
+					if !info.IsDir() {
+						size += info.Size()
+					}
+
+					return err
+				})
+
+				// TODO: better logging
+				if err != nil {
+					fmt.Printf("error in prune worker : %v\n", err)
+					return
+				}
+
+				// send results of sizes to channel
+				results <- size
+
+				// if not dry, remove dir
+				if !dry {
+					err := os.RemoveAll(p)
+					// TODO: better logging
+					if err != nil {
+						fmt.Printf("error in prune worker : %v\n", err)
+						return
+					}
+				}
+			}
+		}()
+	}
 }
