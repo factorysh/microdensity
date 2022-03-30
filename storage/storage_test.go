@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/factorysh/microdensity/task"
 	"github.com/google/uuid"
@@ -132,4 +133,32 @@ func TestGetLateset(t *testing.T) {
 	task, err := s.GetLatest(dummyTask.Service, dummyTask.Project, dummyTask.Branch)
 	assert.NoError(t, err)
 	assert.Equal(t, dummyTask, task)
+}
+
+func TestPrune(t *testing.T) {
+	s, err := NewFSStore(defaultTestDir)
+	defer cleanUp()
+	assert.NoError(t, err)
+
+	// insert
+	err = s.Upsert(dummyTask)
+	assert.NoError(t, err)
+
+	err = s.SetLatest(dummyTask)
+	assert.NoError(t, err)
+
+	// get all
+	all, err := s.All()
+	assert.Len(t, all, 1)
+
+	// wait
+	time.Sleep(500 * time.Microsecond)
+
+	// prune
+	s.Prune(100*time.Millisecond, false)
+
+	// task should be deleted
+	all, err = s.All()
+	assert.NoError(t, err)
+	assert.Len(t, all, 0)
 }
