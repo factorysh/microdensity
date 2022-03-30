@@ -299,6 +299,9 @@ func (s *FSStore) Prune(duration time.Duration, dry bool) (int64, error) {
 	jobs := make(chan string, workers)
 	results := make(chan int64, len(toPrune))
 
+	// start workers
+	pruneWorker(jobs, results, workers, dry)
+
 	for _, t := range toPrune {
 		jobs <- s.taskRootPath(t)
 	}
