@@ -226,8 +226,19 @@ func (s *FSStore) All() ([]*task.Task, error) {
 
 // Filter return all the tasks matching the required predicates from the filter function
 func (s *FSStore) Filter(filterFn func(*task.Task) bool) ([]*task.Task, error) {
-	// TODO: later
-	return nil, nil
+	all, err := s.All()
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := make([]*task.Task, 0)
+	for _, t := range all {
+		if filterFn(t) {
+			tasks = append(tasks, t)
+		}
+	}
+
+	return tasks, nil
 }
 
 // Delete takes an id and delete a task in the fs
