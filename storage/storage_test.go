@@ -150,13 +150,22 @@ func TestPrune(t *testing.T) {
 
 	// get all
 	all, err := s.All()
+	assert.NoError(t, err)
 	assert.Len(t, all, 1)
 
 	// wait
 	time.Sleep(500 * time.Microsecond)
 
 	// prune
-	s.Prune(100*time.Millisecond, false)
+	s.Prune(10*time.Second, false)
+
+	// task should not be deleted
+	all, err = s.All()
+	assert.NoError(t, err)
+	assert.Len(t, all, 1)
+
+	// prune
+	s.Prune(1*time.Millisecond, false)
 
 	// task should be deleted
 	all, err = s.All()
