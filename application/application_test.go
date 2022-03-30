@@ -162,6 +162,13 @@ func TestApplication(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "proof\n", string(data))
 
+	req.URL.Path = fmt.Sprintf("/service/demo/%s/master/%s/volumes/data/musaraigne.webp", mockupGroup, mockupCommit)
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	defer r.Body.Close()
+	assert.Equal(t, 200, r.StatusCode, req.URL.Path)
+
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet

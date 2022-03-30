@@ -10,9 +10,11 @@ services:
     image: busybox
     command: >-
       sh -c "echo 'proof' > /cache/proof
+      && cp /assets/musaraigne.webp /data/
       && echo '<p>${HELLO:-World}</p>' > /data/result.html
       && echo '${HELLO:-World}'
       && echo '{\"color\": \"lime\", \"subject\":\"demo\", \"status\":\"${HELLO:-World}\"}' > /data/demo.badge"
     volumes:
+      - "./musaraigne.webp:/assets/musaraigne.webp:ro"
       - "./cache:/cache"
       - "./data:/data"
