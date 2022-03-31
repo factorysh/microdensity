@@ -63,7 +63,8 @@ func (a *Application) VolumesHandler(basePathLen int, latest bool) http.HandlerF
 
 		// if we just want a regular file/directory, expose it
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			if path.Ext(fullPath) == ".jpg" {
+			switch path.Ext(fullPath) {
+			case ".jpg":
 				webPath := fullPath[:len(fullPath)-3] + "webp"
 				_, err := os.Stat(webPath)
 				if err != nil {
@@ -74,7 +75,6 @@ func (a *Application) VolumesHandler(basePathLen int, latest bool) http.HandlerF
 				//user ask for a jpg, response is webp
 				http.ServeFile(w, r, webPath)
 				return
-
 			}
 
 			l.Warn("Path not found", zap.Error(err))
