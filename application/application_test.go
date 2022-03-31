@@ -56,14 +56,16 @@ func TestApplication(t *testing.T) {
 	// defer os.RemoveAll(dataPath)
 	cfg.DataPath = dataPath
 
+	services := []string{"demo", "picture"}
+
 	app, err := New(cfg)
 	assert.NoError(t, err)
-	svc, err := service.NewFolder("../demo/services/demo")
-	assert.NoError(t, err)
-	app.Services = map[string]service.Service{"demo": svc}
-	svc, err = service.NewFolder("../demo/services/picture")
-	assert.NoError(t, err)
-	app.Services["picture"] = svc
+	app.Services = map[string]service.Service{}
+	for _, _service := range services {
+		svc, err := service.NewFolder("../demo/services/" + _service)
+		assert.NoError(t, err)
+		app.Services[_service] = svc
+	}
 
 	srvApp := httptest.NewServer(app.Router)
 	defer srvApp.Close()
@@ -82,17 +84,19 @@ func TestApplication(t *testing.T) {
 	var servicesList []string
 	err = dec.Decode(&servicesList)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"demo", "picture"}, servicesList)
+	assert.Equal(t, services, servicesList)
 
-	req, err = mkRequest(key)
-	assert.NoError(t, err)
-	req.Method = http.MethodGet
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo", srvApp.URL))
-	assert.NoError(t, err)
-	r, err = cli.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, 200, r.StatusCode)
-	assert.Equal(t, "text/html; charset=utf-8", r.Header.Get("content-type"))
+	for _, service := range services {
+		req, err = mkRequest(key)
+		assert.NoError(t, err)
+		req.Method = http.MethodGet
+		req.URL, err = url.Parse(fmt.Sprintf("%s/service/%s", srvApp.URL, service))
+		assert.NoError(t, err)
+		r, err = cli.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, 200, r.StatusCode)
+		assert.Equal(t, "text/html; charset=utf-8", r.Header.Get("content-type"))
+	}
 
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
