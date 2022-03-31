@@ -59,7 +59,11 @@ func TestApplication(t *testing.T) {
 	app, err := New(cfg)
 	assert.NoError(t, err)
 	svc, err := service.NewFolder("../demo/services/demo")
+	assert.NoError(t, err)
 	app.Services = map[string]service.Service{"demo": svc}
+	svc, err = service.NewFolder("../demo/services/picture")
+	assert.NoError(t, err)
+	app.Services["picture"] = svc
 
 	srvApp := httptest.NewServer(app.Router)
 	defer srvApp.Close()
@@ -78,7 +82,7 @@ func TestApplication(t *testing.T) {
 	var servicesList []string
 	err = dec.Decode(&servicesList)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"demo"}, servicesList)
+	assert.Equal(t, []string{"demo", "picture"}, servicesList)
 
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
