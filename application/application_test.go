@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/cristalhq/jwt/v3"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/factorysh/microdensity/claims"
 	"github.com/factorysh/microdensity/conf"
@@ -49,21 +48,10 @@ var key = MustParseRSAKey(applicationPrivateRSA)
 func TestApplication(t *testing.T) {
 	docker, err := client.NewEnvClient()
 	assert.NoError(t, err)
-	images, err := docker.ImageList(context.TODO(), types.ImageListOptions{
-		All: true,
-	})
+	_, _, err = docker.ImageInspectWithRaw(context.TODO(), "microdensity/picture")
 	assert.NoError(t, err)
-	imageExist := false
-	for _, image := range images {
-		for _, tag := range image.RepoTags {
-			fmt.Println(tag)
-			if tag == "microdensity/picture:latest" {
-				imageExist = true
-			}
-		}
-	}
 
-	if !imageExist {
+	if client.IsErrNotFound(err) {
 		panic("Please, go to demo/services/picture and build the image")
 	}
 
