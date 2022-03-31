@@ -324,7 +324,7 @@ func pruneWorker(jobs <-chan string, results chan<- int64, workers int, dry bool
 		go func() {
 			for p := range jobs {
 				// count the size in bytes
-				var size int64
+				size := int64(0)
 				err := filepath.Walk(p, func(_ string, info os.FileInfo, err error) error {
 					if !info.IsDir() {
 						size += info.Size()
