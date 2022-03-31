@@ -115,15 +115,17 @@ func TestApplication(t *testing.T) {
 	req.Method = http.MethodPost
 	req.URL, err = url.Parse(srvApp.URL)
 	assert.NoError(t, err)
-	req.URL.Path = fmt.Sprintf("/service/demo/%s/master/%s", mockupGroup, mockupCommit)
-	assert.NoError(t, err)
-	b := new(bytes.Buffer)
-	err = json.NewEncoder(b).Encode(map[string]interface{}{"HELLO": "Bob"})
-	// trick to make the buffer a ReaderCloser
-	req.Body = ioutil.NopCloser(b)
-	r, err = cli.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, 200, r.StatusCode)
+	for _, _service := range services {
+		req.URL.Path = fmt.Sprintf("/service/%s/%s/master/%s", _service, mockupGroup, mockupCommit)
+		assert.NoError(t, err)
+		b := new(bytes.Buffer)
+		err = json.NewEncoder(b).Encode(map[string]interface{}{"HELLO": "Bob"})
+		// trick to make the buffer a ReaderCloser
+		req.Body = ioutil.NopCloser(b)
+		r, err = cli.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, 200, r.StatusCode)
+	}
 
 	// get the status badge
 	req, err = mkRequest(key)
