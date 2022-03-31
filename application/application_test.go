@@ -2,6 +2,7 @@ package application
 
 import (
 	"bytes"
+	"context"
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,8 @@ import (
 	"time"
 
 	"github.com/cristalhq/jwt/v3"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/factorysh/microdensity/claims"
 	"github.com/factorysh/microdensity/conf"
 	"github.com/factorysh/microdensity/mockup"
@@ -44,6 +47,26 @@ bhfhLtK7l19RUDS9g702dcr+z7UxZS97SztCWyEO/mjs
 var key = MustParseRSAKey(applicationPrivateRSA)
 
 func TestApplication(t *testing.T) {
+	docker, err := client.NewEnvClient()
+	assert.NoError(t, err)
+	images, err := docker.ImageList(context.TODO(), types.ImageListOptions{
+		All: true,
+	})
+	assert.NoError(t, err)
+	imageExist := false
+	for _, image := range images {
+		for _, tag := range image.RepoTags {
+			fmt.Println(tag)
+			if tag == "microdensity/picture:latest" {
+				imageExist = true
+			}
+		}
+	}
+
+	if !imageExist {
+		panic("Please, go to demo/services/picture and build the image")
+	}
+
 	gitlab := httptest.NewServer(mockup.GitlabJWK(&key.PublicKey))
 	defer gitlab.Close()
 
