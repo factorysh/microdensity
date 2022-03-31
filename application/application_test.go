@@ -179,6 +179,15 @@ func TestApplication(t *testing.T) {
 	defer r.Body.Close()
 	assert.Equal(t, 200, r.StatusCode, req.URL.Path)
 
+	// testing hidden webp
+	req.URL.Path = fmt.Sprintf("/service/picture/%s/master/%s/volumes/data/musaraigne.jpg", mockupGroup, mockupCommit)
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	defer r.Body.Close()
+	assert.Equal(t, 200, r.StatusCode, req.URL.Path)
+	assert.Equal(t, "image/webp", r.Header.Get("content-type"))
+
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
 	req.Method = http.MethodGet
