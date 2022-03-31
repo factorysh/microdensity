@@ -35,6 +35,7 @@ import (
 	"github.com/tchap/zapext/v2/zapsentry"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/sync/semaphore"
 )
 
 type Application struct {
@@ -51,6 +52,7 @@ type Application struct {
 	Sink          *events.Broadcaster
 	Server        *http.Server
 	AdminServer   *http.Server
+	PruneLock     semaphore.Weighted
 	Stopper       chan (os.Signal)
 }
 
@@ -130,8 +132,9 @@ func New(cfg *conf.Conf) (*Application, error) {
 	r := chi.NewRouter()
 
 	a := &Application{
-		Services: svcs,
-		Domain:   cfg.OAuth.AppURL,
+		PruneLock: *semaphore.NewWeighted(int64(1)),
+		Services:  svcs,
+		Domain:    cfg.OAuth.AppURL,
 		// FIXME: use dedicated variable
 		GitlabURL:     cfg.OAuth.ProviderURL,
 		serviceFolder: cfg.Services,
@@ -146,6 +149,7 @@ func New(cfg *conf.Conf) (*Application, error) {
 	}
 	ar.Get("/status", a.StatusHandler)
 	ar.Get("/sink", a.SinkAllHandler)
+	ar.Post("/prune", a.PruneHandler)
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)

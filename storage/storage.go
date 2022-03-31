@@ -37,6 +37,7 @@ type Storage interface {
 	GetLatest(service, project, branch string) (*task.Task, error)
 	GetVolumePath(*task.Task) string
 	EnsureVolumesDir(*task.Task) error
+	Prune(time.Duration, bool) (int64, error)
 }
 
 // FSStore contains all storage data and primitives directly on the FS
