@@ -64,7 +64,7 @@ func TestGet(t *testing.T) {
 
 	task, err := s.Get(dummyTask.Id.String())
 	assert.NoError(t, err)
-	assert.Equal(t, dummyTask, task)
+	assert.Equal(t, dummyTask.Id, task.Id)
 }
 
 func TestAll(t *testing.T) {
@@ -133,7 +133,7 @@ func TestGetLateset(t *testing.T) {
 
 	task, err := s.GetLatest(dummyTask.Service, dummyTask.Project, dummyTask.Branch)
 	assert.NoError(t, err)
-	assert.Equal(t, dummyTask, task)
+	assert.Equal(t, dummyTask.Id, task.Id)
 }
 
 func TestPrune(t *testing.T) {
