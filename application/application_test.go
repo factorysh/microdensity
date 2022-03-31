@@ -162,7 +162,7 @@ func TestApplication(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "proof\n", string(data))
 
-	req.URL.Path = fmt.Sprintf("/service/demo/%s/master/%s/volumes/data/musaraigne.webp", mockupGroup, mockupCommit)
+	req.URL.Path = fmt.Sprintf("/service/picture/%s/master/%s/volumes/data/musaraigne.webp", mockupGroup, mockupCommit)
 	assert.NoError(t, err)
 	r, err = cli.Do(req)
 	assert.NoError(t, err)
