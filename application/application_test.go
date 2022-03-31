@@ -56,10 +56,16 @@ func TestApplication(t *testing.T) {
 	// defer os.RemoveAll(dataPath)
 	cfg.DataPath = dataPath
 
+	services := []string{"demo", "picture"}
+
 	app, err := New(cfg)
 	assert.NoError(t, err)
-	svc, err := service.NewFolder("../demo/services/demo")
-	app.Services = map[string]service.Service{"demo": svc}
+	app.Services = map[string]service.Service{}
+	for _, _service := range services {
+		svc, err := service.NewFolder("../demo/services/" + _service)
+		assert.NoError(t, err)
+		app.Services[_service] = svc
+	}
 
 	srvApp := httptest.NewServer(app.Router)
 	defer srvApp.Close()
@@ -78,17 +84,19 @@ func TestApplication(t *testing.T) {
 	var servicesList []string
 	err = dec.Decode(&servicesList)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"demo"}, servicesList)
+	assert.Equal(t, services, servicesList)
 
-	req, err = mkRequest(key)
-	assert.NoError(t, err)
-	req.Method = http.MethodGet
-	req.URL, err = url.Parse(fmt.Sprintf("%s/service/demo", srvApp.URL))
-	assert.NoError(t, err)
-	r, err = cli.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, 200, r.StatusCode)
-	assert.Equal(t, "text/html; charset=utf-8", r.Header.Get("content-type"))
+	for _, service := range services {
+		req, err = mkRequest(key)
+		assert.NoError(t, err)
+		req.Method = http.MethodGet
+		req.URL, err = url.Parse(fmt.Sprintf("%s/service/%s", srvApp.URL, service))
+		assert.NoError(t, err)
+		r, err = cli.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, 200, r.StatusCode)
+		assert.Equal(t, "text/html; charset=utf-8", r.Header.Get("content-type"))
+	}
 
 	req, err = mkRequest(key)
 	assert.NoError(t, err)
@@ -107,15 +115,17 @@ func TestApplication(t *testing.T) {
 	req.Method = http.MethodPost
 	req.URL, err = url.Parse(srvApp.URL)
 	assert.NoError(t, err)
-	req.URL.Path = fmt.Sprintf("/service/demo/%s/master/%s", mockupGroup, mockupCommit)
-	assert.NoError(t, err)
-	b := new(bytes.Buffer)
-	err = json.NewEncoder(b).Encode(map[string]interface{}{"HELLO": "Bob"})
-	// trick to make the buffer a ReaderCloser
-	req.Body = ioutil.NopCloser(b)
-	r, err = cli.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, 200, r.StatusCode)
+	for _, _service := range services {
+		req.URL.Path = fmt.Sprintf("/service/%s/%s/master/%s", _service, mockupGroup, mockupCommit)
+		assert.NoError(t, err)
+		b := new(bytes.Buffer)
+		err = json.NewEncoder(b).Encode(map[string]interface{}{"HELLO": "Bob"})
+		// trick to make the buffer a ReaderCloser
+		req.Body = ioutil.NopCloser(b)
+		r, err = cli.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, 200, r.StatusCode)
+	}
 
 	// get the status badge
 	req, err = mkRequest(key)
@@ -161,6 +171,22 @@ func TestApplication(t *testing.T) {
 	data, err := ioutil.ReadAll(r.Body)
 	assert.NoError(t, err)
 	assert.Equal(t, "proof\n", string(data))
+
+	req.URL.Path = fmt.Sprintf("/service/picture/%s/master/%s/volumes/data/musaraigne.webp", mockupGroup, mockupCommit)
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	defer r.Body.Close()
+	assert.Equal(t, 200, r.StatusCode, req.URL.Path)
+
+	// testing hidden webp
+	req.URL.Path = fmt.Sprintf("/service/picture/%s/master/%s/volumes/data/musaraigne.jpg", mockupGroup, mockupCommit)
+	assert.NoError(t, err)
+	r, err = cli.Do(req)
+	assert.NoError(t, err)
+	defer r.Body.Close()
+	assert.Equal(t, 200, r.StatusCode, req.URL.Path)
+	assert.Equal(t, "image/webp", r.Header.Get("content-type"))
 
 	req, err = mkRequest(key)
 	assert.NoError(t, err)

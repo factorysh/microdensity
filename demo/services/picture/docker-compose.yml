@@ -1,0 +1,10 @@
+---
+
+services:
+  picture:
+    image: microdensity/picture
+    command: >-
+      sh -c "cp /usr/src/musaraigne.webp /data/
+      && echo '{\"color\": \"lime\", \"subject\":\"demo\", \"status\":\"${HELLO:-World}\"}' > /data/demo.badge"
+    volumes:
+      - "./data:/data"

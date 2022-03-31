@@ -63,6 +63,20 @@ func (a *Application) VolumesHandler(basePathLen int, latest bool) http.HandlerF
 
 		// if we just want a regular file/directory, expose it
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			switch path.Ext(fullPath) {
+			case ".jpg":
+				webPath := fullPath[:len(fullPath)-3] + "webp"
+				_, err := os.Stat(webPath)
+				if err != nil {
+					l.Error("There is no webp for that file", zap.Error(err))
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+				//user ask for a jpg, response is webp
+				http.ServeFile(w, r, webPath)
+				return
+			}
+
 			l.Warn("Path not found", zap.Error(err))
 
 			data, err := NewTaskPage(t, "No result for this task", a.GitlabURL, "Task Result", "container task-output")

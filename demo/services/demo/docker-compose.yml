@@ -14,5 +14,6 @@ services:
       && echo '${HELLO:-World}'
       && echo '{\"color\": \"lime\", \"subject\":\"demo\", \"status\":\"${HELLO:-World}\"}' > /data/demo.badge"
     volumes:
+      - "./musaraigne.webp:/assets/musaraigne.webp:ro"
       - "./cache:/cache"
       - "./data:/data"
