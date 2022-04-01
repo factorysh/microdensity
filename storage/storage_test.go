@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/factorysh/microdensity/task"
 	"github.com/google/uuid"
@@ -11,11 +12,12 @@ import (
 )
 
 var dummyTask = &task.Task{
-	Id:      uuid.New(),
-	Service: "demo",
-	Project: "group%20project",
-	Branch:  "main",
-	Commit:  "01279848527693d126de60ec7b355924c96d2957",
+	Id:       uuid.New(),
+	Service:  "demo",
+	Project:  "group%20project",
+	Branch:   "main",
+	Commit:   "01279848527693d126de60ec7b355924c96d2957",
+	Creation: time.Now(),
 }
 
 const defaultTestDir = "/tmp/microdensity/data"
@@ -62,7 +64,7 @@ func TestGet(t *testing.T) {
 
 	task, err := s.Get(dummyTask.Id.String())
 	assert.NoError(t, err)
-	assert.Equal(t, dummyTask, task)
+	assert.Equal(t, dummyTask.Id, task.Id)
 }
 
 func TestAll(t *testing.T) {
@@ -131,5 +133,45 @@ func TestGetLateset(t *testing.T) {
 
 	task, err := s.GetLatest(dummyTask.Service, dummyTask.Project, dummyTask.Branch)
 	assert.NoError(t, err)
-	assert.Equal(t, dummyTask, task)
+	assert.Equal(t, dummyTask.Id, task.Id)
+}
+
+func TestPrune(t *testing.T) {
+	s, err := NewFSStore(defaultTestDir)
+	defer cleanUp()
+	assert.NoError(t, err)
+
+	// insert
+	err = s.Upsert(dummyTask)
+	assert.NoError(t, err)
+
+	err = s.SetLatest(dummyTask)
+	assert.NoError(t, err)
+
+	// get all
+	all, err := s.All()
+	assert.NoError(t, err)
+	assert.Len(t, all, 1)
+
+	// wait
+	time.Sleep(100 * time.Microsecond)
+
+	// prune
+	s.Prune(1*time.Second, false)
+
+	// task should not be deleted
+	all, err = s.All()
+	assert.NoError(t, err)
+	assert.Len(t, all, 1)
+
+	// wait
+	time.Sleep(100 * time.Millisecond)
+
+	// prune
+	s.Prune(100*time.Millisecond, false)
+
+	// task should be deleted
+	all, err = s.All()
+	assert.NoError(t, err)
+	assert.Len(t, all, 0)
 }

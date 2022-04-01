@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/factorysh/microdensity/task"
 	"github.com/factorysh/microdensity/volumes"
@@ -36,6 +37,7 @@ type Storage interface {
 	GetLatest(service, project, branch string) (*task.Task, error)
 	GetVolumePath(*task.Task) string
 	EnsureVolumesDir(*task.Task) error
+	Prune(time.Duration, bool) (int64, error)
 }
 
 // FSStore contains all storage data and primitives directly on the FS
@@ -226,8 +228,19 @@ func (s *FSStore) All() ([]*task.Task, error) {
 
 // Filter return all the tasks matching the required predicates from the filter function
 func (s *FSStore) Filter(filterFn func(*task.Task) bool) ([]*task.Task, error) {
-	// TODO: later
-	return nil, nil
+	all, err := s.All()
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := make([]*task.Task, 0)
+	for _, t := range all {
+		if filterFn(t) {
+			tasks = append(tasks, t)
+		}
+	}
+
+	return tasks, nil
 }
 
 // Delete takes an id and delete a task in the fs
@@ -267,4 +280,78 @@ func (s *FSStore) GetVolumePath(t *task.Task) string {
 // EnsureVolumesDir is used to create required volume dirs
 func (s *FSStore) EnsureVolumesDir(t *task.Task) error {
 	return s.volumes.Create(t)
+}
+
+// Prune will delete run directory older than provided date
+func (s *FSStore) Prune(duration time.Duration, dry bool) (int64, error) {
+	limit := time.Now().Add(-duration)
+	if time.Now().Before(limit) {
+		return 0, fmt.Errorf("computed limit time can't be in the future")
+	}
+
+	toPrune, err := s.Filter(func(t *task.Task) bool {
+		return t.Creation.Before(limit)
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	workers := 5
+	jobs := make(chan string, workers)
+	results := make(chan int64, len(toPrune))
+
+	// start workers
+	pruneWorker(jobs, results, workers, dry)
+
+	for _, t := range toPrune {
+		jobs <- s.taskRootPath(t)
+	}
+
+	close(jobs)
+
+	size := int64(0)
+	for i := 0; i < len(toPrune); i++ {
+		size += <-results
+	}
+
+	close(results)
+
+	return size, nil
+}
+
+func pruneWorker(jobs <-chan string, results chan<- int64, workers int, dry bool) {
+	for i := 0; i < workers; i++ {
+		go func() {
+			for p := range jobs {
+				// count the size in bytes
+				size := int64(0)
+				err := filepath.Walk(p, func(_ string, info os.FileInfo, err error) error {
+					if !info.IsDir() {
+						size += info.Size()
+					}
+
+					return err
+				})
+
+				// TODO: better logging
+				if err != nil {
+					fmt.Printf("error in prune worker : %v\n", err)
+					return
+				}
+
+				// send results of sizes to channel
+				results <- size
+
+				// if not dry, remove dir
+				if !dry {
+					err := os.RemoveAll(p)
+					// TODO: better logging
+					if err != nil {
+						fmt.Printf("error in prune worker : %v\n", err)
+						return
+					}
+				}
+			}
+		}()
+	}
 }
