@@ -8,7 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/cli v20.10.12+incompatible
 	github.com/docker/compose/v2 v2.2.3
-	github.com/docker/docker v20.10.12+incompatible
+	github.com/docker/docker v20.10.24+incompatible
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c
 	github.com/dop251/goja v0.0.0-20220324112439-a18ffb9c5866
 	github.com/getsentry/sentry-go v0.13.0
